@@ -1,0 +1,87 @@
+
+#' doubledeepms
+#'
+#' Main analysis script.
+#'
+#' @param startStage Start at a specified analysis stage (default:1)
+#' @param stopStage Stop at a specified analysis stage (default:0 i.e. no stop condition)
+#' @param base_dir Base directory for all output file (default:NB private CRG server path; change accordingly)
+#' @param rerun_raw re-run raw data preprocessing (default:F)
+#' @param Ncores # cores available to parallelize leave-one-out cross validation workflow (stage 4)
+#'
+#' @return Nothing
+#' @export
+doubledeepms <- function(
+  startStage=1,
+  stopStage=0,
+  base_dir = "/users/project/prj004631/afaure/DMS/Results/doubledeepms_proj",
+  rerun_raw = F,
+  Ncores = 1
+  ){
+
+  colour_scheme <- list(
+    "shade 0" = list(
+      "#F4270C",
+      "#F4AD0C",
+      "#1B38A6",
+      "#09B636"),
+    "shade 1" = list(
+      "#FFB0A5",
+      "#FFE4A5",
+      "#9DACE3",
+      "#97E9AD"),
+    "shade 2" = list(
+      "#FF6A56",
+      "#FFCB56",
+      "#4C63B7",
+      "#43C766"),
+    "shade 3" = list(
+      "#A31300",
+      "#A37200",
+      "#0C226F",
+      "#007A20"),
+    "shade 4" = list(
+      "#410800",
+      "#412D00",
+      "#020B2C",
+      "#00300D"))
+
+  #First and last analysis stages
+  first_stage <- startStage
+  last_stage <- stopStage
+
+  ### Fit thermo model
+  ###########################
+
+  ### Evaluate thermo model results
+  ###########################
+
+  #Evaluate thermo model results
+  stagenum <- 1
+  #GB1
+  doubledeepms_thermo_model_results(
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "GB1", "mochi__fit_tmodel_3state"),
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_GB1", stagenum=stagenum, base_dir=base_dir),
+    literature_free_energies = file.path(base_dir, "Data", "in_vitro", "GB1_literature_free_energies.txt"),
+    position_offset = 1,
+    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+  #PSD95-PDZ3
+  doubledeepms_thermo_model_results(
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state"),
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_PSD95-PDZ3", stagenum=stagenum, base_dir=base_dir),
+    literature_free_energies = file.path(base_dir, "Data", "in_vitro", "PDZ_literature_free_energies.txt"),
+    position_offset = 310,
+    folding_energy_max_sd = 0.37,
+    binding_energy_max_sd = 0.5,
+    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+  #GRB2-SH3
+  doubledeepms_thermo_model_results(
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state"),
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_GRB2-SH3", stagenum=stagenum, base_dir=base_dir),
+    position_offset = 0,
+    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+
+}
+
+
+
