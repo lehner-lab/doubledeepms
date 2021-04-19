@@ -43,7 +43,7 @@ Fitness scores, thermodynamic models, pre-processed data and required miscellane
 
 # Pipeline Modes
 
-There are a number of options available for running the dimsumms pipeline depending on user requirements.
+There are a number of options available for running the doubledeepms pipeline depending on user requirements.
 
 * ## Basic (default)
 
