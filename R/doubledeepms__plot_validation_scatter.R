@@ -6,6 +6,7 @@
 #' @param input_dt data.table with model free energy estimates (required)
 #' @param lit_inpath path to literature free energies (required)
 #' @param report_outpath output path for scatterplots (required)
+#' @param highlight_colour colour for highlights (default:red)
 #' @param RT constant (default:0.001987*(273+24))
 #' @param position_offset residue position offset (default:0)
 #'
@@ -16,6 +17,7 @@ doubledeepms__plot_validation_scatter <- function(
   input_dt,
   lit_inpath,
   report_outpath,
+  highlight_colour = "red",
   RT = 0.001987*(273+24),
   position_offset = 0
   ){
@@ -108,10 +110,10 @@ doubledeepms__plot_validation_scatter <- function(
         d <- ggplot2::ggplot(plot_dt,ggplot2::aes(col_lit, col_data)) +
           ggplot2::geom_hline(yintercept = 0) +
           ggplot2::geom_vline(xintercept = 0) +
-          ggplot2::geom_point(alpha = 1/2, color = "red", size = 1) +
-          ggplot2::geom_linerange(data = plot_dt[!is.na(col_data_sd)], ggplot2::aes(ymin = col_data-col_data_sd*1.96, ymax = col_data+col_data_sd*1.96), color = "red", alpha = 1/4) +
-          ggplot2::geom_linerange(data = plot_dt[!is.na(col_lit_sd)], ggplot2::aes(xmin = col_lit-col_lit_sd*1.96, xmax = col_lit+col_lit_sd*1.96), color = "red", alpha = 1/4) +
-          ggplot2::geom_smooth(formula = 'y ~ x', linetype = 2, method = "lm", color = "red", se = T) +
+          ggplot2::geom_point(alpha = 1/2, color = highlight_colour, size = 1) +
+          ggplot2::geom_linerange(data = plot_dt[!is.na(col_data_sd)], ggplot2::aes(ymin = col_data-col_data_sd*1.96, ymax = col_data+col_data_sd*1.96), color = highlight_colour, alpha = 1/4) +
+          ggplot2::geom_linerange(data = plot_dt[!is.na(col_lit_sd)], ggplot2::aes(xmin = col_lit-col_lit_sd*1.96, xmax = col_lit+col_lit_sd*1.96), color = highlight_colour, alpha = 1/4) +
+          ggplot2::geom_smooth(formula = 'y ~ x', linetype = 2, method = "lm", color = highlight_colour, se = T) +
           ggplot2::geom_abline(linetype = 2) +
           ggplot2::annotate("text", label=paste("Pearson's r = ", plot_dt[,round(cor(col_lit, col_data), 2)], sep=""), x=-Inf, y=Inf, hjust = 0, vjust = 1) +
           ggplot2::theme_bw()

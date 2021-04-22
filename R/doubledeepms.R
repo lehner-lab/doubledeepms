@@ -19,6 +19,12 @@ doubledeepms <- function(
   Ncores = 1
   ){
 
+  # startStage=1
+  # stopStage=0
+  # base_dir = "/users/project/prj004631/afaure/DMS/Results/doubledeepms_proj"
+  # rerun_raw = F
+  # Ncores = 1
+
   colour_scheme <- list(
     "shade 0" = list(
       "#F4270C",
@@ -56,30 +62,78 @@ doubledeepms <- function(
   ### Evaluate thermo model results
   ###########################
 
-  #Evaluate thermo model results
   stagenum <- 1
   #GB1
   doubledeepms_thermo_model_results(
     mochi_outpath = file.path(base_dir, "Data", "mochi", "GB1", "mochi__fit_tmodel_3state"),
-    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_GB1", stagenum=stagenum, base_dir=base_dir),
     literature_free_energies = file.path(base_dir, "Data", "in_vitro", "GB1_literature_free_energies.txt"),
     position_offset = 1,
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_GB1", stagenum=stagenum, base_dir=base_dir),
+    colour_scheme = colour_scheme,
     execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
   #PSD95-PDZ3
   doubledeepms_thermo_model_results(
     mochi_outpath = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state"),
-    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_PSD95-PDZ3", stagenum=stagenum, base_dir=base_dir),
     literature_free_energies = file.path(base_dir, "Data", "in_vitro", "PDZ_literature_free_energies.txt"),
     position_offset = 310,
     folding_energy_max_sd = 0.37,
     binding_energy_max_sd = 0.5,
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_PSD95-PDZ3", stagenum=stagenum, base_dir=base_dir),
+    colour_scheme = colour_scheme,
     execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
   #GRB2-SH3
   doubledeepms_thermo_model_results(
     mochi_outpath = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state"),
-    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_GRB2-SH3", stagenum=stagenum, base_dir=base_dir),
     position_offset = 0,
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_GRB2-SH3", stagenum=stagenum, base_dir=base_dir),
+    colour_scheme = colour_scheme,
     execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+
+  ### Add 3D structure metrics
+  ###########################
+
+  stagenum <- 2
+  #GB1
+  doubledeepms_structure_metrics(
+    input_file = file.path(base_dir, paste0("001", "_doubledeepms_thermo_model_results_GB1"), "dg_singles.txt"),
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_structure_metrics_GB1", stagenum=stagenum, base_dir=base_dir),
+    pdb_file = file.path(base_dir, "Data", "pdb", "1fcc_RSASA.pdb"),
+    pdb_chain_query = "C",
+    pdb_chain_target = "A",
+    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+  #PSD95-PDZ3
+  doubledeepms_structure_metrics(
+    input_file = file.path(base_dir, paste0("001", "_doubledeepms_thermo_model_results_PSD95-PDZ3"), "dg_singles.txt"),
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_structure_metrics_PSD95-PDZ3", stagenum=stagenum, base_dir=base_dir),
+    pdb_file = file.path(base_dir, "Data", "pdb", "1be9_RSASA.pdb"),
+    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+  #GRB2-SH3
+  doubledeepms_structure_metrics(
+    input_file = file.path(base_dir, paste0("001", "_doubledeepms_thermo_model_results_GRB2-SH3"), "dg_singles.txt"),
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_structure_metrics_GRB2-SH3", stagenum=stagenum, base_dir=base_dir),
+    pdb_file = file.path(base_dir, "Data", "pdb", "2vwf_RSASA.pdb"),
+    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+
+  ### Fitness plots
+  ###########################
+
+  stagenum <- 3
+  #PSD95-PDZ3 and GRB2-SH3
+  doubledeepms_fitness_plots(
+    fitness_list = list(
+      "PSD95-PDZ3" = file.path(base_dir, "Data", "fitness", "PSD95-PDZ3"),
+      "GRB2-SH3" = file.path(base_dir, "Data", "fitness", "GRB2-SH3")),
+    structure_metrics_list = list(
+      "PSD95-PDZ3" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_PSD95-PDZ3"), "dg_singles.txt"),
+      "GRB2-SH3" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_GRB2-SH3"), "dg_singles.txt")),
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_fitness_plots", stagenum=stagenum, base_dir=base_dir),
+    colour_scheme = colour_scheme,
+    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+
+  ### Plot free energy heatmaps
+  ###########################
+
+
 
 }
 

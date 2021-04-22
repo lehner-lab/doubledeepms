@@ -4,15 +4,13 @@
 \alias{doubledeepms_thermo_model_results}
 \title{doubledeepms_thermo_model_results}
 \usage{
-doubledeepms_thermo_model_results(mochi_outpath, outpath,
-  temperature = 24, literature_free_energies = NA,
-  position_offset = 0, folding_energy_max_sd = 1/(1.96 * 2),
-  binding_energy_max_sd = 1/(1.96 * 2), execute = TRUE)
+doubledeepms_thermo_model_results(mochi_outpath, temperature = 24,
+  literature_free_energies = NA, position_offset = 0,
+  folding_energy_max_sd = 1/(1.96 * 2), binding_energy_max_sd = 1/(1.96
+  * 2), outpath, colour_scheme, execute = TRUE)
 }
 \arguments{
 \item{mochi_outpath}{path to MoCHI thermo model fit results (required)}
-
-\item{outpath}{output path for plots and saved objects (required)}
 
 \item{temperature}{temperature in degrees celcuis (default:24)}
 
@@ -23,6 +21,10 @@ doubledeepms_thermo_model_results(mochi_outpath, outpath,
 \item{folding_energy_max_sd}{maximum folding energy standard deviation (default:1/(1.96*2))}
 
 \item{binding_energy_max_sd}{maximum binding energy standard deviation (default:1/(1.96*2))}
+
+\item{outpath}{output path for plots and saved objects (required)}
+
+\item{colour_scheme}{colour scheme file (required)}
 
 \item{execute}{whether or not to execute the analysis (default: TRUE)}
 }

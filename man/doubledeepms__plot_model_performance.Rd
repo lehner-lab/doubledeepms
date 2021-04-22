@@ -4,12 +4,15 @@
 \alias{doubledeepms__plot_model_performance}
 \title{doubledeepms__plot_model_performance}
 \usage{
-doubledeepms__plot_model_performance(input_dt, report_outpath)
+doubledeepms__plot_model_performance(input_dt, report_outpath,
+  highlight_colour = "red")
 }
 \arguments{
 \item{input_dt}{data.table with model free energy estimates (required)}
 
 \item{report_outpath}{output path for scatterplots (required)}
+
+\item{highlight_colour}{colour for highlights (default:red)}
 }
 \value{
 Nothing

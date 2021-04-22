@@ -5,13 +5,15 @@
 \title{doubledeepms__define_confident_free_energies}
 \usage{
 doubledeepms__define_confident_free_energies(input_dt, report_outpath,
-  folding_energy_max_sd = 1/(1.96 * 2), binding_energy_max_sd = 1/(1.96
-  * 2))
+  highlight_colour = "red", folding_energy_max_sd = 1/(1.96 * 2),
+  binding_energy_max_sd = 1/(1.96 * 2))
 }
 \arguments{
 \item{input_dt}{data.table with model free energy estimates (required)}
 
 \item{report_outpath}{output path for scatterplots (required)}
+
+\item{highlight_colour}{colour for highlights (default:red)}
 
 \item{folding_energy_max_sd}{maximum folding energy standard deviation (default:1/(1.96*2))}
 

@@ -5,7 +5,8 @@
 \title{doubledeepms__plot_validation_scatter}
 \usage{
 doubledeepms__plot_validation_scatter(input_dt, lit_inpath, report_outpath,
-  RT = 0.001987 * (273 + 24), position_offset = 0)
+  highlight_colour = "red", RT = 0.001987 * (273 + 24),
+  position_offset = 0)
 }
 \arguments{
 \item{input_dt}{data.table with model free energy estimates (required)}
@@ -13,6 +14,8 @@ doubledeepms__plot_validation_scatter(input_dt, lit_inpath, report_outpath,
 \item{lit_inpath}{path to literature free energies (required)}
 
 \item{report_outpath}{output path for scatterplots (required)}
+
+\item{highlight_colour}{colour for highlights (default:red)}
 
 \item{RT}{constant (default:0.001987*(273+24))}
 

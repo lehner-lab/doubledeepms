@@ -4,12 +4,13 @@
 #' Evaluate thermo model results.
 #'
 #' @param mochi_outpath path to MoCHI thermo model fit results (required)
-#' @param outpath output path for plots and saved objects (required)
 #' @param temperature temperature in degrees celcuis (default:24)
 #' @param literature_free_energies path to literature free energies (default:NA)
 #' @param position_offset residue position offset (default:0)
 #' @param folding_energy_max_sd maximum folding energy standard deviation (default:1/(1.96*2))
 #' @param binding_energy_max_sd maximum binding energy standard deviation (default:1/(1.96*2))
+#' @param outpath output path for plots and saved objects (required)
+#' @param colour_scheme colour scheme file (required)
 #' @param execute whether or not to execute the analysis (default: TRUE)
 #'
 #' @return Nothing
@@ -17,12 +18,13 @@
 #' @import data.table
 doubledeepms_thermo_model_results <- function(
   mochi_outpath,
-  outpath,
   temperature = 24,
   literature_free_energies = NA,
   position_offset = 0,
   folding_energy_max_sd = 1/(1.96*2),
   binding_energy_max_sd = 1/(1.96*2),
+  outpath,
+  colour_scheme,
   execute = TRUE
   ){
 
@@ -44,6 +46,9 @@ doubledeepms_thermo_model_results <- function(
   #Load model data
   fitness_dt <- fread(file.path(mochi_outpath, "model_data.txt"))
 
+  #Load model parameters
+  modpar_dt <- fread(file.path(mochi_outpath, "model_parameters_0.txt"), header = F)
+
   #Load model results
   pred_dt <- doubledeepms__get_model_results(
     input_folder = mochi_outpath, 
@@ -51,25 +56,46 @@ doubledeepms_thermo_model_results <- function(
 
   #Call confident ddGs
   pred_dt_conf <- doubledeepms__define_confident_free_energies(
-    pred_dt, outpath, 
+    input_dt = pred_dt, 
+    report_outpath = outpath, 
+    highlight_colour = colour_scheme[["shade 0"]][[1]],
     folding_energy_max_sd = folding_energy_max_sd, 
     binding_energy_max_sd = binding_energy_max_sd)
 
   #Plot model performance
-  doubledeepms__plot_model_performance(pred_dt_conf, outpath)
+  doubledeepms__plot_model_performance(
+    input_dt = pred_dt_conf, 
+    report_outpath = outpath, 
+    highlight_colour = colour_scheme[["shade 0"]][[1]])
 
-  #Plot folding additive trait 
-  doubledeepms__plot_additive_trait_folding(pred_dt_conf, outpath)
+  #Plot 2D global epistasis (folding energy vs. folding fitness) 
+  doubledeepms__plot_additive_trait_folding(
+    mochi_outpath = mochi_outpath,
+    input_dt = pred_dt_conf, 
+    report_outpath = outpath,
+    colour_scheme = colour_scheme)
+
+  #Plot 3D global epistasis (folding+binding energies vs. binding fitness) 
+  doubledeepms__plot_additive_trait_binding(
+    mochi_outpath = mochi_outpath,
+    input_dt = pred_dt_conf, 
+    report_outpath = outpath,
+    colour_scheme = colour_scheme)
 
   #Plot correlation with validation data
   doubledeepms__plot_validation_scatter(
-    pred_dt_conf, 
-    literature_free_energies, 
-    outpath, 
+    input_dt = pred_dt_conf, 
+    lit_inpath = literature_free_energies, 
+    report_outpath = outpath, 
+    highlight_colour = colour_scheme[["shade 0"]][[1]],
     RT = RT, position_offset = position_offset)
 
   #Add id with reference amino acid position
   pred_dt_conf[, id_ref := doubledeepms__get_reference_id(pred_dt_conf[,.(id, mut_order)], position_offset)]
+
+  #Add residue position for singles
+  pred_dt_conf[mut_order==1, Pos := as.integer(substr(id, 2, nchar(id)-1))]
+  pred_dt_conf[mut_order==1, Pos_ref := as.integer(substr(id_ref, 2, nchar(id_ref)-1))]
 
   #Save dGs and ddGs
   write.table(pred_dt_conf, 
@@ -78,6 +104,8 @@ doubledeepms_thermo_model_results <- function(
   write.table(pred_dt_conf[mut_order<=1 & !duplicated(id),.SD,,.SDcols = c(
     "id", 
     "id_ref",
+    "Pos",
+    "Pos_ref",
     "mut_order", 
     "f_dg_pred", 
     "f_ddg_pred", 

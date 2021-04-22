@@ -5,6 +5,7 @@
 #'
 #' @param input_dt data.table with model free energy estimates (required)
 #' @param report_outpath output path for scatterplots (required)
+#' @param highlight_colour colour for highlights (default:red)
 #' @param folding_energy_max_sd maximum folding energy standard deviation (default:1/(1.96*2))
 #' @param binding_energy_max_sd maximum binding energy standard deviation (default:1/(1.96*2))
 #'
@@ -14,6 +15,7 @@
 doubledeepms__define_confident_free_energies <- function(
   input_dt,
   report_outpath,
+  highlight_colour = "red",
   folding_energy_max_sd = 1/(1.96*2),
   binding_energy_max_sd = 1/(1.96*2)
   ){
@@ -25,9 +27,9 @@ doubledeepms__define_confident_free_energies <- function(
   d <- ggplot2::ggplot(plot_dt,ggplot2::aes(log10(value))) +
     ggplot2::geom_density() +
     ggplot2::geom_vline(data = data.table(value = 1/(1.96*2), type = "Folding"), ggplot2::aes(xintercept = log10(value)), linetype = 2) +
-    ggplot2::geom_vline(data = data.table(value = folding_energy_max_sd, type = "Folding"), ggplot2::aes(xintercept = log10(value)), linetype = 2, color = "red") +
+    ggplot2::geom_vline(data = data.table(value = folding_energy_max_sd, type = "Folding"), ggplot2::aes(xintercept = log10(value)), linetype = 2, color = highlight_colour) +
     ggplot2::geom_vline(data = data.table(value = 1/(1.96*2), type = "Binding"), ggplot2::aes(xintercept = log10(value)), linetype = 2) +
-    ggplot2::geom_vline(data = data.table(value = binding_energy_max_sd, type = "Binding"), ggplot2::aes(xintercept = log10(value)), linetype = 2, color = "red") +
+    ggplot2::geom_vline(data = data.table(value = binding_energy_max_sd, type = "Binding"), ggplot2::aes(xintercept = log10(value)), linetype = 2, color = highlight_colour) +
     ggplot2::xlab(expression("log10 SD("*Delta*Delta*"G)")) +
     ggplot2::facet_grid(~type) + 
     ggplot2::theme_bw()
@@ -48,8 +50,8 @@ doubledeepms__define_confident_free_energies <- function(
   # plot_dt[dataset_binding==1, dataset := "Binding"]
   # d <- ggplot2::ggplot(plot_dt,ggplot2::aes(fitness_resid)) +
   #   ggplot2::geom_density() +
-  #   ggplot2::geom_vline(data = data.table(fitness_resid = c(f_resid_thresh_lower, f_resid_thresh_upper), dataset = "Folding"), ggplot2::aes(xintercept = fitness_resid), linetype = 2, color = "red") +
-  #   ggplot2::geom_vline(data = data.table(fitness_resid = c(b_resid_thresh_lower, b_resid_thresh_upper), dataset = "Binding"), ggplot2::aes(xintercept = fitness_resid), linetype = 2, color = "red") +
+  #   ggplot2::geom_vline(data = data.table(fitness_resid = c(f_resid_thresh_lower, f_resid_thresh_upper), dataset = "Folding"), ggplot2::aes(xintercept = fitness_resid), linetype = 2, color = highlight_colour) +
+  #   ggplot2::geom_vline(data = data.table(fitness_resid = c(b_resid_thresh_lower, b_resid_thresh_upper), dataset = "Binding"), ggplot2::aes(xintercept = fitness_resid), linetype = 2, color = highlight_colour) +
   #   ggplot2::xlab("Residual Fitness (Predicted - Observed)") +
   #   ggplot2::facet_grid(~dataset) + 
   #   ggplot2::theme_bw()

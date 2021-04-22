@@ -1,6 +1,6 @@
 Package: doubledeepms
 Title: Analysis scripts to reproduce the figures and results from doubleDeepPCA manuscript
-Version: 0.0.0.9000
+Version: 0.0.1.9000
 Authors@R: c(
 	person("Andre", "Faure", email = "ajfaure@gmail.com", role = c("aut", "cre")),
 	person("Julia", "Domingo", email = "julia.domingo.espinos@gmail.com", role = "aut"),
@@ -8,13 +8,17 @@ Authors@R: c(
 Description: "A comprehensive map of allosteric sites in a protein domain", Domingo, Faure and Schmiedel et al. 2021
 Depends: R (>= 3.6.1)
 Imports:
+	bio3d,
+	Cairo,
 	data.table,
 	ggplot2,
 	hexbin,
 	optparse,
 	parallel,
+	plot3D,
 	reshape2,
-	RColorBrewer
+	RColorBrewer,
+	stringr
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
