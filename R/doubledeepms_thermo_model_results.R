@@ -52,7 +52,8 @@ doubledeepms_thermo_model_results <- function(
   #Load model results
   pred_dt <- doubledeepms__get_model_results(
     input_folder = mochi_outpath, 
-    input_dt = fitness_dt, RT = RT)
+    input_dt = fitness_dt, 
+    RT = RT)
 
   #Call confident ddGs
   pred_dt_conf <- doubledeepms__define_confident_free_energies(
@@ -72,6 +73,7 @@ doubledeepms_thermo_model_results <- function(
   doubledeepms__plot_additive_trait_folding(
     mochi_outpath = mochi_outpath,
     input_dt = pred_dt_conf, 
+    RT = RT,
     report_outpath = outpath,
     colour_scheme = colour_scheme)
 
@@ -79,6 +81,15 @@ doubledeepms_thermo_model_results <- function(
   doubledeepms__plot_additive_trait_binding(
     mochi_outpath = mochi_outpath,
     input_dt = pred_dt_conf, 
+    RT = RT,
+    report_outpath = outpath,
+    colour_scheme = colour_scheme)
+
+  #Plot folding versus binding energy coloured by fraction bound showing isochores for arbitrary double mutant
+  doubledeepms__plot_isochore_fraction_bound(
+    mochi_outpath = mochi_outpath,
+    input_dt = pred_dt_conf, 
+    RT = RT,
     report_outpath = outpath,
     colour_scheme = colour_scheme)
 
@@ -88,7 +99,8 @@ doubledeepms_thermo_model_results <- function(
     lit_inpath = literature_free_energies, 
     report_outpath = outpath, 
     highlight_colour = colour_scheme[["shade 0"]][[1]],
-    RT = RT, position_offset = position_offset)
+    RT = RT, 
+    position_offset = position_offset)
 
   #Add id with reference amino acid position
   pred_dt_conf[, id_ref := doubledeepms__get_reference_id(pred_dt_conf[,.(id, mut_order)], position_offset)]

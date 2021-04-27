@@ -5,12 +5,14 @@
 \title{doubledeepms__plot_additive_trait_binding}
 \usage{
 doubledeepms__plot_additive_trait_binding(mochi_outpath, input_dt,
-  report_outpath, colour_scheme)
+  RT = 0.001987 * (273 + 24), report_outpath, colour_scheme)
 }
 \arguments{
 \item{mochi_outpath}{path to MoCHI thermo model fit results (required)}
 
 \item{input_dt}{data.table with model free energy estimates (required)}
+
+\item{RT}{constant (default:0.001987*(273+24))}
 
 \item{report_outpath}{output path for scatterplots (required)}
 

@@ -5,7 +5,7 @@
 \title{doubledeepms__predict_fitness}
 \usage{
 doubledeepms__predict_fitness(mochi_outpath, folding_energy,
-  binding_energy)
+  binding_energy, RT = 0.001987 * (273 + 24))
 }
 \arguments{
 \item{mochi_outpath}{path to MoCHI thermo model fit results (required)}
@@ -13,6 +13,8 @@ doubledeepms__predict_fitness(mochi_outpath, folding_energy,
 \item{folding_energy}{folding energies for 3-state model (required)}
 
 \item{binding_energy}{binding energies for 3-state model (required for binding fitness prediction)}
+
+\item{RT}{constant (default:0.001987*(273+24))}
 }
 \value{
 A list with folding and binding fitness predictions
