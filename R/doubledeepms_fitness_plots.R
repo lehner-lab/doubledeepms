@@ -72,7 +72,7 @@ doubledeepms_fitness_plots <- function(
   if(!is.null(colour_scheme)){
     d <- d + ggplot2::scale_fill_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3)]))
   }
-  ggplot2::ggsave(file.path(outpath, "fitness_densities.pdf"), d, width = 7, height = 5, useDingbats=FALSE)
+  ggplot2::ggsave(file.path(outpath, "fitness_densities.pdf"), d, width = 7, height = 3, useDingbats=FALSE)
 
   #Fitness scatter by protein and position class
   plot_dt_abundance <- fitness_dt[Nham_aa==1 & STOP==F & STOP_readthrough==F & pca_type=="Abundance",.(aa_seq, fitness_abundance = fitness, Pos_class, protein)]
@@ -95,6 +95,5 @@ doubledeepms_fitness_plots <- function(
     d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
   }
   ggplot2::ggsave(file.path(outpath, "fitness_scatter_singles_overlay.pdf"), d, width = 7, height = 3, useDingbats=FALSE)
-
 
 }

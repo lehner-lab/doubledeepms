@@ -35,38 +35,23 @@ doubledeepms__define_confident_free_energies <- function(
     ggplot2::theme_bw()
   ggplot2::ggsave(file.path(report_outpath, "ddG_sd_densities_singles.pdf"), d, width = 5, height = 3, useDingbats=FALSE)
 
-  # #Residual fitness distributions
-  # input_dt[, fitness_resid := predicted_fitness - observed_fitness]
-  # plot_dt <- copy(input_dt)
-  # #Outlier residuals thresholds
-  # f_resid_thresh_upper <- plot_dt[dataset_binding==0 & mut_order==1][!duplicated(id), quantile(fitness_resid, 0.75)+1.5*(quantile(fitness_resid, 0.75)-quantile(fitness_resid, 0.25))]
-  # f_resid_thresh_lower <- plot_dt[dataset_binding==0 & mut_order==1][!duplicated(id), quantile(fitness_resid, 0.25)-1.5*(quantile(fitness_resid, 0.75)-quantile(fitness_resid, 0.25))]
-  # b_resid_thresh_upper <- plot_dt[dataset_binding==1 & mut_order==1][!duplicated(id), quantile(fitness_resid, 0.75)+1.5*(quantile(fitness_resid, 0.75)-quantile(fitness_resid, 0.25))]
-  # b_resid_thresh_lower <- plot_dt[dataset_binding==1 & mut_order==1][!duplicated(id), quantile(fitness_resid, 0.25)-1.5*(quantile(fitness_resid, 0.75)-quantile(fitness_resid, 0.25))]
-
-  # plot_dt <- reshape2::melt(plot_dt[mut_order==1 & !is.na(dataset_binding),.(id, dataset_binding, fitness_resid)], id = c("id", "dataset_binding", "fitness_resid"))
-  # plot_dt <- plot_dt[!duplicated(plot_dt[,.(id, dataset_binding)])]
-  # plot_dt[, dataset := "Folding"]
-  # plot_dt[dataset_binding==1, dataset := "Binding"]
-  # d <- ggplot2::ggplot(plot_dt,ggplot2::aes(fitness_resid)) +
-  #   ggplot2::geom_density() +
-  #   ggplot2::geom_vline(data = data.table(fitness_resid = c(f_resid_thresh_lower, f_resid_thresh_upper), dataset = "Folding"), ggplot2::aes(xintercept = fitness_resid), linetype = 2, color = highlight_colour) +
-  #   ggplot2::geom_vline(data = data.table(fitness_resid = c(b_resid_thresh_lower, b_resid_thresh_upper), dataset = "Binding"), ggplot2::aes(xintercept = fitness_resid), linetype = 2, color = highlight_colour) +
-  #   ggplot2::xlab("Residual Fitness (Predicted - Observed)") +
-  #   ggplot2::facet_grid(~dataset) + 
-  #   ggplot2::theme_bw()
-  # ggplot2::ggsave(file.path(report_outpath, "fitness_resid_densities_singles.pdf"), d, width = 5, height = 3, useDingbats=FALSE)
-
   #Confident ddGs
-  # nf_ids <- input_dt[dataset_binding==0 & (fitness_resid>=f_resid_thresh_upper | fitness_resid<=f_resid_thresh_lower),unique(id)]
-  # nb_ids <- input_dt[dataset_binding==1 & (fitness_resid>=b_resid_thresh_upper | fitness_resid<=b_resid_thresh_lower),unique(id)]
-  # f_ids <- input_dt[f_ddg_pred_sd<folding_energy_max_sd & !id %in% nf_ids,unique(id)]
-  # b_ids <- input_dt[b_ddg_pred_sd<binding_energy_max_sd & !id %in% nb_ids,unique(id)]
   f_ids <- input_dt[f_ddg_pred_sd<folding_energy_max_sd,unique(id)]
   b_ids <- input_dt[b_ddg_pred_sd<binding_energy_max_sd,unique(id)]
   input_dt[, f_ddg_pred_conf := FALSE]
   input_dt[id %in% f_ids, f_ddg_pred_conf := TRUE]
   input_dt[, b_ddg_pred_conf := FALSE]
   input_dt[id %in% b_ids, b_ddg_pred_conf := TRUE]
+
+  # #Upper and lower limits on ddG
+  # b_ddg_pred_lower <- input_dt[b_ddg_pred_conf==T,quantile(b_ddg_pred, 0.025),]
+  # b_ddg_pred_upper <- input_dt[b_ddg_pred_conf==T,quantile(b_ddg_pred, 0.975),]
+  # f_ddg_pred_lower <- input_dt[f_ddg_pred_conf==T,quantile(f_ddg_pred, 0.025),]
+  # f_ddg_pred_upper <- input_dt[f_ddg_pred_conf==T,quantile(f_ddg_pred, 0.975),]
+  # input_dt[f_ddg_pred_conf==T & (f_ddg_pred > f_ddg_pred_upper | f_ddg_pred < f_ddg_pred_lower),.N,mut_order]
+  # input_dt[b_ddg_pred_conf==T & (b_ddg_pred > b_ddg_pred_upper | b_ddg_pred < b_ddg_pred_lower),.N,mut_order]
+  # input_dt[(f_ddg_pred > f_ddg_pred_upper | f_ddg_pred < f_ddg_pred_lower),f_ddg_pred_conf := F]
+  # input_dt[(b_ddg_pred > b_ddg_pred_upper | b_ddg_pred < b_ddg_pred_lower),b_ddg_pred_conf := F]
+
   return(input_dt)
 }

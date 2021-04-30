@@ -133,8 +133,65 @@ doubledeepms <- function(
   ### Plot free energy heatmaps
   ###########################
 
+  stagenum <- 4
+  #PSD95-PDZ3
+  doubledeepms_fitness_heatmaps(
+    input_file = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_PSD95-PDZ3"), "dg_singles.txt"),
+    input_file_fitness = file.path(base_dir, "Data", "fitness", "PSD95-PDZ3"),
+    domain_name = "PSD95 PDZ3",
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_fitness_heatmaps_PSD95-PDZ3", stagenum=stagenum, base_dir=base_dir),
+    colour_scheme = colour_scheme,
+    plot_width = 15,
+    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+  #GRB2-SH3
+  doubledeepms_fitness_heatmaps(
+    input_file = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_GRB2-SH3"), "dg_singles.txt"),
+    input_file_fitness = file.path(base_dir, "Data", "fitness", "GRB2-SH3"),
+    domain_name = "GRB2 SH3",
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_fitness_heatmaps_GRB2-SH3", stagenum=stagenum, base_dir=base_dir),
+    colour_scheme = colour_scheme,
+    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
 
+  ### Plot free energy scatterplots
+  ###########################
 
+  stagenum <- 5
+  #All domains
+  doubledeepms_free_energy_scatterplots(
+    input_list = list(
+      "GB1" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_GB1"), "dg_singles.txt"),
+      "PSD95-PDZ3" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_PSD95-PDZ3"), "dg_singles.txt"),
+      "GRB2-SH3" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_GRB2-SH3"), "dg_singles.txt")),
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_free_energy_scatterplots", stagenum=stagenum, base_dir=base_dir),
+    colour_scheme = colour_scheme,
+    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+
+  ### Plot free energy heatmaps
+  ###########################
+
+  stagenum <- 6
+  #GB1
+  doubledeepms_free_energy_heatmaps(
+    input_file = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_GB1"), "dg_singles.txt"),
+    domain_name = "GB1",
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_free_energy_heatmaps_GB1", stagenum=stagenum, base_dir=base_dir),
+    colour_scheme = colour_scheme,
+    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+  #PSD95-PDZ3
+  doubledeepms_free_energy_heatmaps(
+    input_file = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_PSD95-PDZ3"), "dg_singles.txt"),
+    domain_name = "PSD95 PDZ3",
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_free_energy_heatmaps_PSD95-PDZ3", stagenum=stagenum, base_dir=base_dir),
+    colour_scheme = colour_scheme,
+    plot_width = 15,
+    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+  #GRB2-SH3
+  doubledeepms_free_energy_heatmaps(
+    input_file = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_GRB2-SH3"), "dg_singles.txt"),
+    domain_name = "GRB2 SH3",
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_free_energy_heatmaps_GRB2-SH3", stagenum=stagenum, base_dir=base_dir),
+    colour_scheme = colour_scheme,
+    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
 }
 
 

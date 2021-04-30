@@ -50,8 +50,8 @@ doubledeepms_structure_metrics <- function(
   sasa_dt[, Pos_ref := Pos]
 
   #Merge with free energies
-  dg_dt <- merge(dg_dt, dist_dt[,.SD,,.SDcols = names(dist_dt)[names(dist_dt)!="Pos"]], by = "Pos_ref")
-  dg_dt <- merge(dg_dt, sasa_dt[,.SD,,.SDcols = names(sasa_dt)[names(sasa_dt)!="Pos"]], by = "Pos_ref")
+  dg_dt <- merge(dg_dt, dist_dt[,.SD,,.SDcols = names(dist_dt)[names(dist_dt)!="Pos"]], by = "Pos_ref", all.x = T)
+  dg_dt <- merge(dg_dt, sasa_dt[,.SD,,.SDcols = names(sasa_dt)[names(sasa_dt)!="Pos"]], by = "Pos_ref", all.x = T)
 
   #Define position class
   dg_dt[RSASA<0.5, Pos_class := "core"]

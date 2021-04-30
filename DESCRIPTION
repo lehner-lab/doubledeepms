@@ -9,6 +9,7 @@ Description: "A comprehensive map of allosteric sites in a protein domain", Domi
 Depends: R (>= 3.6.1)
 Imports:
 	bio3d,
+	Biostrings,
 	Cairo,
 	data.table,
 	ggplot2,
@@ -18,6 +19,7 @@ Imports:
 	plot3D,
 	reshape2,
 	RColorBrewer,
+	ROCR,
 	stringr
 License: MIT + file LICENSE
 Encoding: UTF-8
