@@ -20,7 +20,8 @@ Imports:
 	reshape2,
 	RColorBrewer,
 	ROCR,
-	stringr
+	stringr,
+	gridExtra
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

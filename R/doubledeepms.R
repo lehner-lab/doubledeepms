@@ -132,6 +132,17 @@ doubledeepms <- function(
   
   ### Replicates plots
   ###########################
+  doubledeepms__plot_fitness_replicates_cor(
+    fitness_list = list(
+      "PSD95-PDZ3" = file.path(base_dir, "Data", "fitness", "PSD95-PDZ3"),
+      "GRB2-SH3" = file.path(base_dir, "Data", "fitness", "GRB2-SH3")),
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_fitness_replications_validations", stagenum=stagenum, base_dir=base_dir),
+    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)),
+    scatter_examples_list = list(
+      "GRB2-SH3" = c("Abundance", "singles", "rep2", "rep1"),
+      "PSD95-PDZ3" = c("Binding", "doubles", "rep2", "rep3")
+    )
+  )
   
   stagenum <- 3
   #PSD95-PDZ3 and GRB2-SH3
