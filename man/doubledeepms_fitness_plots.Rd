@@ -4,13 +4,15 @@
 \alias{doubledeepms_fitness_plots}
 \title{doubledeepms_fitness_plots}
 \usage{
-doubledeepms_fitness_plots(fitness_list, structure_metrics_list, outpath,
-  colour_scheme, execute = TRUE)
+doubledeepms_fitness_plots(fitness_list, structure_metrics_list,
+  scatter_examples_list, outpath, colour_scheme, execute = TRUE)
 }
 \arguments{
 \item{fitness_list}{list of folder paths to fitness data (required)}
 
 \item{structure_metrics_list}{list of paths to structure metrics (required)}
+
+\item{scatter_examples_list}{list of two vectors containing as elements the protein, assay, replicate X and replicate Y, to plot the fitness comparison (required)}
 
 \item{outpath}{output path for plots and saved objects (required)}
 
@@ -22,5 +24,5 @@ doubledeepms_fitness_plots(fitness_list, structure_metrics_list, outpath,
 Nothing
 }
 \description{
-Evaluate thermo model results.
+Plot fitness distributions and scatterplots.
 }

@@ -1,10 +1,11 @@
 
 #' doubledeepms_fitness_plots
 #'
-#' Evaluate thermo model results.
+#' Plot fitness distributions and scatterplots.
 #'
 #' @param fitness_list list of folder paths to fitness data (required)
 #' @param structure_metrics_list list of paths to structure metrics (required)
+#' @param scatter_examples_list list of two vectors containing as elements the protein, assay, replicate X and replicate Y, to plot the fitness comparison (required)
 #' @param outpath output path for plots and saved objects (required)
 #' @param colour_scheme colour scheme file (required)
 #' @param execute whether or not to execute the analysis (default: TRUE)
@@ -15,6 +16,7 @@
 doubledeepms_fitness_plots <- function(
   fitness_list,
   structure_metrics_list,
+  scatter_examples_list,
   outpath,
   colour_scheme,
   execute = TRUE
@@ -52,6 +54,18 @@ doubledeepms_fitness_plots <- function(
   }
   fitness_dt <- rbindlist(unlist(fit_list, recursive = FALSE), fill = T)
 
+  ### Plot fitness replicate correlations
+  ###########################
+
+  doubledeepms__plot_fitness_replicates_cor(
+    input_dt = fitness_dt,
+    scatter_examples_list = scatter_examples_list,
+    outpath = outpath,
+    colour_scheme = colour_scheme)
+
+  ### Plot fitness distributions by protein and PCA type
+  ###########################
+
   #Fitness distributions by protein and PCA type
   plot_dt <- copy(fitness_dt)
   #Detrimental STOPs
@@ -73,6 +87,9 @@ doubledeepms_fitness_plots <- function(
     d <- d + ggplot2::scale_fill_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3)]))
   }
   ggplot2::ggsave(file.path(outpath, "fitness_densities.pdf"), d, width = 7, height = 3, useDingbats=FALSE)
+
+  ### Plot fitness scatter by protein and position class
+  ###########################
 
   #Fitness scatter by protein and position class
   plot_dt_abundance <- fitness_dt[Nham_aa==1 & STOP==F & STOP_readthrough==F & pca_type=="Abundance",.(aa_seq, fitness_abundance = fitness, Pos_class, protein)]
