@@ -66,7 +66,7 @@ doubledeepms_free_energy_scatterplots <- function(
   if(!is.null(colour_scheme)){
     d <- d + ggplot2::scale_fill_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3)]))
   }
-  ggplot2::ggsave(file.path(outpath, "ddG_densities_all.pdf"), d, width = 9, height = 2, useDingbats=FALSE)
+  ggplot2::ggsave(file.path(outpath, "ddG_densities_all.pdf"), d, width = 9, height = 3, useDingbats=FALSE)
 
   #Free energy distributions by protein - GRB2 and PSD95 - conf
   plot_dt <- reshape2::melt(copy(dg_dt)[protein != "GB1",.(protein, f_ddg_pred, b_ddg_pred, f_ddg_pred_conf, b_ddg_pred_conf)], id = c("protein", "f_ddg_pred_conf", "b_ddg_pred_conf"))
@@ -87,7 +87,7 @@ doubledeepms_free_energy_scatterplots <- function(
   if(!is.null(colour_scheme)){
     d <- d + ggplot2::scale_fill_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3)]))
   }
-  ggplot2::ggsave(file.path(outpath, "ddG_densities.pdf"), d, width = 7, height = 2, useDingbats=FALSE)
+  ggplot2::ggsave(file.path(outpath, "ddG_densities.pdf"), d, width = 6, height = 2, useDingbats=FALSE)
 
   ###########################
   ### Free energy scatterplots
@@ -137,7 +137,7 @@ doubledeepms_free_energy_scatterplots <- function(
   if(!is.null(colour_scheme)){
     d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
   }
-  ggplot2::ggsave(file.path(outpath, "ddG_scatter.pdf"), d, width = 7, height = 3, useDingbats=FALSE)
+  ggplot2::ggsave(file.path(outpath, "ddG_scatter.pdf"), d, width = 6, height = 3, useDingbats=FALSE)
 
 }
 

@@ -33,8 +33,11 @@ doubledeepms_thermo_model_results <- function(
     return()
   }
 
+  #Domain name
+  domain_name <- rev(unlist(strsplit(basename(outpath), "_")))[1]
+
   #Display status
-  message(paste("\n\n*******", "running stage: doubledeepms_thermo_model_results", "*******\n\n"))
+  message(paste("\n\n*******", paste("running stage: doubledeepms_thermo_model_results for", domain_name), "*******\n\n"))
 
   #Create output directory
   doubledeepms__create_dir(doubledeepms_dir = outpath)

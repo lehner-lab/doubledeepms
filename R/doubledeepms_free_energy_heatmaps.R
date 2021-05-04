@@ -30,7 +30,7 @@ doubledeepms_free_energy_heatmaps <- function(
   }
 
   #Display status
-  message(paste("\n\n*******", "running stage: doubledeepms_free_energy_heatmaps", "*******\n\n"))
+  message(paste("\n\n*******", paste("running stage: doubledeepms_free_energy_heatmaps for", domain_name), "*******\n\n"))
 
   #Create output directory
   doubledeepms__create_dir(doubledeepms_dir = outpath)

@@ -28,7 +28,7 @@ doubledeepms_structure_metrics <- function(
   }
 
   #Display status
-  message(paste("\n\n*******", "running stage: doubledeepms_structure_metrics", "*******\n\n"))
+  message(paste("\n\n*******", paste("running stage: doubledeepms_structure_metrics for", basename(pdb_file)), "*******\n\n"))
 
   #Create output directory
   doubledeepms__create_dir(doubledeepms_dir = outpath)
