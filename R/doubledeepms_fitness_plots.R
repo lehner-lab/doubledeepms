@@ -4,6 +4,7 @@
 #' Plot fitness distributions and scatterplots.
 #'
 #' @param fitness_list list of folder paths to fitness data (required)
+#' @param val_inpath  path to experimental fitness validations (required)
 #' @param structure_metrics_list list of paths to structure metrics (required)
 #' @param scatter_examples_list list of two vectors containing as elements the protein, assay, replicate X and replicate Y, to plot the fitness comparison (required)
 #' @param outpath output path for plots and saved objects (required)
@@ -15,6 +16,7 @@
 #' @import data.table
 doubledeepms_fitness_plots <- function(
   fitness_list,
+  val_inpath,
   structure_metrics_list,
   scatter_examples_list,
   outpath,
@@ -48,6 +50,8 @@ doubledeepms_fitness_plots <- function(
       wt_seq <- unlist(strsplit(all_variants[WT==T,aa_seq], ""))
       #Single mutant position class
       all_variants[Nham_aa==1, Pos := which(unlist(strsplit(aa_seq, "")) != wt_seq), aa_seq]
+      all_variants[Nham_aa==1, WT_AA := wt_seq[Pos], aa_seq]
+      all_variants[Nham_aa==1, Mut := substr(aa_seq, Pos, Pos), aa_seq]
       all_variants <- merge(all_variants, metrics_dt, by = "Pos", all = T)
       fit_list[[protein]][[pca_type]] <- all_variants
     }
@@ -62,6 +66,16 @@ doubledeepms_fitness_plots <- function(
     scatter_examples_list = scatter_examples_list,
     outpath = outpath,
     colour_scheme = colour_scheme)
+  
+  
+  ### Plot experimental growth validations vs. sequencing results
+  ###########################
+  doubledeepms__plot_growth_validations(
+    input_dt = fitness_dt, 
+    outpath = outpath,
+    val_inpath = val_inpath,
+    colour_scheme
+  )
 
   ### Plot fitness distributions by protein and PCA type
   ###########################

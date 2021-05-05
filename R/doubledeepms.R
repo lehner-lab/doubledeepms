@@ -129,6 +129,7 @@ doubledeepms <- function(
     scatter_examples_list = list(
       "GRB2-SH3" = c("Abundance", "singles", "rep2", "rep1"),
       "PSD95-PDZ3" = c("Binding", "doubles", "rep2", "rep3")),
+    val_inpath = file.path(base_dir, "Data", "experimental_validations", "GRB2-SH3", "experimenal_validations_ODs.txt"),
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_fitness_plots", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
     execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
