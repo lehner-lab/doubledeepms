@@ -4,17 +4,17 @@
 \alias{doubledeepms__plot_growth_validations}
 \title{doubledeepms__plot_fitness_replicates_cor}
 \usage{
-doubledeepms__plot_growth_validations(fitness_path, outpath, val_inpath,
-  execute = TRUE, message = NULL)
+doubledeepms__plot_growth_validations(input_dt, outpath, val_inpath,
+  colour_scheme)
 }
 \arguments{
-\item{fitness_path}{list of folder paths to fitness data (required)}
+\item{input_dt}{processed data table with DiMSum fitness scores (required)}
 
 \item{outpath}{output path for plots and saved objects (required)}
 
 \item{val_inpath}{path to experimental fitness validations (required)}
 
-\item{execute}{whether or not the system command will be executed (required)}
+\item{colour_scheme}{colour scheme file (required)}
 }
 \value{
 Nothing

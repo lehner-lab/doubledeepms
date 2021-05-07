@@ -60,14 +60,22 @@ doubledeepms_fitness_heatmaps <- function(
   ### Folding heatmap
   ###########################
 
+  #Heatmap data
+  heatmap_dt <- fitness_dt[pca_type=="Abundance" & Nham_aa==1,.(fitness = -fitness, fitness_conf = T, Pos_ref, scHAmin_ligand, WT_AA, Mut, Pos_class)]
+  #Add dummy mutation to ensure all positions included
+  dummy_dt <- fitness_dt[Nham_aa==1 & !is.na(Pos_ref)][!duplicated(Pos_ref) & Nham_aa==1,.(fitness = -fitness, fitness_conf = T, Pos_ref, scHAmin_ligand, WT_AA, Mut, Pos_class)]
+  dummy_dt[, Mut := WT_AA]
+  dummy_dt[, fitness := NA]  
+  heatmap_dt <- rbind(heatmap_dt, dummy_dt)
+
   doubledeepms__plot_heatmap(
-    input_dt = fitness_dt[pca_type=="Abundance" & Nham_aa==1,.(fitness = -fitness, fitness_conf = T, Pos_ref, scHAmin_ligand, WT_AA, Mut, Pos_class)],
+    input_dt = heatmap_dt,
     variable_name = "fitness",
     output_file = file.path(outpath, "abundance_heatmap.pdf"),
     width = plot_width,
     height = plot_height,
     plot_title = paste0(domain_name, " amino acid position"),
-    colour_clip = 2.5,
+    colour_clip = 1.5,
     colour_low = colour_scheme[["shade 0"]][[3]],
     colour_high = colour_scheme[["shade 0"]][[1]])
 
@@ -75,14 +83,22 @@ doubledeepms_fitness_heatmaps <- function(
   ### Binding heatmap
   ###########################
 
+  #Heatmap data
+  heatmap_dt <- fitness_dt[pca_type=="Binding" & Nham_aa==1,.(fitness = -fitness, fitness_conf = T, Pos_ref, scHAmin_ligand, WT_AA, Mut, Pos_class)]
+  #Add dummy mutation to ensure all positions included
+  dummy_dt <- fitness_dt[Nham_aa==1 & !is.na(Pos_ref)][!duplicated(Pos_ref) & Nham_aa==1,.(fitness = -fitness, fitness_conf = T, Pos_ref, scHAmin_ligand, WT_AA, Mut, Pos_class)]
+  dummy_dt[, Mut := WT_AA]
+  dummy_dt[, fitness := NA]  
+  heatmap_dt <- rbind(heatmap_dt, dummy_dt)
+
   doubledeepms__plot_heatmap(
-    input_dt = fitness_dt[pca_type=="Binding" & Nham_aa==1,.(fitness = -fitness, fitness_conf = T, Pos_ref, scHAmin_ligand, WT_AA, Mut, Pos_class)],
+    input_dt = heatmap_dt,
     variable_name = "fitness",
     output_file = file.path(outpath, "binding_heatmap.pdf"),
     width = plot_width,
     height = plot_height,
     plot_title = paste0(domain_name, " amino acid position"),
-    colour_clip = 2.5,
+    colour_clip = 1.5,
     colour_low = colour_scheme[["shade 0"]][[3]],
     colour_high = colour_scheme[["shade 0"]][[1]])
 
@@ -150,11 +166,11 @@ doubledeepms_fitness_heatmaps <- function(
   plot_dt[fitness_decrease==T, binding_phenotype := "Decrease"]
   plot_dt[, binding_phenotype := factor(binding_phenotype, levels = c("Increase", "Decrease"))]
   plot_cols = c(
-    colour_scheme[["shade 3"]][[3]],
+    colour_scheme[["shade 3"]][[1]],
+    colour_scheme[["shade 0"]][[1]],
+    colour_scheme[["shade 1"]][[3]],
     colour_scheme[["shade 0"]][[3]],
-    colour_scheme[["shade 0"]][[4]],
-    colour_scheme[["shade 0"]][[2]],
-    colour_scheme[["shade 3"]][[2]],
+    colour_scheme[["shade 3"]][[3]],
      "grey")
   names(plot_cols) <- c("Binding only", "Binding antagonistic", "Binding + Folding\nsynergistic", "Folding antagonistic", "Folding only", "Remainder")
   d <- ggplot2::ggplot(plot_dt,ggplot2::aes(y = binding_phenotype, percentage, fill = as.factor(ddg_class))) +

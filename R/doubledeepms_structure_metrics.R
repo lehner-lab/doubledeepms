@@ -6,6 +6,7 @@
 #' @param input_file path to MoCHI thermo model fit results (required)
 #' @param outpath output path for plots and saved objects (required)
 #' @param pdb_file path to PDB file (required)
+#' @param pdb_RSASA_file path to PDB file with RSASA (required)
 #' @param pdb_chain_query query chain id (default:A)
 #' @param pdb_chain_target target chain id (default:B)
 #' @param execute whether or not to execute the analysis (default: TRUE)
@@ -17,6 +18,7 @@ doubledeepms_structure_metrics <- function(
   input_file,
   outpath,
   pdb_file,
+  pdb_RSASA_file,
   pdb_chain_query = "A",
   pdb_chain_target = "B",
   execute = TRUE
@@ -45,13 +47,20 @@ doubledeepms_structure_metrics <- function(
 
   #Get relative SASA
   sasa_dt <- doubledeepms__relative_SASA_from_PDB(
-    input_file = pdb_file,
+    input_file = pdb_RSASA_file,
     chain = pdb_chain_query)
   sasa_dt[, Pos_ref := Pos]
+
+  #Get secondary structure
+  ss_dt <- doubledeepms__secondary_structure_from_PDB(
+    input_file = pdb_file,
+    chain = pdb_chain_query)
+  ss_dt[, Pos_ref := Pos]
 
   #Merge with free energies
   dg_dt <- merge(dg_dt, dist_dt[,.SD,,.SDcols = names(dist_dt)[names(dist_dt)!="Pos"]], by = "Pos_ref", all.x = T)
   dg_dt <- merge(dg_dt, sasa_dt[,.SD,,.SDcols = names(sasa_dt)[names(sasa_dt)!="Pos"]], by = "Pos_ref", all.x = T)
+  dg_dt <- merge(dg_dt, ss_dt[,.SD,,.SDcols = names(ss_dt)[names(ss_dt)!="Pos"]], by = "Pos_ref", all.x = T)
 
   #Define position class
   dg_dt[RSASA<0.5, Pos_class := "core"]

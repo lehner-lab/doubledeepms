@@ -46,7 +46,7 @@ doubledeepms__plot_growth_validations <- function(
     ggplot2::theme_classic() +
     ggplot2::theme(legend.position = "bottom", legend.direction = "vertical") +
     ggplot2::scale_color_manual("PCA assay",values = c("#9061A7", "#F7941E")) +
-    ggrepel::geom_text_repel(ggplot2::aes(label = genotype, color=pca_type), show.legend = F) +
+    ggrepel::geom_text_repel(ggplot2::aes(label = genotype, color=pca_type), show.legend = F, max.overlaps = 20) +
     ggplot2::geom_text(data = plot_dt[,.(label = paste(" r = ", round(cor(growth_rate_slope, fitness, use = "pairwise.complete"), 2), sep=""))], 
                        ggplot2::aes(label=label, x=-Inf, y=Inf, hjust = 0, vjust = 1)) +
     ggplot2::labs(x="growth rate (individual measurements)",

@@ -223,6 +223,7 @@ doubledeepms_free_energy_heatmaps <- function(
   auc_dt[, TPR := seq(0, 1, 1/(.N+1))[2:(.N+1)]]
   d <- ggplot2::ggplot(plot_dt,ggplot2::aes(FPR, TPR, color = measure_plot)) +
     ggplot2::geom_line() +
+    ggplot2::geom_abline(linetype = 2) +
     ggplot2::xlab("FPR") +
     ggplot2::ylab("TPR") +
     ggplot2::geom_text(data = auc_dt, ggplot2::aes(label=paste("AUC = ", auc, sep=""))) +

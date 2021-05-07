@@ -4,11 +4,14 @@
 \alias{doubledeepms_fitness_plots}
 \title{doubledeepms_fitness_plots}
 \usage{
-doubledeepms_fitness_plots(fitness_list, structure_metrics_list,
-  scatter_examples_list, outpath, colour_scheme, execute = TRUE)
+doubledeepms_fitness_plots(fitness_list, val_inpath,
+  structure_metrics_list, scatter_examples_list, outpath, colour_scheme,
+  execute = TRUE)
 }
 \arguments{
 \item{fitness_list}{list of folder paths to fitness data (required)}
+
+\item{val_inpath}{path to experimental fitness validations (required)}
 
 \item{structure_metrics_list}{list of paths to structure metrics (required)}
 
