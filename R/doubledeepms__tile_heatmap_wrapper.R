@@ -134,7 +134,10 @@ doubledeepms__tile_heatmap_wrapper <- function(
         ggplot2::element_blank())[[as.numeric(omit_xticks)+1]],
       axis.ticks.y=list(
         ggplot2::element_line(), 
-        ggplot2::element_blank())[[as.numeric(omit_yticks)+1]]) + 
+        ggplot2::element_blank())[[as.numeric(omit_yticks)+1]],
+      panel.grid.major = ggplot2::element_blank(), 
+      panel.grid.minor = ggplot2::element_blank(),
+      panel.background = ggplot2::element_blank()) + 
     # ggplot2::theme_classic() + 
     ggplot2::xlab(xlab) + 
     ggplot2::ylab(ylab) + 

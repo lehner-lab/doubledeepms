@@ -134,7 +134,7 @@ doubledeepms <- function(
     colour_scheme = colour_scheme,
     execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
   
-  ### Plot free energy heatmaps
+  ### Plot free fitness heatmaps
   ###########################
 
   stagenum <- 4
@@ -145,7 +145,8 @@ doubledeepms <- function(
     domain_name = "PSD95 PDZ3",
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_fitness_heatmaps_PSD95-PDZ3", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    plot_width = 12,
+    plot_width = 10,
+    plot_height = 2.5,
     execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
   #GRB2-SH3
   doubledeepms_fitness_heatmaps(
@@ -154,7 +155,8 @@ doubledeepms <- function(
     domain_name = "GRB2 SH3",
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_fitness_heatmaps_GRB2-SH3", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    plot_width = 12,
+    plot_width = 7.5,
+    plot_height = 2.5,
     execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
 
   ### Plot free energy scatterplots

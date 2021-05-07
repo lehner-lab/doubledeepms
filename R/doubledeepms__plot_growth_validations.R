@@ -36,22 +36,27 @@ doubledeepms__plot_growth_validations <- function(
   }))
 
   gr_mean <- as.data.table(aggregate(growth_rate_slope ~ genotype+pca_type, data=gr[, c("growth_rate_slope", "genotype", "pca_type")], FUN = mean))
-  # gr_mean[pca_type == "Abundance", growth_rate_slope_rel2wt := growth_rate_slope-gr_mean[pca_type == "Abundance" & genotype == "GRB2", growth_rate_slope]]
-  # gr_mean[pca_type == "Binding", growth_rate_slope_rel2wt := growth_rate_slope-gr_mean[pca_type == "Abundance" & genotype == "GRB2", growth_rate_slope]]
+  gr_mean[pca_type == "Abundance", growth_rate_slope_rel2wt := growth_rate_slope-gr_mean[pca_type == "Abundance" & genotype == "GRB2", growth_rate_slope]]
+  gr_mean[pca_type == "Binding", growth_rate_slope_rel2wt := growth_rate_slope-gr_mean[pca_type == "Binding" & genotype == "GRB2", growth_rate_slope]]
   
   plot_dt <- merge(gr_mean, singles_dt[, .(id, fitness, pca_type)], by.x = c("genotype", "pca_type"), by.y=c("id", "pca_type"), all=F)
+  plot_dt[pca_type == "Abundance", fitness_rel2wt := fitness-plot_dt[pca_type == "Abundance" & genotype == "GRB2", fitness]]
+  plot_dt[pca_type == "Binding", fitness_rel2wt := fitness-plot_dt[pca_type == "Binding" & genotype == "GRB2", fitness]]
   
-  p <- ggplot2::ggplot(plot_dt, ggplot2::aes(x=growth_rate_slope, y=fitness)) +
+  
+  
+  p <- ggplot2::ggplot(plot_dt, ggplot2::aes(x=growth_rate_slope_rel2wt, y=fitness)) +
     ggplot2::geom_point(size=2, ggplot2::aes(color=pca_type)) +
     ggplot2::theme_classic() +
-    ggplot2::theme(legend.position = "bottom", legend.direction = "vertical") +
+    ggplot2::theme(legend.position = "bottom", legend.direction = "vertical", plot.margin = ggplot2::unit(c(30, 30, 30, 30), "points")) +
+    ggplot2::coord_cartesian(clip = "off") +
     ggplot2::scale_color_manual("PCA assay",values = c("#9061A7", "#F7941E")) +
-    ggrepel::geom_text_repel(ggplot2::aes(label = genotype, color=pca_type), show.legend = F) +
-    ggplot2::geom_text(data = plot_dt[,.(label = paste(" r = ", round(cor(growth_rate_slope, fitness, use = "pairwise.complete"), 2), sep=""))], 
+    ggrepel::geom_text_repel(ggplot2::aes(label = genotype, color=pca_type), show.legend = F, 
+                             max.overlaps = Inf, xlim = c(-10, 10), ylim = c(-10, 10)) +
+    ggplot2::geom_text(data = plot_dt[,.(label = paste(" r = ", round(cor(growth_rate_slope_rel2wt, fitness, use = "pairwise.complete", method = "pearson"), 2), sep=""))], 
                        ggplot2::aes(label=label, x=-Inf, y=Inf, hjust = 0, vjust = 1)) +
     ggplot2::labs(x="growth rate (individual measurements)",
                   y="fitness (deep sequencing)")
-    
     
   ggplot2::ggsave(file.path(outpath, "fitness_growth_validations_scatter.pdf"), width = 3.2, height = 4)
 }
