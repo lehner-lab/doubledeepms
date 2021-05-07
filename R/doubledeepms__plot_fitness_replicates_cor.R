@@ -75,13 +75,17 @@ doubledeepms__plot_fitness_replicates_cor <- function(
   
   p2 <- do.call(gridExtra::grid.arrange, c(lapply(1:length(scatter_examples_list), function(x){
     reps_vector <- c(paste0(gsub("rep", "fitness", scatter_examples_list[[x]][3]), "_uncorr"), paste0(gsub("rep", "fitness", scatter_examples_list[[x]][4]), "_uncorr"))
-    plot_dt <- setnames(fitness_dt[protein == names(scatter_examples_list)[x] & pca_type == scatter_examples_list[[x]][1], ..reps_vector], c("x","y"))
+        if (scatter_examples_list[[x]][2] == "singles") {
+      plot_dt <- setnames(fitness_dt[protein == names(scatter_examples_list)[x] & pca_type == scatter_examples_list[[x]][1] & Nham_aa == 1, ..reps_vector], c("x","y"))
+    } else {
+      plot_dt <- setnames(fitness_dt[protein == names(scatter_examples_list)[x] & pca_type == scatter_examples_list[[x]][1] & Nham_aa == 2, ..reps_vector], c("x","y"))
+    }
     ggplot2::ggplot(plot_dt[!is.na(x) & !is.na(y)], ggplot2::aes(x=x, y=y)) +
-      ggplot2::stat_binhex(bins = 50, size = 0.2, color = "grey") +
+      ggplot2::stat_binhex(bins = 40, size = 0.1, color = "grey") +
       ggplot2::scale_fill_gradientn(colours = c("white", "black"), trans = "log10") +
       ggplot2::xlab(scatter_examples_list[[x]][3]) +
       ggplot2::ylab(scatter_examples_list[[x]][4]) +
-      ggplot2::geom_abline(color = "black", linetype = 2, size = 1) +
+      ggplot2::geom_abline(color = "black", linetype = 2, size = 0.5) +
       ggplot2::geom_text(data = plot_dt[!is.na(x) & !is.na(y),.(label = paste(" r = ", round(cor(x, y, use = "pairwise.complete"), 2), sep=""))], ggplot2::aes(label=label, x=-Inf, y=Inf, hjust = 0, vjust = 1)) +
       ggplot2::theme_classic() +
       ggplot2::labs(title = paste0(names(scatter_examples_list)[x], "\n", scatter_examples_list[[x]][1], ", ", scatter_examples_list[[x]][2]), color=col_rect[[x]]) +

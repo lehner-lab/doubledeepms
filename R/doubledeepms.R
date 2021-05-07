@@ -137,7 +137,7 @@ doubledeepms <- function(
     colour_scheme = colour_scheme,
     execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
   
-  ### Plot free energy heatmaps
+  ### Plot free fitness heatmaps
   ###########################
 
   stagenum <- 4

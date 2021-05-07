@@ -21,7 +21,8 @@ Imports:
 	RColorBrewer,
 	ROCR,
 	stringr,
-	gridExtra
+	gridExtra,
+	ggrepel
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
