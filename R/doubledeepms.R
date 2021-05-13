@@ -98,7 +98,6 @@ doubledeepms <- function(
     input_file = file.path(base_dir, paste0("001", "_doubledeepms_thermo_model_results_GB1"), "dg_singles.txt"),
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_structure_metrics_GB1", stagenum=stagenum, base_dir=base_dir),
     pdb_file = file.path(base_dir, "Data", "pdb", "1fcc.pdb"),
-    pdb_RSASA_file = file.path(base_dir, "Data", "pdb", "1fcc_RSASA.pdb"),
     pdb_chain_query = "C",
     pdb_chain_target = "A",
     execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
@@ -107,14 +106,12 @@ doubledeepms <- function(
     input_file = file.path(base_dir, paste0("001", "_doubledeepms_thermo_model_results_PSD95-PDZ3"), "dg_singles.txt"),
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_structure_metrics_PSD95-PDZ3", stagenum=stagenum, base_dir=base_dir),
     pdb_file = file.path(base_dir, "Data", "pdb", "1be9.pdb"),
-    pdb_RSASA_file = file.path(base_dir, "Data", "pdb", "1be9_RSASA.pdb"),
     execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
   #GRB2-SH3
   doubledeepms_structure_metrics(
     input_file = file.path(base_dir, paste0("001", "_doubledeepms_thermo_model_results_GRB2-SH3"), "dg_singles.txt"),
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_structure_metrics_GRB2-SH3", stagenum=stagenum, base_dir=base_dir),
     pdb_file = file.path(base_dir, "Data", "pdb", "2vwf.pdb"),
-    pdb_RSASA_file = file.path(base_dir, "Data", "pdb", "2vwf_RSASA.pdb"),
     execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
 
   ### Fitness plots

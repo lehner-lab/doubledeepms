@@ -5,8 +5,7 @@
 \title{doubledeepms_structure_metrics}
 \usage{
 doubledeepms_structure_metrics(input_file, outpath, pdb_file,
-  pdb_RSASA_file, pdb_chain_query = "A", pdb_chain_target = "B",
-  execute = TRUE)
+  pdb_chain_query = "A", pdb_chain_target = "B", execute = TRUE)
 }
 \arguments{
 \item{input_file}{path to MoCHI thermo model fit results (required)}
@@ -14,8 +13,6 @@ doubledeepms_structure_metrics(input_file, outpath, pdb_file,
 \item{outpath}{output path for plots and saved objects (required)}
 
 \item{pdb_file}{path to PDB file (required)}
-
-\item{pdb_RSASA_file}{path to PDB file with RSASA (required)}
 
 \item{pdb_chain_query}{query chain id (default:A)}
 

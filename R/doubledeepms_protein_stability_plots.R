@@ -57,10 +57,32 @@ doubledeepms_protein_stability_plots <- function(
   dg_dt[, Mut := substr(id, nchar(id), nchar(id))]
 
   ###########################
+  ### Save mean folding ddG to file
+  ###########################
+
+  for(i in names(pdb_file_list)){
+    #load PDB structure
+    sink(file = "/dev/null")
+    pdb <- bio3d::read.pdb(pdb_file_list[[i]], rm.alt = TRUE)
+    sink()
+
+    #Replace B factor with mean folding ddG 
+    pdb_atom_dt <- as.data.table(pdb$atom)
+    f_ddg_pred_med_dt <- dg_dt[protein==i & f_ddg_pred_conf==T & id!="-0-",.(b_new = mean(f_ddg_pred), resno = Pos_ref),Pos_ref][,.(resno, b_new)]
+    old_colnames <- names(pdb_atom_dt)
+    pdb_atom_dt <- merge(pdb_atom_dt, f_ddg_pred_med_dt, by = "resno", all.x = T)
+    pdb_atom_dt[, b := b_new]
+    pdb_atom_dt[is.na(b) | chain!=pdb_chain_query_list[[i]], b := 0]
+    pdb$atom <- as.data.frame(pdb_atom_dt[order(eleno),.SD,,.SDcols = old_colnames])
+
+    bio3d::write.pdb(pdb, file = file.path(outpath, gsub(".pdb", "_f_ddg_pred_mean.pdb", basename(pdb_file_list[[i]]))))
+  }
+
+  ###########################
   ### Position class violin plots
   ###########################
 
-  plot_dt <- dg_dt[f_ddg_pred_conf==T & id!="-0-",.(protein, f_ddg_pred, Pos_class)]
+  plot_dt <- dg_dt[f_ddg_pred_conf==T & id!="-0-",.(protein, f_ddg_pred, Pos_class, RSASA, scHAmin_ligand, Pos_ref)]
   plot_dt[, Pos_class_plot := stringr::str_to_title(Pos_class)]
   plot_dt[Pos_class=="binding_interface", Pos_class_plot := "Binding\ninterface"]
   d <- ggplot2::ggplot(plot_dt,ggplot2::aes(Pos_class_plot, f_ddg_pred, fill = Pos_class_plot)) +
@@ -76,7 +98,7 @@ doubledeepms_protein_stability_plots <- function(
   }
   suppressWarnings(ggplot2::ggsave(file.path(outpath, "position_violins_all.pdf"), d, width = 7, height = 3, useDingbats=FALSE))
 
-  plot_dt <- dg_dt[f_ddg_pred_conf==T & id!="-0-" & protein!="GB1",.(protein, f_ddg_pred, Pos_class)]
+  plot_dt <- dg_dt[f_ddg_pred_conf==T & id!="-0-" & protein!="GB1",.(protein, f_ddg_pred, Pos_class, RSASA, scHAmin_ligand)]
   plot_dt[, Pos_class_plot := stringr::str_to_title(Pos_class)]
   plot_dt[Pos_class=="binding_interface", Pos_class_plot := "Binding\ninterface"]
   d <- ggplot2::ggplot(plot_dt,ggplot2::aes(Pos_class_plot, f_ddg_pred, fill = Pos_class_plot)) +
@@ -86,9 +108,6 @@ doubledeepms_protein_stability_plots <- function(
     ggplot2::facet_grid(~protein, scales = "free") + 
     ggplot2::theme_bw() +
     ggplot2::coord_cartesian(ylim = c(-1.5, 4)) +
-    # ggplot2::theme(
-    #   axis.text.x = ggplot2::element_blank(),
-    #   axis.ticks.x = ggplot2::element_blank()) +
     ggplot2::labs(fill = "Residue\nposition")
   if(!is.null(colour_scheme)){
     d <- d + ggplot2::scale_fill_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
@@ -96,97 +115,114 @@ doubledeepms_protein_stability_plots <- function(
   suppressWarnings(ggplot2::ggsave(file.path(outpath, "position_violins.pdf"), d, width = 5, height = 3, useDingbats=FALSE))
 
   ###########################
-  ### Save median folding ddG to file
+  ### Correlation of median folding ddG with RSASA
   ###########################
 
+  #Mean folding ddG per residue
+  dg_dt[f_ddg_pred_conf==T & id!="-0-", f_ddg_pred_mean := mean(f_ddg_pred),.(Pos_ref, protein)]
+
+  #Plot correlation with RSASA
+  plot_dt <- dg_dt[f_ddg_pred_conf==T & id!="-0-"][!duplicated(paste(Pos_ref, protein, sep = ":"))]
+  d <- ggplot2::ggplot(plot_dt,ggplot2::aes(RSASA, f_ddg_pred_mean)) +
+    ggplot2::geom_point() +
+    ggplot2::geom_smooth(method = "lm", formula = 'y~x', color = colour_scheme[["shade 0"]][c(1)], se = F) +
+    ggplot2::xlab("Relative solvent accessible surface area (SASA)") +
+    ggplot2::ylab(expression("Mean "*Delta*Delta*"G of Folding")) +
+    ggplot2::geom_text(data = plot_dt[,.(label = paste("Pearson's r = ", round(cor(RSASA, f_ddg_pred_mean, use = "pairwise.complete"), 2), sep="")),.(protein)], ggplot2::aes(label=label, x=Inf, y=Inf, hjust = 1, vjust = 1)) +
+    ggplot2::facet_grid(~protein, scales = "free") + 
+    ggplot2::theme_bw()
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_color_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
+  }
+  ggplot2::ggsave(file.path(outpath, "mean_ddg_pred_RSASA_scatter_all.pdf"), d, width = 7, height = 3, useDingbats=FALSE)
+
+  #Plot correlation with RSASA
+  plot_dt <- dg_dt[f_ddg_pred_conf==T & id!="-0-" & protein!="GB1"][!duplicated(paste(Pos_ref, protein, sep = ":"))]
+  d <- ggplot2::ggplot(plot_dt,ggplot2::aes(RSASA, f_ddg_pred_mean)) +
+    ggplot2::geom_point() +
+    ggplot2::geom_smooth(method = "lm", formula = 'y~x', color = colour_scheme[["shade 0"]][c(1)], se = F) +
+    ggplot2::xlab("Relative solvent accessible surface area (SASA)") +
+    ggplot2::ylab(expression("Mean "*Delta*Delta*"G of Folding")) +
+    ggplot2::geom_text(data = plot_dt[,.(label = paste("Pearson's r = ", round(cor(RSASA, f_ddg_pred_mean, use = "pairwise.complete"), 2), sep="")),.(protein)], ggplot2::aes(label=label, x=Inf, y=Inf, hjust = 1, vjust = 1)) +
+    ggplot2::facet_grid(~protein, scales = "free") + 
+    ggplot2::theme_bw()
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_color_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
+  }
+  ggplot2::ggsave(file.path(outpath, "mean_ddg_pred_RSASA_scatter.pdf"), d, width = 4, height = 3, useDingbats=FALSE)
+
+  ###########################
+  ### Stabilising mutations
+  ###########################
+
+  #Mean folding ddG per residue
+  dg_dt[f_ddg_pred_conf==T & id!="-0-", f_ddg_pred_fdr := p.adjust(doubledeepms__pvalue(f_ddg_pred, f_ddg_pred_sd), method = "BH"),.(protein)]
+
+  #Stabilising mutations
+  dg_dt[, f_ddg_pred_stab := 0]
+  dg_dt[f_ddg_pred<0 & f_ddg_pred_fdr<0.05, f_ddg_pred_stab := 1]
+
+  #Stabilising residues (at least 3 or at least 5)
+  dg_dt[, f_ddg_pred_stab_res3 := F]
+  dg_dt[, f_ddg_pred_stab_res5 := F]
   for(i in names(pdb_file_list)){
-    #load PDB structure
-    sink(file = "/dev/null")
-    pdb <- bio3d::read.pdb(pdb_file_list[[i]], rm.alt = TRUE)
-    sink()
-
-    #Replace B factor with median folding ddG 
-    pdb_atom_dt <- as.data.table(pdb$atom)
-    f_ddg_pred_med_dt <- dg_dt[protein==i & f_ddg_pred_conf==T & id!="-0-",.(b_new = median(f_ddg_pred), resno = Pos_ref),Pos_ref][,.(resno, b_new)]
-    old_colnames <- names(pdb_atom_dt)
-    pdb_atom_dt <- merge(pdb_atom_dt, f_ddg_pred_med_dt, by = "resno", all.x = T)
-    pdb_atom_dt[, b := b_new]
-    pdb_atom_dt[is.na(b) | chain!=pdb_chain_query_list[[i]], b := 0]
-    pdb$atom <- as.data.frame(pdb_atom_dt[order(eleno),.SD,,.SDcols = old_colnames])
-
-    bio3d::write.pdb(pdb, file = file.path(outpath, gsub(".pdb", "_f_ddg_pred_median.pdb", basename(pdb_file_list[[i]]))))
+    temp <- dg_dt[protein==i & f_ddg_pred_stab==1,table(Pos_ref)]
+    stab_res <- as.integer(names(temp)[temp>=3])
+    if(length(stab_res)==0){stab_res <- as.integer(names(temp))}
+    dg_dt[protein==i & Pos_ref %in% stab_res, f_ddg_pred_stab_res3 := T]
+    stab_res <- as.integer(names(temp)[temp>=5])
+    if(length(stab_res)==0){stab_res <- as.integer(names(temp))}
+    dg_dt[protein==i & Pos_ref %in% stab_res, f_ddg_pred_stab_res5 := T]
   }
 
-  ### AA properties PCA
+  ###########################
+  ### Position of de-stabilising residues
   ###########################
 
-  #AA properties PCA
-  exp_pca_list <- doubledeepms__aa_properties_pca(
-    aa_properties_file = aaprop_file, 
-    selected_identifiers = unlist(fread(aaprop_file_selected, header = F)),
-    return_evidences = T)
-  exp_pca <- exp_pca_list[["PCA"]]
-  aa_evidences <- exp_pca_list[["evidences"]]
-
-  #% variance explained by top 5 PCs
-  top5pc_var <- sum((exp_pca$sdev^2/sum(exp_pca$sdev^2))[1:5])
-
-  #Screeplot
-  plot_df <- data.frame(perc_var = exp_pca$sdev^2/sum(exp_pca$sdev^2)*100, pc = 1:20)
-  plot_df[,"pc"] <- factor(plot_df[,"pc"], levels = 1:20)
-  d <- ggplot2::ggplot(plot_df, ggplot2::aes(pc, perc_var)) +
-    ggplot2::geom_bar(stat = "identity") +
-    ggplot2::geom_vline(xintercept = 5.5, linetype = 2) +
-    ggplot2::theme_bw() +
-    ggplot2::annotate("text", x = 10, y = 30, label = paste0("Var. explained by PC1-5 = ", round(top5pc_var*100, 0), "%"))
-  ggplot2::ggsave(file=file.path(outpath, 'PCA_screeplot.pdf'), width=4, height=4, useDingbats=FALSE)
-
-  #Top features on top 5 PCs
-  aa_evidences_name <- as.list(paste(names(aa_evidences), unlist(aa_evidences), sep = ": "))
-  names(aa_evidences_name) <- names(aa_evidences)
-  for(i in 1:20){
-    output_file = file.path(outpath, paste0("PCA_loadings_PC", i, "_highlow.txt"))
-    write.table(data.frame(), file=output_file, col.names=FALSE)
-    lapply(aa_evidences_name[rownames(exp_pca$rotation)[order(exp_pca$rotation[,i], decreasing = T)[1:20]]], write, output_file, append=TRUE, ncolumns=1000)
-    write("...", file = output_file, append=TRUE)
-    lapply(rev(aa_evidences_name[rownames(exp_pca$rotation)[order(exp_pca$rotation[,i], decreasing = F)[1:20]]]), write, output_file, append=TRUE, ncolumns=1000)
+  #All proteins
+  plot_dt <- dg_dt[!duplicated(paste(Pos_ref, protein, sep = ":"))][!is.na(relative_angle),.(f_ddg_pred_stab_res5, Pos_class, protein)]
+  plot_dt <- plot_dt[,.(count = .N),.(protein, Pos_class, f_ddg_pred_stab_res5)]
+  #Calculate percentage
+  plot_dt[f_ddg_pred_stab_res5==T & protein=="GB1", percentage := count/sum(count)*100]
+  plot_dt[f_ddg_pred_stab_res5==F & protein=="GB1", percentage := count/sum(count)*100]
+  plot_dt[f_ddg_pred_stab_res5==T & protein=="GRB2-SH3", percentage := count/sum(count)*100]
+  plot_dt[f_ddg_pred_stab_res5==F & protein=="GRB2-SH3", percentage := count/sum(count)*100]
+  plot_dt[f_ddg_pred_stab_res5==T & protein=="PSD95-PDZ3", percentage := count/sum(count)*100]
+  plot_dt[f_ddg_pred_stab_res5==F & protein=="PSD95-PDZ3", percentage := count/sum(count)*100]
+  plot_dt[f_ddg_pred_stab_res5==T, class := "De-stabilising"]
+  plot_dt[f_ddg_pred_stab_res5==F, class := "Remainder"]
+  plot_dt[, class := factor(class, levels = c("Remainder", "De-stabilising"))]
+  d <- ggplot2::ggplot(plot_dt,ggplot2::aes(y = f_ddg_pred_stab_res5, percentage, fill = Pos_class)) +
+    ggplot2::geom_bar(stat="identity") +
+    ggplot2::xlab("% Residues") +
+    ggplot2::ylab("Residue class") +
+    ggplot2::facet_grid(~protein, scales = "free") + 
+    ggplot2::theme_classic() +
+    ggplot2::labs(fill = "Residue\nposition")
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_fill_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
   }
+  ggplot2::ggsave(file.path(outpath, "destabilising_position_barplot_all.pdf"), d, width = 7, height = 2, useDingbats=FALSE)
 
-  #Feature type
-  temp_cols <- c("black", unlist(colour_scheme[["shade 0"]][1:4]), "grey")
-  feature_type <- rep("6_Remainder", dim(exp_pca$rotation)[1])
-  feature_type[grep("hydrophobic|Hydrophobic", unlist(aa_evidences))] <- "1_hydrophobic/Hydrophobic"
-  feature_type[grep("helix|helical", unlist(aa_evidences))] <- "2_helix/helical"
-  feature_type[grep("composition|Composition", unlist(aa_evidences))] <- "3_composition/Composition"
-  feature_type[grep("linker|Linker", unlist(aa_evidences))] <- "4_linker/Linker"
-  feature_type[grep("beta-sheet|beta-strand|Beta-sheet|Beta-strand", unlist(aa_evidences))] <- "5_beta-sheet/beta-strand/Beta-sheet/Beta-strand"
-  names(temp_cols) <- unique(feature_type[order(feature_type)])
+  #GRB2-SH3 and PSD95-PDZ3 only
+  d <- ggplot2::ggplot(plot_dt[protein!="GB1"],ggplot2::aes(y = class, percentage, fill = Pos_class)) +
+    ggplot2::geom_bar(stat="identity") +
+    ggplot2::xlab("% Residues") +
+    ggplot2::ylab("Residue class") +
+    ggplot2::facet_grid(~protein, scales = "free") + 
+    ggplot2::theme_classic() +
+    ggplot2::labs(fill = "Residue\nposition")
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_fill_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
+  }
+  ggplot2::ggsave(file.path(outpath, "destabilising_position_barplot.pdf"), d, width = 7, height = 2, useDingbats=FALSE)
 
-  #Plot PCA variable loadings
-  doubledeepms__plot_loadings(
-    pca_obj=exp_pca, 
-    output_file=file.path(outpath, paste0('PCA_biplots_5_symbols.pdf')),
-    plot_categories=feature_type,
-    plot_colours=temp_cols, 
-    comps=1:5, 
-    plot_symbol=19,
-    width=15, height=15)
-
-  #Plot PCA variable loadings legend
-  doubledeepms__plot_loadings(
-    pca_obj=exp_pca, 
-    output_file=file.path(outpath, paste0('PCA_biplots_5_symbols_PC1_PC2.pdf')),
-    plot_categories=feature_type,
-    plot_colours=temp_cols, 
-    comps=1:2, 
-    plot_symbol=19,
-    width=5, height=5)
-
-  ### Single mutant loadings
+  ###########################
+  ### Amino acid properties of WT residues
   ###########################
 
-  #Amino acid properties PCA scores for each single mutant
-  aa_pca_dt <- doubledeepms__aa_properties_pca_singles_loadings(
+  #Amino acid properties PCA scores for each WT residue
+  aa_pca_dt <- doubledeepms__aa_properties_pca_WT_loadings(
     input_dt = dg_dt[id!="-0-"],
     aa_properties_file = aaprop_file,
     selected_identifiers = unlist(fread(aaprop_file_selected, header = F)))
@@ -200,76 +236,253 @@ doubledeepms_protein_stability_plots <- function(
   names(aa_pca_dt)[grep("^PC", names(aa_pca_dt))][1:5] <- paste0(names(aa_pca_dt)[grep("^PC", names(aa_pca_dt))][1:5], " (", top_PC_names, ")")
 
   ###########################
-  ### Stabilising mutations
+  ### Hydrophobicity of de-stabilising residues
   ###########################
 
-  for(i in aa_pca_dt[,unique(protein)]){
-    aa_pca_dt[protein==i & f_ddg_pred_conf & id!="-0-", f_ddg_pred_fdr := p.adjust(doubledeepms__pvalue(f_ddg_pred, f_ddg_pred_sd), method = "BH")]
+  #All proteins
+  plot_dt <- aa_pca_dt[!duplicated(paste(Pos_ref, protein, sep = ":")) & id!="-0-"]
+  plot_dt[, Hydrophobicity := .SD[[1]],,.SDcols = "PC1 (Hydrophobicity)"]
+  plot_dt[, Hydrophobic_AA := WT_AA %in% unlist(strsplit("AVILMFYW", ""))]
+  t.test(
+    plot_dt[Pos_class=="surface" & f_ddg_pred_stab_res5,Hydrophobicity],
+    plot_dt[Pos_class=="surface" & !f_ddg_pred_stab_res5,Hydrophobicity])
+  set.seed(2)
+  d <- ggplot2::ggplot(plot_dt[Pos_class=="surface"],ggplot2::aes(y = f_ddg_pred_stab_res5, Hydrophobicity, fill = f_ddg_pred_stab_res5)) +
+    ggplot2::geom_violin(draw_quantiles = c(0.25, 0.5, 0.75)) +
+    ggplot2::geom_jitter(width = 0.2, height = 0.2, size = 2, pch = 21) +
+
+    ggplot2::geom_vline(xintercept = 0, linetype = 2) +
+    ggplot2::facet_grid(~protein, scales = "free") + 
+    ggplot2::theme_classic() +
+    ggplot2::labs(fill = "Residue\ntype")
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_fill_manual(values = c("grey", unlist(colour_scheme[["shade 0"]][c(4)])))
   }
+  ggplot2::ggsave(file.path(outpath, "destabilising_hydrophobicity_violin_all.pdf"), d, width = 7, height = 2, useDingbats=FALSE)
 
-  #Stabilising mutations
-  aa_pca_dt[, f_ddg_pred_sig := 0]
-  aa_pca_dt[f_ddg_pred<0 & f_ddg_pred_fdr<0.05, f_ddg_pred_sig := 1]
-
-  #Add charge to PCs
-  aa_pca_dt[, WT_AA_charge := 0]
-  aa_pca_dt[grepl("^[RHK]", id), WT_AA_charge := 1]
-  aa_pca_dt[grepl("^[DE]", id), WT_AA_charge := -1]
-  aa_pca_dt[, Mut_charge := 0]
-  aa_pca_dt[grepl("[RHK]$", id), Mut_charge := 1]
-  aa_pca_dt[grepl("[DE]$", id), Mut_charge := -1]
-  aa_pca_dt[, delta_charge := Mut_charge-WT_AA_charge]
-  aa_pca_dt[, Mut_charge_abs := abs(Mut_charge)]
-  aa_pca_dt[, WT_AA_charge_abs := abs(WT_AA_charge)]
-  aa_pca_dt[, Mut_charge_bin := Mut_charge!=0]
-  aa_pca_dt[, WT_AA_charge_bin := WT_AA_charge!=0]
-
-  #Model data
-  model_data <- aa_pca_dt[f_ddg_pred_conf==T & protein=="GRB2-SH3",.SD,,.SDcols = grepl("^PC|f_ddg_pred_sig$|RSASA|SS", names(aa_pca_dt))]
-  model_data <- model_data[,.SD,,.SDcols = !grepl("PC20", names(model_data))]
-
-  #Model list
-  model_list <- list()
-  #RSASA model
-  model_list[["RSASA"]] <- glm(f_ddg_pred_sig~RSASA, family="binomial", data=model_data)
-  #Hydrophobicity model
-  model_list[["Hydrophobicity"]] <- glm(f_ddg_pred_sig~`PC1 (Hydrophobicity)`, family="binomial", data=model_data)
-  #Full model
-  model_list[["Full model"]] <- glm(f_ddg_pred_sig~., family="binomial", data=model_data)
-
-  #Performance
-  perf_list <- list()
-  for(i in names(model_list)){
-    model_predict <- predict(model_list[[i]], data = model_data)
-    pred <- ROCR::prediction(model_predict, model_data[,f_ddg_pred_sig])
-    perf <- ROCR::performance(pred,"tpr","fpr")
-    auc <- round(ROCR::performance(pred, measure = "auc")@'y.values'[[1]], 2)
-    #Save
-    perf_list[[i]] <- data.table(
-      FPR = perf@'x.values'[[1]],
-      TPR = perf@'y.values'[[1]],
-      measure = i,
-      auc = auc)
+  #GRB2-SH3 and PSD95-PDZ3 only
+  t.test(
+    plot_dt[Pos_class=="surface" & f_ddg_pred_stab_res5 & protein!="GB1",Hydrophobicity],
+    plot_dt[Pos_class=="surface" & !f_ddg_pred_stab_res5 & protein!="GB1",Hydrophobicity])
+  set.seed(1)
+  d <- ggplot2::ggplot(plot_dt[Pos_class=="surface" & protein!="GB1"],ggplot2::aes(y = f_ddg_pred_stab_res5, Hydrophobicity, fill = f_ddg_pred_stab_res5)) +
+    ggplot2::geom_violin(draw_quantiles = c(0.25, 0.5, 0.75)) +
+    ggplot2::geom_jitter(width = 0.2, height = 0.2, size = 2, pch = 21) +
+    ggplot2::geom_vline(xintercept = 0, linetype = 2) +
+    ggplot2::facet_grid(~protein, scales = "free") + 
+    ggplot2::theme_classic() +
+    ggplot2::labs(fill = "Residue\ntype")
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_fill_manual(values = c("grey", unlist(colour_scheme[["shade 0"]][c(4)])))
   }
-  plot_dt <- rbindlist(perf_list)
-  plot_dt[, measure := factor(measure, levels = c("Hydrophobicity", "RSASA", "Full model"))]
-  plot_cols <- c(colour_scheme[["shade 0"]][[2]], colour_scheme[["shade 0"]][[1]], colour_scheme[["shade 0"]][[3]])
-  names(plot_cols) <- c("Hydrophobicity", "RSASA", "Full model")
+  ggplot2::ggsave(file.path(outpath, "destabilising_hydrophobicity_violin.pdf"), d, width = 5, height = 2, useDingbats=FALSE)
 
-  #Plot
-  auc_dt <- plot_dt[!duplicated(measure)][order(measure, decreasing = T)]
-  auc_dt[, FPR := 0.5]
-  auc_dt[, TPR := seq(0, 1, 1/(.N+1))[2:(.N+1)]]
-  d <- ggplot2::ggplot(plot_dt,ggplot2::aes(FPR, TPR, color = measure)) +
-    ggplot2::geom_line() +
-    ggplot2::geom_abline(linetype = 2) +
-    ggplot2::xlab("FPR") +
-    ggplot2::ylab("TPR") +
-    ggplot2::geom_text(data = auc_dt, ggplot2::aes(label=paste("AUC = ", auc, sep=""))) +
+  ###########################
+  ### Relative side chain angle of stabilising residues
+  ###########################
+
+  #All residues
+  angle_stab_res <- dg_dt[!duplicated(paste(Pos_ref, protein, sep = ":"))][f_ddg_pred_stab_res3==T & !is.na(relative_angle),relative_angle]
+  angle_nstab_res <- dg_dt[!duplicated(paste(Pos_ref, protein, sep = ":"))][f_ddg_pred_stab_res3==F & !is.na(relative_angle),relative_angle]
+  t.test(angle_nstab_res, angle_stab_res)
+  plot_dt <- data.table(
+    relative_angle = c(angle_stab_res, angle_nstab_res),
+    type = c(rep("Stabilising", length(angle_stab_res)), rep("Remainder", length(angle_nstab_res))))
+  plot_dt[, type := factor(type, levels = c("Stabilising", "Remainder"))]
+  d <- ggplot2::ggplot(plot_dt,ggplot2::aes(relative_angle)) +
+    ggplot2::geom_histogram(ggplot2::aes(y = ..density.., fill = type), bins = 30) +
+    ggplot2::geom_density() +
+    ggplot2::xlab("Relative side-chain angle (degrees)") +
+    ggplot2::ylab("Density") +
+    ggplot2::geom_vline(xintercept = 90, linetype = 2) +
+    ggplot2::facet_grid(type~., scales = "free") + 
     ggplot2::theme_bw() +
-    ggplot2::scale_colour_manual(values=plot_cols) +
-    ggplot2::labs(color = "Model")   
-  ggplot2::ggsave(file.path(outpath, "stabilising_ROC_GRB2.pdf"), d, width = 4.5, height = 3, useDingbats=FALSE)
+    ggplot2::labs(color = "Residue\ttype")
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_fill_manual(values = c(unlist(colour_scheme[["shade 0"]][c(4)]), "grey"))
+  }
+  ggplot2::ggsave(file.path(outpath, "stabilising_relative_angle_density.pdf"), d, width = 7, height = 3, useDingbats=FALSE)
+
+  #Non binding interface residues
+  angle_stab_res <- dg_dt[!duplicated(paste(Pos_ref, protein, sep = ":"))][f_ddg_pred_stab_res3==T & !is.na(relative_angle) & Pos_class!="binding_interface",relative_angle]
+  angle_nstab_res <- dg_dt[!duplicated(paste(Pos_ref, protein, sep = ":"))][f_ddg_pred_stab_res3==F & !is.na(relative_angle) & Pos_class!="binding_interface",relative_angle]
+  t.test(angle_nstab_res, angle_stab_res)
+  plot_dt <- data.table(
+    relative_angle = c(angle_stab_res, angle_nstab_res),
+    type = c(rep("Stabilising", length(angle_stab_res)), rep("Remainder", length(angle_nstab_res))))
+  plot_dt[, type := factor(type, levels = c("Stabilising", "Remainder"))]
+  d <- ggplot2::ggplot(plot_dt,ggplot2::aes(relative_angle)) +
+    ggplot2::geom_histogram(ggplot2::aes(y = ..density.., fill = type), bins = 30) +
+    ggplot2::geom_density() +
+    ggplot2::xlab("Relative side-chain angle (degrees)") +
+    ggplot2::ylab("Density") +
+    ggplot2::geom_vline(xintercept = 90, linetype = 2) +
+    ggplot2::facet_grid(type~., scales = "free") + 
+    ggplot2::theme_bw() +
+    ggplot2::labs(color = "Residue\ttype")
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_fill_manual(values = c(unlist(colour_scheme[["shade 0"]][c(4)]), "grey"))
+  }
+  ggplot2::ggsave(file.path(outpath, "stabilising_relative_angle_density_nobindinginterface.pdf"), d, width = 7, height = 3, useDingbats=FALSE)
+
+  #Surface residues
+  angle_stab_res <- dg_dt[!duplicated(paste(Pos_ref, protein, sep = ":"))][f_ddg_pred_stab_res3==T & !is.na(relative_angle) & Pos_class=="surface",relative_angle]
+  angle_nstab_res <- dg_dt[!duplicated(paste(Pos_ref, protein, sep = ":"))][f_ddg_pred_stab_res3==F & !is.na(relative_angle) & Pos_class=="surface",relative_angle]
+  t.test(angle_nstab_res, angle_stab_res)
+  plot_dt <- data.table(
+    relative_angle = c(angle_stab_res, angle_nstab_res),
+    type = c(rep("Stabilising", length(angle_stab_res)), rep("Remainder", length(angle_nstab_res))))
+  plot_dt[, type := factor(type, levels = c("Stabilising", "Remainder"))]
+  d <- ggplot2::ggplot(plot_dt,ggplot2::aes(relative_angle)) +
+    ggplot2::geom_histogram(ggplot2::aes(y = ..density.., fill = type), bins = 30) +
+    ggplot2::geom_density() +
+    ggplot2::xlab("Relative side-chain angle (degrees)") +
+    ggplot2::ylab("Density") +
+    ggplot2::geom_vline(xintercept = 90, linetype = 2) +
+    ggplot2::facet_grid(type~., scales = "free") + 
+    ggplot2::theme_bw() +
+    ggplot2::labs(color = "Residue\ttype")
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_fill_manual(values = c(unlist(colour_scheme[["shade 0"]][c(4)]), "grey"))
+  }
+  ggplot2::ggsave(file.path(outpath, "stabilising_relative_angle_density_surface.pdf"), d, width = 7, height = 3, useDingbats=FALSE)
+
+  # ### AA properties PCA
+  # ###########################
+
+  # #AA properties PCA
+  # exp_pca_list <- doubledeepms__aa_properties_pca(
+  #   aa_properties_file = aaprop_file, 
+  #   selected_identifiers = unlist(fread(aaprop_file_selected, header = F)),
+  #   return_evidences = T)
+  # exp_pca <- exp_pca_list[["PCA"]]
+  # aa_evidences <- exp_pca_list[["evidences"]]
+
+  # #% variance explained by top 5 PCs
+  # top5pc_var <- sum((exp_pca$sdev^2/sum(exp_pca$sdev^2))[1:5])
+
+  # #Screeplot
+  # plot_df <- data.frame(perc_var = exp_pca$sdev^2/sum(exp_pca$sdev^2)*100, pc = 1:20)
+  # plot_df[,"pc"] <- factor(plot_df[,"pc"], levels = 1:20)
+  # d <- ggplot2::ggplot(plot_df, ggplot2::aes(pc, perc_var)) +
+  #   ggplot2::geom_bar(stat = "identity") +
+  #   ggplot2::geom_vline(xintercept = 5.5, linetype = 2) +
+  #   ggplot2::theme_bw() +
+  #   ggplot2::annotate("text", x = 10, y = 30, label = paste0("Var. explained by PC1-5 = ", round(top5pc_var*100, 0), "%"))
+  # ggplot2::ggsave(file=file.path(outpath, 'PCA_screeplot.pdf'), width=4, height=4, useDingbats=FALSE)
+
+  # #Top features on top 5 PCs
+  # aa_evidences_name <- as.list(paste(names(aa_evidences), unlist(aa_evidences), sep = ": "))
+  # names(aa_evidences_name) <- names(aa_evidences)
+  # for(i in 1:20){
+  #   output_file = file.path(outpath, paste0("PCA_loadings_PC", i, "_highlow.txt"))
+  #   write.table(data.frame(), file=output_file, col.names=FALSE)
+  #   lapply(aa_evidences_name[rownames(exp_pca$rotation)[order(exp_pca$rotation[,i], decreasing = T)[1:20]]], write, output_file, append=TRUE, ncolumns=1000)
+  #   write("...", file = output_file, append=TRUE)
+  #   lapply(rev(aa_evidences_name[rownames(exp_pca$rotation)[order(exp_pca$rotation[,i], decreasing = F)[1:20]]]), write, output_file, append=TRUE, ncolumns=1000)
+  # }
+
+  # #Feature type
+  # temp_cols <- c("black", unlist(colour_scheme[["shade 0"]][1:4]), "grey")
+  # feature_type <- rep("6_Remainder", dim(exp_pca$rotation)[1])
+  # feature_type[grep("hydrophobic|Hydrophobic", unlist(aa_evidences))] <- "1_hydrophobic/Hydrophobic"
+  # feature_type[grep("helix|helical", unlist(aa_evidences))] <- "2_helix/helical"
+  # feature_type[grep("composition|Composition", unlist(aa_evidences))] <- "3_composition/Composition"
+  # feature_type[grep("linker|Linker", unlist(aa_evidences))] <- "4_linker/Linker"
+  # feature_type[grep("beta-sheet|beta-strand|Beta-sheet|Beta-strand", unlist(aa_evidences))] <- "5_beta-sheet/beta-strand/Beta-sheet/Beta-strand"
+  # names(temp_cols) <- unique(feature_type[order(feature_type)])
+
+  # ### Single mutant loadings  #Plot PCA variable loadings
+  # doubledeepms__plot_loadings(
+  #   pca_obj=exp_pca, 
+  #   output_file=file.path(outpath, paste0('PCA_biplots_5_symbols.pdf')),
+  #   plot_categories=feature_type,
+  #   plot_colours=temp_cols, 
+  #   comps=1:5, 
+  #   plot_symbol=19,
+  #   width=15, height=15)
+
+  # #Plot PCA variable loadings legend
+  # doubledeepms__plot_loadings(
+  #   pca_obj=exp_pca, 
+  #   output_file=file.path(outpath, paste0('PCA_biplots_5_symbols_PC1_PC2.pdf')),
+  #   plot_categories=feature_type,
+  #   plot_colours=temp_cols, 
+  #   comps=1:2, 
+  #   plot_symbol=19,
+  #   width=5, height=5)
+
+  # ###########################
+  # ### Stabilising mutations
+  # ###########################
+
+  # for(i in aa_pca_dt[,unique(protein)]){
+  #   aa_pca_dt[protein==i & f_ddg_pred_conf & id!="-0-", f_ddg_pred_fdr := p.adjust(doubledeepms__pvalue(f_ddg_pred, f_ddg_pred_sd), method = "BH")]
+  # }
+
+  # #Stabilising mutations
+  # aa_pca_dt[, f_ddg_pred_sig := 0]
+  # aa_pca_dt[f_ddg_pred<0 & f_ddg_pred_fdr<0.05, f_ddg_pred_sig := 1]
+
+  # #Add charge to PCs
+  # aa_pca_dt[, WT_AA_charge := 0]
+  # aa_pca_dt[grepl("^[RHK]", id), WT_AA_charge := 1]
+  # aa_pca_dt[grepl("^[DE]", id), WT_AA_charge := -1]
+  # aa_pca_dt[, Mut_charge := 0]
+  # aa_pca_dt[grepl("[RHK]$", id), Mut_charge := 1]
+  # aa_pca_dt[grepl("[DE]$", id), Mut_charge := -1]
+  # aa_pca_dt[, delta_charge := Mut_charge-WT_AA_charge]
+  # aa_pca_dt[, Mut_charge_abs := abs(Mut_charge)]
+  # aa_pca_dt[, WT_AA_charge_abs := abs(WT_AA_charge)]
+  # aa_pca_dt[, Mut_charge_bin := Mut_charge!=0]
+  # aa_pca_dt[, WT_AA_charge_bin := WT_AA_charge!=0]
+
+  # #Model data
+  # model_data <- aa_pca_dt[f_ddg_pred_conf==T & protein=="GRB2-SH3",.SD,,.SDcols = grepl("^PC|f_ddg_pred_sig$|RSASA|SS", names(aa_pca_dt))]
+  # model_data <- model_data[,.SD,,.SDcols = !grepl("PC20", names(model_data))]
+
+  # #Model list
+  # model_list <- list()
+  # #RSASA model
+  # model_list[["RSASA"]] <- glm(f_ddg_pred_sig~RSASA, family="binomial", data=model_data)
+  # #Hydrophobicity model
+  # model_list[["Hydrophobicity"]] <- glm(f_ddg_pred_sig~`PC1 (Hydrophobicity)`, family="binomial", data=model_data)
+  # #Full model
+  # model_list[["Full model"]] <- glm(f_ddg_pred_sig~., family="binomial", data=model_data)
+
+  # #Performance
+  # perf_list <- list()
+  # for(i in names(model_list)){
+  #   model_predict <- predict(model_list[[i]], data = model_data)
+  #   pred <- ROCR::prediction(model_predict, model_data[,f_ddg_pred_sig])
+  #   perf <- ROCR::performance(pred,"tpr","fpr")
+  #   auc <- round(ROCR::performance(pred, measure = "auc")@'y.values'[[1]], 2)
+  #   #Save
+  #   perf_list[[i]] <- data.table(
+  #     FPR = perf@'x.values'[[1]],
+  #     TPR = perf@'y.values'[[1]],
+  #     measure = i,
+  #     auc = auc)
+  # }
+  # plot_dt <- rbindlist(perf_list)
+  # plot_dt[, measure := factor(measure, levels = c("Hydrophobicity", "RSASA", "Full model"))]
+  # plot_cols <- c(colour_scheme[["shade 0"]][[2]], colour_scheme[["shade 0"]][[1]], colour_scheme[["shade 0"]][[3]])
+  # names(plot_cols) <- c("Hydrophobicity", "RSASA", "Full model")
+
+  # #Plot
+  # auc_dt <- plot_dt[!duplicated(measure)][order(measure, decreasing = T)]
+  # auc_dt[, FPR := 0.5]
+  # auc_dt[, TPR := seq(0, 1, 1/(.N+1))[2:(.N+1)]]
+  # d <- ggplot2::ggplot(plot_dt,ggplot2::aes(FPR, TPR, color = measure)) +
+  #   ggplot2::geom_line() +
+  #   ggplot2::geom_abline(linetype = 2) +
+  #   ggplot2::xlab("FPR") +
+  #   ggplot2::ylab("TPR") +
+  #   ggplot2::geom_text(data = auc_dt, ggplot2::aes(label=paste("AUC = ", auc, sep=""))) +
+  #   ggplot2::theme_bw() +
+  #   ggplot2::scale_colour_manual(values=plot_cols) +
+  #   ggplot2::labs(color = "Model")   
+  # ggplot2::ggsave(file.path(outpath, "stabilising_ROC_GRB2.pdf"), d, width = 4.5, height = 3, useDingbats=FALSE)
 
   # ### Correlate PCs with folding ddGs - stratify by position class
   # ###########################

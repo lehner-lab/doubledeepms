@@ -1,15 +1,15 @@
 
-#' doubledeepms__relative_SASA_from_PDB
+#' doubledeepms__temperature_factor_from_PDB
 #'
-#' Get relative solvent accessible surface area.
+#' Get residue-level data from temperature factor (B-factor) columm in PDB file.
 #'
 #' @param input_file path to PDB file (required)
 #' @param chain chain id (default:A)
 #'
-#' @return data.table with relative solvent accessible surface area
+#' @return data.table with residue-level temperature factor (B-factor) column values 
 #' @export
 #' @import data.table
-doubledeepms__relative_SASA_from_PDB <- function(
+doubledeepms__temperature_factor_from_PDB <- function(
 	input_file,
   chain = "A"
   ){
@@ -25,7 +25,7 @@ doubledeepms__relative_SASA_from_PDB <- function(
 	#C-alpha atoms
   sele_ca <- bio3d::atom.select(pdb, "calpha", chain = chain, verbose=FALSE)
 
-  ### Get relative SASA
+  ### Get temperature factor values
   ###########################
 
   #Subset to c-alpha atoms
@@ -33,7 +33,7 @@ doubledeepms__relative_SASA_from_PDB <- function(
   #Result data.table
   result_dt <- data.table(
   	Pos = pdb_sub$atom[,"resno"],
-  	RSASA = pdb_sub$atom[,"b"])
+  	bfactor = pdb_sub$atom[,"b"])
 
   #Return
   return(result_dt)
