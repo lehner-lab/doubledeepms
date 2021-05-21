@@ -4,6 +4,9 @@
 #' Plot free energy heatmaps.
 #'
 #' @param input_list path to MoCHI thermo model fit results (required)
+#' @param pdb_file_list path to PDB file (required)
+#' @param pdb_chain_query_list query chain id (required)
+#' @param literature_list literature allosteric sites (required)
 #' @param aaprop_file path to amino acid properties file (required)
 #' @param aaprop_file_selected path to file with selected subset of identifiers
 #' @param outpath output path for plots and saved objects (required)
@@ -15,6 +18,9 @@
 #' @import data.table
 doubledeepms_allostery_plots <- function(
   input_list,
+  pdb_file_list,
+  pdb_chain_query_list,
+  literature_list,
   aaprop_file,
   aaprop_file_selected,
   outpath,
@@ -48,6 +54,7 @@ doubledeepms_allostery_plots <- function(
 
     #Per residue metrics
     for(i in c("f_ddg", "b_ddg")){
+      # temp_dt[,paste0(i, "_posmaxabs") := max(abs(.SD[[1]]), na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred"))]
       temp_dt[,paste0(i, "_posmeanabs") := mean(abs(.SD[[1]]), na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred"))]
       temp_dt[,paste0(i, "_posse") := sd(abs(.SD[[1]]), na.rm = T)/sqrt(sum(!is.na(.SD[[1]]))),Pos_ref,.SDcols = paste0(i, c("_pred"))]
       temp_dt[,paste0(i, "_wposmeanabs") := sum(abs(.SD[[1]])/.SD[[2]]^2, na.rm = T)/sum(1/.SD[[2]]^2, na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred", "_pred_sd"))]
@@ -58,14 +65,53 @@ doubledeepms_allostery_plots <- function(
     for(i in c("f_ddg", "b_ddg")){
       temp_dt[get(paste0(i, "_pred_conf"))==TRUE,paste0(i, "_pred_filtered") := .SD[[1]],,.SDcols = paste0(i, "_pred")]
       temp_dt[get(paste0(i, "_pred_conf"))==TRUE,paste0(i, "_pred_sd_filtered") := .SD[[1]],,.SDcols = paste0(i, "_pred_sd")]
+      # temp_dt[,paste0(i, "_posmaxabs_conf") := max(abs(.SD[[1]]), na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred_filtered"))]
       temp_dt[,paste0(i, "_posmeanabs_conf") := mean(abs(.SD[[1]]), na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred_filtered"))]
       temp_dt[,paste0(i, "_posse_conf") := sd(abs(.SD[[1]]), na.rm = T)/sqrt(sum(!is.na(.SD[[1]]))),Pos_ref,.SDcols = paste0(i, c("_pred_filtered"))]
       temp_dt[,paste0(i, "_wposmeanabs_conf") := sum(abs(.SD[[1]])/.SD[[2]]^2, na.rm = T)/sum(1/.SD[[2]]^2, na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred_filtered", "_pred_sd_filtered"))]
       temp_dt[,paste0(i, "_wposse_conf") := sqrt(1/sum(1/.SD[[2]]^2, na.rm = T)),Pos_ref,.SDcols = paste0(i, c("_pred_filtered", "_pred_sd_filtered"))]
     }
+
+    # #Mann whitney U test + randomisation
+    # result_list <- list()
+    # for(i in temp_dt[order(Pos_ref), unique(Pos_ref)]){
+    #   print(i)
+    #   result_list[[as.character(i)]] <- doubledeepms__mann_whitney_U_wrapper_rand(
+    #     temp_dt[Pos_ref==i & b_ddg_pred_conf,abs(b_ddg_pred)],
+    #     temp_dt[Pos_ref!=i & b_ddg_pred_conf,abs(b_ddg_pred)],
+    #     temp_dt[Pos_ref==i & b_ddg_pred_conf,b_ddg_pred_sd],
+    #     temp_dt[Pos_ref!=i & b_ddg_pred_conf,b_ddg_pred_sd],
+    #     100)
+    # }
+    # result_dt <- as.data.table(do.call('rbind', result_list))
+    # result_dt[, Pos_ref := as.integer(names(result_list))]
+    # temp_dt <- merge(temp_dt, result_dt, by = "Pos_ref")
+
     dg_list[[protein]] <- temp_dt
   }
   dg_dt <- rbindlist(dg_list)
+
+  ###########################
+  ### Save mean binding ddG to file
+  ###########################
+
+  for(i in names(pdb_file_list)){
+    #load PDB structure
+    sink(file = "/dev/null")
+    pdb <- bio3d::read.pdb(pdb_file_list[[i]], rm.alt = TRUE)
+    sink()
+
+    #Replace B factor with mean folding ddG 
+    pdb_atom_dt <- as.data.table(pdb$atom)
+    b_ddg_pred_med_dt <- dg_dt[protein==i & b_ddg_pred_conf==T & id!="-0-",.(b_new = mean(abs(b_ddg_pred)), resno = Pos_ref),Pos_ref][,.(resno, b_new)]
+    old_colnames <- names(pdb_atom_dt)
+    pdb_atom_dt <- merge(pdb_atom_dt, b_ddg_pred_med_dt, by = "resno", all.x = T)
+    pdb_atom_dt[, b := b_new]
+    pdb_atom_dt[is.na(b) | chain!=pdb_chain_query_list[[i]], b := 0]
+    pdb$atom <- as.data.frame(pdb_atom_dt[order(eleno),.SD,,.SDcols = old_colnames])
+
+    bio3d::write.pdb(pdb, file = file.path(outpath, gsub(".pdb", "_b_ddg_pred_abs_mean.pdb", basename(pdb_file_list[[i]]))))
+  }
 
   ###########################
   ### Folding energy distance correlation plots
@@ -84,66 +130,112 @@ doubledeepms_allostery_plots <- function(
   ###########################
 
   for(i in dg_dt[,unique(protein)]){
-    doubledeepms__persite_energy_vs_distance_plot(
+    allostery_pos <- doubledeepms__persite_energy_vs_distance_plot(
       input_dt = copy(dg_dt)[protein==i],
+      literature_sites = literature_list[[i]],
       outpath = file.path(outpath, paste0(i, "_persite_binding_energy_vs_distance_scatter.pdf")),
       colour_scheme = colour_scheme,
       trait_name = "binding")
+    dg_dt[protein==i & Pos_ref %in% allostery_pos, allosteric := T]
   }
 
-  # ###########################
-  # ### Binding ROC plot
-  # ###########################
+  ###########################
+  ### Binding ROC plot
+  ###########################
 
-  # metric_names <- c("b_ddg_wposmeanabs", "b_ddg_wposmeanabs_conf", "b_ddg_posmeanabs", "b_ddg_posmeanabs_conf")
-  # metric_names_plot <- c(
-  #   "Weighted mean |Binding ddG|",
-  #   "Weighted mean |Binding ddG| (conf.)",
-  #   "Mean |Binding ddG|",
-  #   "Mean |Binding ddG| (conf.)")
-  # names(metric_names_plot) <- metric_names
+  for(i in dg_dt[,unique(protein)]){
+    doubledeepms__plot_binding_site_ROC(
+      input_dt = copy(dg_dt)[protein==i],
+      outpath = file.path(outpath, paste0(i, "_binding_site_ROC.pdf")),
+      colour_scheme = colour_scheme)
+  }
 
-  # #Subset
-  # subset_dt <- dg_dt[order(Pos_ref)][!duplicated(Pos_ref)]
+  ###########################
+  ### Allosteric mutations
+  ###########################
 
-  # #Performance of all metrics
-  # perf_list <- list()
-  # for(metric_name in c("b_ddg_wposmeanabs", "b_ddg_wposmeanabs_conf", "b_ddg_posmeanabs", "b_ddg_posmeanabs_conf")){
-  #   #Metric
-  #   subset_dt[, plot_metric := .SD[[1]],,.SDcols = metric_name]
-  #   #ROC curve data
-  #   roc_df <- data.frame(
-  #     predictions = subset_dt[,plot_metric], 
-  #     labels = subset_dt[,as.numeric(Pos_class=="binding_interface")])
-  #   pred <- ROCR::prediction(roc_df$predictions, roc_df$labels)
-  #   perf <- ROCR::performance(pred,"tpr","fpr")
-  #   auc <- round(ROCR::performance(pred, measure = "auc")@'y.values'[[1]], 2)
-  #   #Save
-  #   perf_list[[metric_name]] <- data.table(
-  #     FPR = perf@'x.values'[[1]],
-  #     TPR = perf@'y.values'[[1]],
-  #     measure = metric_name,
-  #     auc = auc)
-  # }
-  # plot_dt <- rbindlist(perf_list)
-  # plot_dt[, measure_plot := metric_names_plot[measure]]
-  # plot_cols <- c(colour_scheme[["shade 0"]][[1]], colour_scheme[["shade 0"]][[2]], colour_scheme[["shade 0"]][[3]], colour_scheme[["shade 0"]][[4]])
-  # names(plot_cols) <- metric_names_plot
+  dg_list <- list()
+  for(i in dg_dt[,unique(protein)]){
+    dg_list[[i]] <- doubledeepms__allosteric_mutations_scatterplot(
+      input_dt = copy(dg_dt)[protein==i],
+      outpath = file.path(outpath, paste0(i, "_allosteric_mutations_scatter.pdf")),
+      colour_scheme = colour_scheme)
+  }
+  dg_dt <- rbindlist(dg_list)
 
-  # #Plot
-  # auc_dt <- plot_dt[!duplicated(measure_plot)][order(measure_plot, decreasing = T)]
-  # auc_dt[, FPR := 0.5]
-  # auc_dt[, TPR := seq(0, 1, 1/(.N+1))[2:(.N+1)]]
-  # d <- ggplot2::ggplot(plot_dt,ggplot2::aes(FPR, TPR, color = measure_plot)) +
-  #   ggplot2::geom_line() +
-  #   ggplot2::geom_abline(linetype = 2) +
-  #   ggplot2::xlab("FPR") +
-  #   ggplot2::ylab("TPR") +
-  #   ggplot2::geom_text(data = auc_dt, ggplot2::aes(label=paste("AUC = ", auc, sep=""))) +
-  #   ggplot2::theme_bw() +
-  #   ggplot2::scale_colour_manual(values=plot_cols) +
-  #   ggplot2::labs(color = "Binding interface\nprediction metric")   
-  # ggplot2::ggsave(file.path(outpath, "binding_ROC.pdf"), d, width = 6, height = 3, useDingbats=FALSE)
+  ###########################
+  ### Pleiotropy of allosteric mutations
+  ###########################
+
+  #Significant change in ddG binding
+  dg_dt[b_ddg_pred_conf==T, b_ddg_pred_pvalue := doubledeepms__pvalue(b_ddg_pred, b_ddg_pred_sd)]
+  dg_dt[b_ddg_pred_conf==T, b_ddg_pred_FDR := p.adjust(b_ddg_pred_pvalue, method = "BH"),protein]
+
+  #Significant change in ddG folding
+  dg_dt[f_ddg_pred_conf==T, f_ddg_pred_pvalue := doubledeepms__pvalue(f_ddg_pred, f_ddg_pred_sd)]
+  dg_dt[f_ddg_pred_conf==T, f_ddg_pred_FDR := p.adjust(f_ddg_pred_pvalue, method = "BH"),protein]
+
+  #Pleiotropy class
+  dg_dt[, ddg_class := "Remainder"]
+  # dg_dt[b_ddg_pred*f_ddg_pred>0 & b_ddg_pred_FDR<0.05 & f_ddg_pred_FDR<0.05, ddg_class := "Synergistic"]
+  # dg_dt[b_ddg_pred*f_ddg_pred<0 & b_ddg_pred_FDR<0.05 & f_ddg_pred_FDR<0.05, ddg_class := "Antagonistic"]
+  dg_dt[b_ddg_pred_conf==T & b_ddg_pred*f_ddg_pred>0, ddg_class := "Synergistic"]
+  dg_dt[b_ddg_pred_conf==T & b_ddg_pred*f_ddg_pred<0, ddg_class := "Antagonistic"]
+  # dg_dt[b_ddg_pred_FDR>=0.05 & f_ddg_pred_FDR<0.05, ddg_class := "Folding only"]
+  # dg_dt[b_ddg_pred_FDR<0.05) & f_ddg_pred_FDR>=0.05, ddg_class := "Binding only"]
+
+  dg_dt[b_ddg_pred_outlier==T & Pos_class!="binding_interface",.N,.(protein, ddg_class)][order(protein, ddg_class)]
+  dg_dt[b_ddg_pred_outlier==T & Pos_class=="binding_interface",.N,.(protein, ddg_class)][order(protein, ddg_class)]
+
+  dg_dt[allosteric_mutation==T & Pos_class!="binding_interface",.N,.(protein, ddg_class)][order(protein, ddg_class)]
+  dg_dt[allosteric_mutation==T & Pos_class=="binding_interface",.N,.(protein, ddg_class)][order(protein, ddg_class)]
+
+  fisher.test(matrix(c(
+    dg_dt[b_ddg_pred_outlier==T & Pos_class=="binding_interface" & ddg_class=="Antagonistic",.N],
+    dg_dt[b_ddg_pred_outlier==T & Pos_class=="binding_interface" & ddg_class!="Antagonistic",.N],
+    dg_dt[b_ddg_pred_outlier==T & Pos_class!="binding_interface" & ddg_class=="Antagonistic",.N],
+    dg_dt[b_ddg_pred_outlier==T & Pos_class!="binding_interface" & ddg_class!="Antagonistic",.N]), nrow = 2))
+
+  fisher.test(matrix(c(
+    dg_dt[allosteric_mutation==T & Pos_class=="binding_interface" & ddg_class=="Antagonistic",.N],
+    dg_dt[allosteric_mutation==T & Pos_class=="binding_interface" & ddg_class!="Antagonistic",.N],
+    dg_dt[allosteric_mutation==T & Pos_class!="binding_interface" & ddg_class=="Antagonistic",.N],
+    dg_dt[allosteric_mutation==T & Pos_class!="binding_interface" & ddg_class!="Antagonistic",.N]), nrow = 2))
+
+  dg_dt[Pos_class=="binding_interface" & b_ddg_pred_conf==T & f_ddg_pred_conf==T, .(cor = cor(f_ddg_pred, b_ddg_pred)),.(protein, Pos_ref)][,sum(cor<0, na.rm = T)/.N,protein]
+  dg_dt[Pos_class!="binding_interface" & b_ddg_pred_conf==T & f_ddg_pred_conf==T, .(cor = cor(f_ddg_pred, b_ddg_pred)),.(protein, Pos_ref)][,sum(cor<0, na.rm = T)/.N,protein]
+
+  ###########################
+  ### Free energy scatterplots
+  ###########################
+
+  #dG max absolute value
+  ddg_max <- 5
+
+  #Free energy scatterplots by protein - all - conf
+  plot_dt <- copy(dg_dt)[,.(protein, f_ddg_pred, b_ddg_pred, f_ddg_pred_conf, b_ddg_pred_conf, Pos_class, id, allosteric, allosteric_mutation)]
+  plot_dt <- plot_dt[f_ddg_pred_conf & b_ddg_pred_conf & abs(b_ddg_pred)<ddg_max & abs(f_ddg_pred)<ddg_max,]
+  # plot_dt <- plot_dt[f_ddg_pred_conf & b_ddg_pred_conf & abs(b_ddg_pred)<ddg_max & abs(f_ddg_pred)<ddg_max,]
+  plot_dt[, Pos_class_plot := "Remainder"]
+  plot_dt[Pos_class=="binding_interface", Pos_class_plot := "binding_interface"]
+  plot_dt[allosteric==T & Pos_class!="binding_interface", Pos_class_plot := "allosteric_site"]
+  plot_dt[allosteric_mutation==T & Pos_class!="binding_interface", Pos_class_plot := "allosteric_mutation"]
+  #Plot
+  d <- ggplot2::ggplot(plot_dt[id!="-0-"],ggplot2::aes(f_ddg_pred, b_ddg_pred)) +
+    ggplot2::geom_point(alpha = 0.5) +
+    ggplot2::geom_smooth(method = "lm", formula = 'y~x') +
+    ggplot2::geom_vline(xintercept = 0) +
+    ggplot2::geom_hline(yintercept = 0) +
+    ggplot2::geom_text(data = plot_dt[,.(label = paste("Pearson's r = ", round(cor(f_ddg_pred, b_ddg_pred, use = "pairwise.complete"), 2), sep="")),.(Pos_class_plot, protein)], ggplot2::aes(label=label, x=-Inf, y=Inf, hjust = 0, vjust = 1)) +
+    ggplot2::facet_grid(Pos_class_plot~protein, scales = "free") +
+    ggplot2::xlab(expression("Folding "*Delta*Delta*"G")) +
+    ggplot2::ylab(expression("Binding "*Delta*Delta*"G")) +
+    ggplot2::labs(color = "Residue\nposition") +
+    ggplot2::theme_classic()
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
+  }
+  ggplot2::ggsave(file.path(outpath, "ddG_scatter_subsets_all.pdf"), d, width = 9, height = 9, useDingbats=FALSE)
 
 }
 

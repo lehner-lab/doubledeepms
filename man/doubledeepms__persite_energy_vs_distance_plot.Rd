@@ -5,19 +5,21 @@
 \title{doubledeepms__persite_energy_vs_distance_plot}
 \usage{
 doubledeepms__persite_energy_vs_distance_plot(input_dt, outpath,
-  colour_scheme, trait_name = "folding")
+  colour_scheme, literature_sites = c(), trait_name = "folding")
 }
 \arguments{
-\item{input_dt}{processed data table with DiMSum fitness scores (required)}
+\item{input_dt}{input data table (required)}
 
-\item{outpath}{output path for plots and saved objects (required)}
+\item{outpath}{plot output path (required)}
 
 \item{colour_scheme}{colour scheme file (required)}
+
+\item{literature_sites}{literature allosteric sites (default:empty vector)}
 
 \item{trait_name}{trait name (default:folding)}
 }
 \value{
-Nothing
+Allosteric positions
 }
 \description{
 Create results folder for analysis script plots and saved objects.

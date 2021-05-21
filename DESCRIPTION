@@ -10,6 +10,7 @@ Depends: R (>= 3.6.1)
 Imports:
 	bio3d,
 	Biostrings,
+	coin,
 	Cairo,
 	data.table,
 	ggplot2,

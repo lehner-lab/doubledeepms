@@ -155,7 +155,7 @@ doubledeepms_protein_stability_plots <- function(
   ### Stabilising mutations
   ###########################
 
-  #Mean folding ddG per residue
+  #Significant stabilising mutations
   dg_dt[f_ddg_pred_conf==T & id!="-0-", f_ddg_pred_fdr := p.adjust(doubledeepms__pvalue(f_ddg_pred, f_ddg_pred_sd), method = "BH"),.(protein)]
 
   #Stabilising mutations
@@ -346,6 +346,73 @@ doubledeepms_protein_stability_plots <- function(
     d <- d + ggplot2::scale_fill_manual(values = c(unlist(colour_scheme[["shade 0"]][c(4)]), "grey"))
   }
   ggplot2::ggsave(file.path(outpath, "stabilising_relative_angle_density_surface.pdf"), d, width = 7, height = 3, useDingbats=FALSE)
+
+  # ###########################
+  # ### Residue-specific tolerated mutations
+  # ###########################
+
+  # #Destabilising mutations
+  # dg_dt[, f_ddg_pred_destab := FALSE]
+  # dg_dt[f_ddg_pred>0 & f_ddg_pred_fdr<0.05, f_ddg_pred_destab := TRUE]
+
+  # #Plot folding
+  # plot_dt <- dg_dt[protein=="GRB2-SH3" & Pos_class=="surface" & f_ddg_pred_conf==T]
+  # plot_dt <- plot_dt[, Pos_ref_plot := as.factor(Pos_ref)]  
+  # plot_dt <- plot_dt[, f_ddg_pred_destab_plot := factor(f_ddg_pred_destab, levels = c(0, 1))]  
+  # plot_dt <- plot_dt[, Mut_polar := FALSE]  
+  # plot_dt <- plot_dt[, Mut_polar := Mut %in% unlist(strsplit("RHKDESTNQ", ""))]
+
+  # #Tolerant sites
+  # intol_res <- plot_dt[,.(prop_mut = sum(f_ddg_pred_destab/.N)),.(Pos_ref)][prop_mut==1,Pos_ref]
+  # #Intolerant sites
+  # tol_res <- plot_dt[,.(prop_mut = sum(f_ddg_pred_destab/.N)),.(Pos_ref)][prop_mut<0.5,Pos_ref]
+  # #Tolerance classification
+  # plot_dt[, tol_class := "Remainder"]
+  # plot_dt[Pos_ref %in% tol_res, tol_class := "Tolerant"]
+  # plot_dt[Pos_ref %in% intol_res, tol_class := "Intolerant"]
+
+  # d <- ggplot2::ggplot(plot_dt,ggplot2::aes(Pos_ref_plot, f_ddg_pred)) +
+  #   ggplot2::geom_boxplot(ggplot2::aes(fill = Mut_polar)) +
+  #  ggplot2::xlab("Residue position") +
+  #   ggplot2::ylab(expression(Delta*Delta*"G of folding")) +
+  #   ggplot2::geom_hline(yintercept = 0, linetype = 2) +
+  #   # ggplot2::geom_vline(xintercept = 0, linetype = 2) +
+  #   ggplot2::facet_wrap(~tol_class, scales = "free_x") + 
+  #   ggplot2::theme_bw() +
+  #   ggplot2::labs(fill = "Polar?")
+  # if(!is.null(colour_scheme)){
+  #   d <- d + ggplot2::scale_fill_manual(values = c("grey", unlist(colour_scheme[["shade 0"]][c(1)])))
+  # }
+  # ggplot2::ggsave(file.path(outpath, "destabilising_folding_surface_perresidue_box.pdf"), d, width = 10, height = 4, useDingbats=FALSE)
+  # d <- ggplot2::ggplot(plot_dt,ggplot2::aes(Mut_polar, f_ddg_pred)) +
+  #   ggplot2::geom_boxplot(ggplot2::aes(fill = Mut_polar), notch = T) +
+  #   ggplot2::xlab("Residue position") +
+  #   ggplot2::ylab(expression(Delta*Delta*"G of folding")) +
+  #   ggplot2::geom_hline(yintercept = 0, linetype = 2) +
+  #   # ggplot2::geom_vline(xintercept = 0, linetype = 2) +
+  #   ggplot2::facet_wrap(~tol_class, scales = "free_x") + 
+  #   ggplot2::theme_bw() +
+  #   ggplot2::labs(fill = "Polar?")
+  # if(!is.null(colour_scheme)){
+  #   d <- d + ggplot2::scale_fill_manual(values = c("grey", unlist(colour_scheme[["shade 0"]][c(1)])))
+  # }
+  # ggplot2::ggsave(file.path(outpath, "destabilising_folding_surface_box.pdf"), d, width = 4, height = 4, useDingbats=FALSE)
+
+  # #Intolerant
+  # temp_polar <- plot_dt[tol_class=="Intolerant" & Mut_polar==T,f_ddg_pred]
+  # temp_nonpolar <- plot_dt[tol_class=="Intolerant" & Mut_polar==F,f_ddg_pred]
+  # t.test(temp_nonpolar, temp_polar)
+
+  # #Tolerant
+  # temp_polar <- plot_dt[tol_class=="Tolerant" & Mut_polar==T,f_ddg_pred]
+  # temp_nonpolar <- plot_dt[tol_class=="Tolerant" & Mut_polar==F,f_ddg_pred]
+  # t.test(temp_nonpolar, temp_polar)
+
+  # #Remainder
+  # temp_polar <- plot_dt[tol_class=="Remainder" & Mut_polar==T,f_ddg_pred]
+  # temp_nonpolar <- plot_dt[tol_class=="Remainder" & Mut_polar==F,f_ddg_pred]
+  # t.test(temp_nonpolar, temp_polar)
+
 
   # ### AA properties PCA
   # ###########################

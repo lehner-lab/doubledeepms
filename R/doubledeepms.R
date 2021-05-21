@@ -239,6 +239,18 @@ doubledeepms <- function(
       "GB1" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_GB1"), "dg_singles.txt"),
       "PSD95-PDZ3" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_PSD95-PDZ3"), "dg_singles.txt"),
       "GRB2-SH3" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_GRB2-SH3"), "dg_singles.txt")),
+    pdb_file_list = list(
+      "GB1" = file.path(base_dir, "Data", "pdb", "1fcc.pdb"),
+      "PSD95-PDZ3" = file.path(base_dir, "Data", "pdb", "1be9.pdb"),
+      "GRB2-SH3" = file.path(base_dir, "Data", "pdb", "2vwf.pdb")),
+    pdb_chain_query_list = list(
+      "GB1" = "C",
+      "PSD95-PDZ3" = "A",
+      "GRB2-SH3" = "A"),
+    literature_list = list(
+      "GB1" = c(),
+      "PSD95-PDZ3" = c(322, 327, 329, 330, 336, 362, 372, 375, 379),
+      "GRB2-SH3" = c()),
     aaprop_file = file.path(base_dir, "Data", "amino_acid_properties", "amino_acid_properties_annotated_supplementary.txt"),
     aaprop_file_selected = file.path(base_dir, "Data", "amino_acid_properties", "selected.amino_acid_properties.txt"),
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_allostery_plots", stagenum=stagenum, base_dir=base_dir),
