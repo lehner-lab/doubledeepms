@@ -228,6 +228,12 @@ doubledeepms <- function(
   ###########################
 
   stagenum <- 8
+  # GRB2-SH3
+  doubledeepms_interface_mechanisms(
+    base_dir = base_dir, 
+    domain_name = "GRB2-SH3", 
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_ligand_interface_plots", stagenum=stagenum, base_dir=base_dir), 
+    colour_scheme = colour_scheme)
 
   ### Allostery plots
   ###########################

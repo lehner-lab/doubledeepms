@@ -119,6 +119,14 @@ doubledeepms__tile_heatmap_wrapper <- function(
     plot_df$value_point <- plot_df$value
     plot_df[plot_df$point==T,]$value <- 0
   }
+  
+  #Write table with heatmap values
+  write_df <- plot_df
+  write_df$x <- gsub("\\\n", "_", write_df$x)
+  write.table(write_df, 
+              file = gsub("\\.pdf", "_data.txt", output_file), 
+              quote = F, sep = "\t", row.names = F)
+  
   p <- ggplot2::ggplot(plot_df, ggplot2::aes(x, y)) + 
     ggplot2::geom_tile(ggplot2::aes(fill = value)) + 
     ggplot2::geom_text(ggplot2::aes(label = label), size=text_size, colour=text_colour) +
