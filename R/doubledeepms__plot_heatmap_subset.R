@@ -49,6 +49,9 @@
 doubledeepms__plot_heatmap_subset <- function(
   input_file, 
   output_file, 
+  mut_subset,
+  pos_subset,
+  order_mut_subset = T,
   width=10, 
   height=4, 
   units="in",
@@ -86,10 +89,27 @@ doubledeepms__plot_heatmap_subset <- function(
   highlight_regions=NULL, 
   x_breaks=ggplot2::waiver(), 
   y_breaks=ggplot2::waiver(), 
+  show_legend = F,
   plot = T){
+  
+  aa_obj <- Biostrings::AAString("GAVLMIFYWKRHDESTCNQP")
+  aa_list <- Biostrings::AMINO_ACID_CODE[strsplit(as.character(aa_obj), NULL)[[1]]]
+  aa_order <- names(aa_list) 
   
   plot_df <- input_file
   plot_df$x <- gsub("_", "\\\n", plot_df$x)
+  
+  #order rows and columns to match energy heatmaps
+  plot_df$y <- factor(plot_df$y, levels = rev(c(aa_order, "Prox.")))
+  plot_df$x <- factor(plot_df$x, levels = unique(plot_df$x))
+  
+  #subset the heatmap plot by position and aa subsitution
+  plot_df <- plot_df[Pos %in% pos_subset,]
+  plot_df <- plot_df[y %in% mut_subset,]
+  
+  if(order_mut_subset){
+    plot_df$y <- factor(plot_df$y, levels = rev(mut_subset))
+  }
   
   p <- ggplot2::ggplot(plot_df, ggplot2::aes(x, y)) + 
     ggplot2::geom_tile(ggplot2::aes(fill = value)) + 
@@ -172,6 +192,9 @@ doubledeepms__plot_heatmap_subset <- function(
   if(colour_type=='categorical'){
     p <- p + ggplot2::scale_fill_brewer(palette='Set1')    
     p <- p + ggplot2::scale_colour_brewer(palette='Set1')    
+  }
+  if(!show_legend){
+    p <- p + ggplot2::theme(legend.position = "none") 
   }
   if(plot){
     ggplot2::ggsave(file=output_file, width=width, units=units, height=height, useDingbats=FALSE)

@@ -233,7 +233,13 @@ doubledeepms <- function(
     base_dir = base_dir, 
     domain_name = "GRB2-SH3", 
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_ligand_interface_plots", stagenum=stagenum, base_dir=base_dir), 
-    colour_scheme = colour_scheme)
+    colour_scheme = colour_scheme,
+    mut_subset_list = list(
+      c("T", "F", "H", "S", "V", "I", "C"),
+      c("T", "S", "L", "V", "A", "K", "R")),
+    pos_subset_list = list(
+      c(7, 51),
+      c(46)))
 
   ### Allostery plots
   ###########################

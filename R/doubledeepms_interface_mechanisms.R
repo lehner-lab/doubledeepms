@@ -20,6 +20,8 @@ doubledeepms_interface_mechanisms <- function(
   domain_name,
   outpath,
   colour_scheme,
+  mut_subset_list,
+  pos_subset_list,
   plot_width = 10,
   plot_height = 4,
   execute = TRUE
@@ -39,28 +41,40 @@ doubledeepms_interface_mechanisms <- function(
   
   #Load free energy heatmap info
   heat_df <- fread(file.path(base_dir, paste0(input_folder_prefix, "_", domain_name), "binding_heatmap_data.txt"))
-  
+  heat_df[, Pos := as.numeric(unlist(strsplit(x, "_"))[[1]]), by=x]
   
   ###########################
   ### Binding heatmap subsets
   ###########################
   
-  doubledeepms__plot_heatmap_subset(
-    input_file = heat_df,
-    output_file = file.path(outpath, "binding_subset_heatmap_pos_.pdf"),
-    width = 10,
-    height = 4,
-    plot_title = "",
-    colour_clip = 4,
-    colour_mid = "lightgrey",
-    colour_low = colour_scheme[["shade 0"]][[3]],
-    colour_high = colour_scheme[["shade 0"]][[1]],
-    xaxis_angle = 0,
-    xaxis_hjust = 0.5, 
-    xaxis_size = 5, 
-    na_colour = "white",
-    input_matrix_point = TRUE
-  )
+  for (x in 1:length(mut_subset_list)){
+    mut_subset <- mut_subset_list[[x]]
+    pos_subset <- pos_subset_list[[x]]
+    
+    #Adjust weight and height of the plot for each different subset
+    w <- 0.5 + 9*length(pos_subset_list[[x]])/max(heat_df$Pos)
+    h <- 0.5 +4*length(mut_subset_list[[x]])/length(unique(heat_df$y))
+    
+    doubledeepms__plot_heatmap_subset(
+      input_file = heat_df,
+      output_file = file.path(outpath, paste0("binding_subset_heatmap_pos_", paste(pos_subset, collapse="_"), ".pdf")),
+      mut_subset = mut_subset,
+      pos_subset = pos_subset,
+      width = w,
+      height = h,
+      plot_title = "",
+      colour_clip = 4,
+      colour_mid = "lightgrey",
+      colour_low = colour_scheme[["shade 0"]][[3]],
+      colour_high = colour_scheme[["shade 0"]][[1]],
+      xaxis_angle = 0,
+      xaxis_hjust = 0.5, 
+      xaxis_size = 5, 
+      na_colour = "white",
+      input_matrix_point = TRUE
+    )
+  }
+  
   
   
 }
