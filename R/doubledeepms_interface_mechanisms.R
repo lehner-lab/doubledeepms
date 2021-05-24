@@ -76,6 +76,10 @@ doubledeepms_interface_mechanisms <- function(
   }
   
   
+  ###########################
+  ### Structure plots
+  ###########################
+  
   
 }
 
