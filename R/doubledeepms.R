@@ -241,7 +241,7 @@ doubledeepms <- function(
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_ligand_interface_plots", stagenum=stagenum, base_dir=base_dir), 
     colour_scheme = colour_scheme,
     mut_subset_list = list(
-      c("T", "F", "H", "S", "V", "I", "C"),
+      c("T", "F","Q","H", "S", "V", "I", "C"),
       c("T", "S", "L", "V", "A", "K", "R")),
     pos_subset_list = list(
       c(7, 51),
