@@ -41,6 +41,7 @@
 #' @param highlight_regions list of highlighted regions of form: list("red" = list("region1" = c(_min_, _max_), "region2" = c(_min_, _max_), ...), "blue" = list("region3" = c(_min_, _max_), ...), ...)
 #' @param x_breaks x-axis breaks (for displaing xtick_labels)
 #' @param y_breaks y-axis breaks (for displaing ytick_labels)
+#' @param show_legend whether to plot legend (True, False)
 #' @param plot whether to plot the heatmap (True, False)
 #'
 #' @return Nothing

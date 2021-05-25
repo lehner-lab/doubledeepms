@@ -7,6 +7,12 @@
 #' @param domain_name domain name (required)
 #' @param outpath output path for plots and saved objects (required)
 #' @param colour_scheme colour scheme file (required)
+#' @param mut_subset_list list of aa mutations to highlight in the heatmap (required)
+#' @param pos_subset_list list of domain positions to highlight in the heatmap and 3D structure (required)
+#' @param ligand_pos_list list of domain positions to highlight in the 3D structure (required)
+#' @param pdb_id name of the pdb file (required)
+#' @param pdb_view vector with pdb coordinates to orientate the 3D structure (required)
+#' @param zoom_pdb point to zoom into the center of the pdb structure (default: 25)
 #' @param plot_width heatmap plot width in inches (default:10)
 #' @param plot_height heatmap plot height in inches (default:4)
 #' @param execute whether or not to execute the analysis (default: TRUE)
@@ -22,6 +28,10 @@ doubledeepms_interface_mechanisms <- function(
   colour_scheme,
   mut_subset_list,
   pos_subset_list,
+  ligand_pos_list,
+  pdb_id,
+  pdb_view,
+  zoom_pdb,
   plot_width = 10,
   plot_height = 4,
   execute = TRUE
@@ -80,6 +90,21 @@ doubledeepms_interface_mechanisms <- function(
   ### Structure plots
   ###########################
   
+  domain_pos <- do.call("c", lapply(pos_subset_list, function(x){x}))
+  ligand_pos <- do.call("c", lapply(ligand_pos_list, function(x){x}))
+  
+  doubledeepms__plot_sturcture_examples_residues(
+    pdb_id = pdb_id,
+    pdb_view = pdb_view,
+    domain_pos = domain_pos,
+    ligand_pos = ligand_pos,
+    domain_backbone_color = colour_scheme[["shade 5"]][[1]],
+    ligand_backbone_color = colour_scheme[["shade 5"]][[2]],
+    domain_residues_color = colour_scheme[["shade 0"]][[4]],
+    ligand_residues_color = colour_scheme[["shade 5"]][[4]],
+    zoom_center = zoom_pdb,
+    output_file = file.path(outpath, paste0("pymol_script_highlighted_residues_", paste(domain_pos, collapse="_"), ".txt"))
+  )
   
 }
 
