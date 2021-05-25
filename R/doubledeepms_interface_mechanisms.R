@@ -3,6 +3,7 @@
 #'
 #' Plot terface structures and binding free energy heatmaps subsets
 #'
+#' @param base_dir Base directory for all output file (required, change accordingly)
 #' @param input_folder_prefix folder name where free energy heatmap data is (required)
 #' @param domain_name domain name (required)
 #' @param outpath output path for plots and saved objects (required)

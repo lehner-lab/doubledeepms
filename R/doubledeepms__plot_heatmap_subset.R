@@ -4,6 +4,9 @@
 #'
 #' @param input_file data frame with heatmap values (required)
 #' @param output_file plot output file path
+#' @param mut_subset vector of aa mutations to show in the heat map y axis (required)
+#' @param pos_subset vector of domain positions to show in the heat map x axis (required)
+#' @param order_mut_subset whether the y axis should follow the order of aa of the mut_subset (True, False, default: True)
 #' @param width plot width in "units"
 #' @param height plot height in "units"
 #' @param units plot size units ("in", "cm", or "mm")

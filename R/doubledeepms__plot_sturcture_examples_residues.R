@@ -3,7 +3,7 @@
 #' generate pymol script to get figures of pdb structures highlighting example residues
 #'
 #' @param pdb_id name of the pdb structure (required)
-#' @param pdv_view vector of the pdb sturcture orientation (required)
+#' @param pdb_view vector of the pdb sturcture orientation (required)
 #' @param domain_pos vector of domain positions to highlight in the heatmap and 3D structure (required)
 #' @param ligand_pos vector of domain positions to highlight in the 3D structure (required)
 #' @param domain_backbone_color color of the domain backbone in the 3D structure
