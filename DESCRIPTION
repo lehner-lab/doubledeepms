@@ -23,8 +23,7 @@ Imports:
 	ROCR,
 	stringr,
 	gridExtra,
-	ggrepel,
-	grDevices
+	ggrepel
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
