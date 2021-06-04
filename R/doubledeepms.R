@@ -50,7 +50,13 @@ doubledeepms <- function(
       "#410800",
       "#412D00",
       "#020B2C",
-      "#00300D"))
+      "#00300D"),
+    "shade 5" = list(
+      "#CCCCCC",
+      "#FF991F",
+      "#5CB8FF",
+      "#B22222"
+    ))
 
   #First and last analysis stages
   first_stage <- startStage
@@ -226,6 +232,24 @@ doubledeepms <- function(
   ###########################
 
   stagenum <- 8
+  # GRB2-SH3
+  doubledeepms_interface_mechanisms(
+    base_dir = base_dir, 
+    domain_name = "GRB2-SH3", 
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_ligand_interface_plots", stagenum=stagenum, base_dir=base_dir), 
+    colour_scheme = colour_scheme,
+    mut_subset_list = list(
+      c("T", "F","Q","H", "S", "V", "I", "C"),
+      c("T", "S", "L", "V", "A", "K", "R")),
+    pos_subset_list = list(
+      c(7, 51),
+      c(46)),
+    ligand_pos_list = list(
+      c(3,4),
+      c(11)),
+    pdb_id = "2vwf",
+    pdb_view = "(0.837024331,0.261427671,0.480670929,0.209657252,0.658192515,-0.723066926,-0.505404055,0.706001341,0.496113181,0.000000000,0.000000000,-141.782043457,-2.309909821,13.775757790,0.139801025,111.782043457,171.782043457,-20.000000000 )",
+    )
 
   ### Allostery plots
   ###########################

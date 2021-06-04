@@ -1,10 +1,12 @@
-
-#' doubledeepms__tile_heatmap_wrapper
+#' doubledeepms__plot_heatmap_subset
 #'
-#' ggplot tile heatmap wrapper.
+#' ggplot subset and plot free energies heatmap.
 #'
-#' @param input_matrix matrix of heatmap values (required)
+#' @param input_file data frame with heatmap values (required)
 #' @param output_file plot output file path
+#' @param mut_subset vector of aa mutations to show in the heat map y axis (required)
+#' @param pos_subset vector of domain positions to show in the heat map x axis (required)
+#' @param order_mut_subset whether the y axis should follow the order of aa of the mut_subset (True, False, default: True)
 #' @param width plot width in "units"
 #' @param height plot height in "units"
 #' @param units plot size units ("in", "cm", or "mm")
@@ -42,21 +44,25 @@
 #' @param highlight_regions list of highlighted regions of form: list("red" = list("region1" = c(_min_, _max_), "region2" = c(_min_, _max_), ...), "blue" = list("region3" = c(_min_, _max_), ...), ...)
 #' @param x_breaks x-axis breaks (for displaing xtick_labels)
 #' @param y_breaks y-axis breaks (for displaing ytick_labels)
+#' @param show_legend whether to plot legend (True, False)
 #' @param plot whether to plot the heatmap (True, False)
 #'
 #' @return Nothing
 #' @export
 #' @import data.table
-doubledeepms__tile_heatmap_wrapper <- function(
-  input_matrix, 
+doubledeepms__plot_heatmap_subset <- function(
+  input_file, 
   output_file, 
+  mut_subset,
+  pos_subset,
+  order_mut_subset = T,
   width=10, 
   height=4, 
   units="in",
   colour_clip=4, 
   cluster='both', 
-  xlab='x', 
-  ylab='y', 
+  xlab='', 
+  ylab='', 
   xtick_labels=NULL, 
   ytick_labels=NULL,
   colour_type='continuous', 
@@ -87,45 +93,27 @@ doubledeepms__tile_heatmap_wrapper <- function(
   highlight_regions=NULL, 
   x_breaks=ggplot2::waiver(), 
   y_breaks=ggplot2::waiver(), 
+  show_legend = F,
   plot = T){
-
-  order_row <- rev(1:dim(input_matrix)[1])
-  order_col <- 1:dim(input_matrix)[2]
-  if(cluster %in% c('both', 'row')){
-    d <- dist(input_matrix, method = "euclidean") # distance matrix
-    order_row <- hclust(d, method="ward.D")$order
-  }
-  if(cluster %in% c('both', 'column')){
-    d <- dist(t(input_matrix), method = "euclidean") # distance matrix
-    order_col <- hclust(d, method="ward.D")$order    
-  }
-  plot_df <- reshape2::melt(input_matrix[order_row,order_col])
-  colnames(plot_df) <- c('y', 'x', 'value')
-  plot_df$label <- ""
-  if(!is.null(input_matrix_text)){
-    plot_df_text <- reshape2::melt(input_matrix_text[order_row,order_col])
-    colnames(plot_df_text) <- c('y', 'x', 'label')
-    plot_df$label <- plot_df_text$label
-  }
-  if(colour_type=='continuous' & colour_clip){
-    plot_df$value[plot_df$value>colour_clip] <- colour_clip
-    plot_df$value[plot_df$value<(-colour_clip)] <- (-colour_clip)    
-  }
-  if(!is.null(input_matrix_point)){
-    plot_df_point <- reshape2::melt(input_matrix_point[order_row,order_col])
-    colnames(plot_df_point) <- c('y', 'x', 'point')
-    plot_df$point <- plot_df_point$point
-    #Plot points on top of 0 tiles
-    plot_df$value_point <- plot_df$value
-    plot_df[plot_df$point==T,]$value <- 0
-  }
   
-  #Write table with heatmap values
-  write_df <- plot_df
-  write_df$x <- gsub("\\\n", "_", write_df$x)
-  write.table(write_df, 
-              file = gsub("\\.pdf", "_data.txt", output_file), 
-              quote = F, sep = "\t", row.names = F)
+  aa_obj <- Biostrings::AAString("GAVLMIFYWKRHDESTCNQP")
+  aa_list <- Biostrings::AMINO_ACID_CODE[strsplit(as.character(aa_obj), NULL)[[1]]]
+  aa_order <- names(aa_list) 
+  
+  plot_df <- input_file
+  plot_df$x <- gsub("_", "\\\n", plot_df$x)
+  
+  #order rows and columns to match energy heatmaps
+  plot_df$y <- factor(plot_df$y, levels = rev(c(aa_order, "Prox.")))
+  plot_df$x <- factor(plot_df$x, levels = unique(plot_df$x))
+  
+  #subset the heatmap plot by position and aa subsitution
+  plot_df <- plot_df[Pos %in% pos_subset,]
+  plot_df <- plot_df[y %in% mut_subset,]
+  
+  if(order_mut_subset){
+    plot_df$y <- factor(plot_df$y, levels = rev(mut_subset))
+  }
   
   p <- ggplot2::ggplot(plot_df, ggplot2::aes(x, y)) + 
     ggplot2::geom_tile(ggplot2::aes(fill = value)) + 
@@ -172,7 +160,7 @@ doubledeepms__tile_heatmap_wrapper <- function(
   if(!is.null(input_matrix_point)){
     p <- p + ggplot2::geom_point(data = plot_df[plot_df$point == T,], ggplot2::aes(colour = value_point), size = 2)
   }
-
+  
   #xtick labels specified
   if(!is.null(xtick_labels)){
     if(is.numeric(plot_df$x)){
@@ -209,8 +197,11 @@ doubledeepms__tile_heatmap_wrapper <- function(
     p <- p + ggplot2::scale_fill_brewer(palette='Set1')    
     p <- p + ggplot2::scale_colour_brewer(palette='Set1')    
   }
+  if(!show_legend){
+    p <- p + ggplot2::theme(legend.position = "none") 
+  }
   if(plot){
     ggplot2::ggsave(file=output_file, width=width, units=units, height=height, useDingbats=FALSE)
   }
   return(p)
-}
+  }
