@@ -5,15 +5,13 @@
 #' @param input_dt processed data table with DiMSum fitness scores (required)
 #' @param outpath output path for plots and saved objects (required)
 #' @param val_inpath  path to experimental fitness validations (required)
-#' @param colour_scheme colour scheme file (required)
 #'
 #' @return Nothing
 #' @export
 doubledeepms__plot_growth_validations <- function(
   input_dt, 
   outpath,
-  val_inpath,
-  colour_scheme){
+  val_inpath){
   
   #Check validation data exists
   if(is.na(val_inpath)){return()}
@@ -42,16 +40,17 @@ doubledeepms__plot_growth_validations <- function(
   plot_dt <- merge(gr_mean, singles_dt[, .(id, fitness, pca_type)], by.x = c("genotype", "pca_type"), by.y=c("id", "pca_type"), all=F)
   plot_dt[pca_type == "Abundance", fitness_rel2wt := fitness-plot_dt[pca_type == "Abundance" & genotype == "GRB2", fitness]]
   plot_dt[pca_type == "Binding", fitness_rel2wt := fitness-plot_dt[pca_type == "Binding" & genotype == "GRB2", fitness]]
-  
-  
+  plot_shapes <- c(21, 19)
+  names(plot_shapes) <- c("Abundance", "Binding")
   
   p <- ggplot2::ggplot(plot_dt, ggplot2::aes(x=growth_rate_slope_rel2wt, y=fitness)) +
-    ggplot2::geom_point(size=2, ggplot2::aes(color=pca_type)) +
+    ggplot2::geom_point(size=2, ggplot2::aes(shape=pca_type)) +
+    ggplot2::geom_smooth(method = "lm", formula = 'y~x', linetype = 2, color = "grey", se = F) +
     ggplot2::theme_classic() +
     ggplot2::theme(legend.position = "bottom", legend.direction = "vertical", plot.margin = ggplot2::unit(c(30, 30, 30, 30), "points")) +
     ggplot2::coord_cartesian(clip = "off") +
-    ggplot2::scale_color_manual("PCA assay",values = c("#9061A7", "#F7941E")) +
-    ggrepel::geom_text_repel(ggplot2::aes(label = genotype, color=pca_type), show.legend = F, 
+    ggplot2::scale_shape_manual("PCA assay",values = plot_shapes) +
+    ggrepel::geom_text_repel(ggplot2::aes(label = genotype), show.legend = F, 
                              max.overlaps = Inf, xlim = c(-10, 10), ylim = c(-10, 10)) +
     ggplot2::geom_text(data = plot_dt[,.(label = paste(" r = ", round(cor(growth_rate_slope_rel2wt, fitness, use = "pairwise.complete", method = "pearson"), 2), sep=""))], 
                        ggplot2::aes(label=label, x=-Inf, y=Inf, hjust = 0, vjust = 1)) +

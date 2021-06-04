@@ -14,6 +14,7 @@ Imports:
 	Cairo,
 	data.table,
 	ggplot2,
+	GGally,
 	hexbin,
 	optparse,
 	parallel,

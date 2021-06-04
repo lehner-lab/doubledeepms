@@ -74,19 +74,25 @@ doubledeepms__get_model_results <- function(
   coef_dt[, b_ddg_pred_sd := apply(boot_dt[,.SD,,.SDcols = grep("b_ddg_pred", names(boot_dt))], 1, sd)]
 
   #Coefficient ids
-  coef_names <- unlist(fread(file.path(input_folder, "", "feature_matrix_colnames.txt"), header = F))
-  coef_dt[, name := gsub("pos", "", coef_names)]
-  all_mut_pos <- unique(unlist(as.data.frame(input_dt[id!="-0-",.(mut_pos1, mut_pos2)])))
-  all_mut_pos <- all_mut_pos[order(all_mut_pos)]
-  all_mut_pos <- rev(all_mut_pos[!is.na(all_mut_pos)])
-  coef_dt[name!="(Intercept)", Pos := all_mut_pos[as.integer(sapply(lapply(strsplit(name, "\\."), unlist), "[", 1))]]
-  coef_dt[name!="(Intercept)", Mut := sapply(lapply(strsplit(name, "\\."), unlist), "[", 2)]
-  coef_dt[name!="(Intercept)", WT_AA := sapply(as.list(Pos), function(x){substr(input_dt[id=="-0-", aa_seq][1], x, x)})]
-  coef_dt[name!="(Intercept)", id := paste0(WT_AA, Pos, Mut)]
-  coef_dt[name=="(Intercept)", id := "-0-"]
-  coef_dt[, mut_order := 1]
-  coef_dt[id == "-0-", mut_order := 0]
-
+  if(!"id" %in% names(coef_dt)){
+    coef_names <- unlist(fread(file.path(input_folder, "", "feature_matrix_colnames.txt"), header = F))
+    coef_dt[, name := gsub("pos", "", coef_names)]
+    all_mut_pos <- unique(unlist(as.data.frame(input_dt[id!="-0-",.(mut_pos1, mut_pos2)])))
+    all_mut_pos <- all_mut_pos[order(all_mut_pos)]
+    all_mut_pos <- rev(all_mut_pos[!is.na(all_mut_pos)])
+    coef_dt[name!="(Intercept)", Pos := all_mut_pos[as.integer(sapply(lapply(strsplit(name, "\\."), unlist), "[", 1))]]
+    coef_dt[name!="(Intercept)", Mut := sapply(lapply(strsplit(name, "\\."), unlist), "[", 2)]
+    coef_dt[name!="(Intercept)", WT_AA := sapply(as.list(Pos), function(x){substr(input_dt[id=="-0-", aa_seq][1], x, x)})]
+    coef_dt[name!="(Intercept)", id := paste0(WT_AA, Pos, Mut)]
+    coef_dt[name=="(Intercept)", id := "-0-"]
+    coef_dt[, mut_order := 1]
+    coef_dt[id == "-0-", mut_order := 0]
+  }else{
+    coef_dt[id == "WT", id := "-0-"]
+    coef_dt[, mut_order := 1]
+    coef_dt[id == "-0-", mut_order := 0]
+  }
+ 
   #Append to predicted fitness data.table
   pred_dt <- rbind(pred_dt, coef_dt[!id %in% pred_dt[,id],.(f_dg_pred, f_ddg_pred, f_ddg_pred_sd, b_dg_pred, b_ddg_pred, b_ddg_pred_sd, id, mut_order)], fill = T)
   return(pred_dt)

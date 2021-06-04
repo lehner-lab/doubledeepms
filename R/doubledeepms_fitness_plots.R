@@ -73,9 +73,7 @@ doubledeepms_fitness_plots <- function(
   doubledeepms__plot_growth_validations(
     input_dt = fitness_dt, 
     outpath = outpath,
-    val_inpath = val_inpath,
-    colour_scheme
-  )
+    val_inpath = val_inpath)
 
   ### Plot fitness distributions by protein and PCA type
   ###########################
@@ -126,5 +124,72 @@ doubledeepms_fitness_plots <- function(
     d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
   }
   ggplot2::ggsave(file.path(outpath, "fitness_scatter_singles_overlay.pdf"), d, width = 7, height = 3, useDingbats=FALSE)
+
+  ###########################
+  ### Where are strongest binding effects?
+  ###########################
+
+  fitness_dt_merge <- merge(
+    fitness_dt[Nham_aa==1 & STOP==F & STOP_readthrough==F & pca_type=="Binding"], 
+    fitness_dt[Nham_aa==1 & STOP==F & STOP_readthrough==F & pca_type=="Abundance", .(aa_seq, fitness_abundance = fitness, sigma_abundance = sigma)], by = "aa_seq", all.x = T)
+
+  #Thresholded data
+  plot_list <- list()
+  for(i in c(1:40)/20){
+    plot_list[[as.character(i)]] <- fitness_dt_merge[Nham_aa==1 & STOP==F & STOP_readthrough==F & (fitness-1.96*sigma)>i/10,]
+    plot_list[[as.character(i)]][, fitness_class := i]
+    plot_list[[as.character(-i)]] <- fitness_dt_merge[Nham_aa==1 & STOP==F & STOP_readthrough==F & (fitness-1.96*sigma)<(-i),]
+    plot_list[[as.character(-i)]][, fitness_class := (-i)]
+  }
+  plot_dt <- rbindlist(plot_list)
+  
+  #Plot
+  plot_dt_all <- plot_dt[,.(num_mutations = .N),.(fitness_class, Pos_class, protein)]
+  d <- ggplot2::ggplot(plot_dt_all[order(Pos_class)],ggplot2::aes(fitness_class, num_mutations, color = Pos_class)) +
+    ggplot2::geom_line(size = 1) +
+    # ggplot2::geom_point(size = 0.5) +
+    ggplot2::geom_vline(xintercept = 0, linetype = 2) +
+    ggplot2::facet_grid(protein~., scales = "free") +
+    ggplot2::xlab("Binding fitness threshold") +
+    ggplot2::ylab("#Mutations") +
+    ggplot2::labs(color = "Residue\nposition") +
+    ggplot2::theme_bw()
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_color_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
+  }
+  ggplot2::ggsave(file.path(outpath, "binding_fitness_mutations_all.pdf"), d, width = 7, height = 5, useDingbats=FALSE)
+
+ #Plot
+  plot_dt_all <- plot_dt[protein!="GB1",.(num_mutations = .N),.(fitness_class, Pos_class, protein)]
+  d <- ggplot2::ggplot(plot_dt_all[order(Pos_class)],ggplot2::aes(fitness_class, num_mutations, color = Pos_class)) +
+    ggplot2::geom_line(size = 1) +
+    # ggplot2::geom_point(size = 0.5) +
+    ggplot2::geom_vline(xintercept = 0, linetype = 2) +
+    ggplot2::facet_wrap(~protein, nrow = 1, scales = "free") +
+    ggplot2::xlab("Binding fitness threshold") +
+    ggplot2::ylab("#Mutations") +
+    ggplot2::labs(color = "Residue\nposition") +
+    ggplot2::theme_bw()
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_color_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
+  }
+  ggplot2::ggsave(file.path(outpath, "binding_fitness_mutations.pdf"), d, width = 10, height = 3, useDingbats=FALSE)
+
+  #Plot - abundance unchanged
+  plot_dt_all <- plot_dt[(abs(fitness_abundance)-1.96*sigma_abundance)<0,.(num_mutations = .N),.(fitness_class, Pos_class, protein)]
+  d <- ggplot2::ggplot(plot_dt_all[order(Pos_class)],ggplot2::aes(fitness_class, num_mutations, color = Pos_class)) +
+    ggplot2::geom_line(size = 1) +
+    # ggplot2::geom_point(size = 0.5) +
+    ggplot2::geom_vline(xintercept = 0, linetype = 2) +
+    ggplot2::facet_grid(protein~., scales = "free") +
+    ggplot2::xlab("Binding fitness threshold") +
+    ggplot2::ylab("#Mutations") +
+    ggplot2::labs(color = "Residue\nposition") +
+    ggplot2::theme_bw()
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_color_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
+  }
+  ggplot2::ggsave(file.path(outpath, "binding_fitness_mutations_all_abundanceunchanged.pdf"), d, width = 7, height = 5, useDingbats=FALSE)
+
 
 }

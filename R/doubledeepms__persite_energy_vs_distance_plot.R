@@ -47,7 +47,9 @@ doubledeepms__persite_energy_vs_distance_plot <- function(
 
   #Threshold for binding interface modulating residues (50% of binding interface residues)
   # reg_threshold <- plot_dt[Pos_class=="binding_interface"][order(plot_metric, decreasing = F)][ceiling(0.5*.N),plot_metric]
-  reg_threshold <- plot_dt[Pos_class=="binding_interface"][order(plot_metric, decreasing = T)][5][,plot_metric]
+  # reg_threshold <- plot_dt[Pos_class=="binding_interface"][order(plot_metric, decreasing = T)][5][,plot_metric]
+  # reg_threshold <- plot_dt[Pos_class=="binding_interface",median(plot_metric)]
+  reg_threshold <- input_dt[get(paste0(trait_prefix, "_pred_conf"))==T & Pos_class=="binding_interface",mean(abs(.SD[[1]])),,.SDcols = metric_name]
 
   #Residue class
   allostery_pos <- plot_dt[plot_metric>=reg_threshold,Pos_ref]

@@ -73,17 +73,15 @@ doubledeepms <- function(
     execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
   #PSD95-PDZ3
   doubledeepms_thermo_model_results(
-    mochi_outpath = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state"),
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse"),
     literature_free_energies = file.path(base_dir, "Data", "in_vitro", "PDZ_literature_free_energies.txt"),
     position_offset = 310,
-    folding_energy_max_sd = 0.37,
-    binding_energy_max_sd = 0.5,
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_PSD95-PDZ3", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
     execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
   #GRB2-SH3
   doubledeepms_thermo_model_results(
-    mochi_outpath = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state"),
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse"),
     position_offset = 0,
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_GRB2-SH3", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,

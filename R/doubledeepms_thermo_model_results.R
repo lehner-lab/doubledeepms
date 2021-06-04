@@ -49,8 +49,7 @@ doubledeepms_thermo_model_results <- function(
   #Load model data
   fitness_dt <- fread(file.path(mochi_outpath, "model_data.txt"))
 
-  #Load model parameters
-  modpar_dt <- fread(file.path(mochi_outpath, "model_parameters_0.txt"), header = F)
+  #Plot
 
   #Load model results
   pred_dt <- doubledeepms__get_model_results(
@@ -130,6 +129,18 @@ doubledeepms_thermo_model_results <- function(
     "b_ddg_pred_sd", 
     "f_ddg_pred_conf", 
     "b_ddg_pred_conf")], 
-  file = file.path(outpath, "dg_singles.txt"), 
-  quote = F, sep = "\t", row.names = F)
+    file = file.path(outpath, "dg_singles.txt"), 
+    quote = F, sep = "\t", row.names = F)
+
+  #Add ddG significance
+  pred_dt_conf[mut_order==1 & !duplicated(id), b_ddg_pred_sig := p.adjust(doubledeepms__pvalue(b_ddg_pred, b_ddg_pred_sd), method = "BH")<0.05]
+  pred_dt_conf[mut_order==1 & !duplicated(id), f_ddg_pred_sig := p.adjust(doubledeepms__pvalue(f_ddg_pred, f_ddg_pred_sd), method = "BH")<0.05]
+
+  #Save ids of singles with significant ddGs
+  write.table(pred_dt_conf[mut_order==1 & !duplicated(id) & b_ddg_pred_sig==T,id], 
+    file = file.path(outpath, "b_ddg_sig_singles_id.txt"), 
+    quote = F, sep = "\n", row.names = F, col.names = "id")
+  write.table(pred_dt_conf[mut_order==1 & !duplicated(id) & f_ddg_pred_sig==T,id], 
+    file = file.path(outpath, "f_ddg_sig_singles_id.txt"), 
+    quote = F, sep = "\n", row.names = F, col.names = "id")
 }

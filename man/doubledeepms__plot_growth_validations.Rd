@@ -4,8 +4,7 @@
 \alias{doubledeepms__plot_growth_validations}
 \title{doubledeepms__plot_fitness_replicates_cor}
 \usage{
-doubledeepms__plot_growth_validations(input_dt, outpath, val_inpath,
-  colour_scheme)
+doubledeepms__plot_growth_validations(input_dt, outpath, val_inpath)
 }
 \arguments{
 \item{input_dt}{processed data table with DiMSum fitness scores (required)}
@@ -13,8 +12,6 @@ doubledeepms__plot_growth_validations(input_dt, outpath, val_inpath,
 \item{outpath}{output path for plots and saved objects (required)}
 
 \item{val_inpath}{path to experimental fitness validations (required)}
-
-\item{colour_scheme}{colour scheme file (required)}
 }
 \value{
 Nothing

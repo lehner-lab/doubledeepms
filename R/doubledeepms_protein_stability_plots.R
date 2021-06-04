@@ -249,8 +249,7 @@ doubledeepms_protein_stability_plots <- function(
   set.seed(2)
   d <- ggplot2::ggplot(plot_dt[Pos_class=="surface"],ggplot2::aes(y = f_ddg_pred_stab_res5, Hydrophobicity, fill = f_ddg_pred_stab_res5)) +
     ggplot2::geom_violin(draw_quantiles = c(0.25, 0.5, 0.75)) +
-    ggplot2::geom_jitter(width = 0.2, height = 0.2, size = 2, pch = 21) +
-
+    ggplot2::geom_jitter(width = 0, height = 0.2, size = 2, pch = 21) +
     ggplot2::geom_vline(xintercept = 0, linetype = 2) +
     ggplot2::facet_grid(~protein, scales = "free") + 
     ggplot2::theme_classic() +
@@ -267,7 +266,7 @@ doubledeepms_protein_stability_plots <- function(
   set.seed(1)
   d <- ggplot2::ggplot(plot_dt[Pos_class=="surface" & protein!="GB1"],ggplot2::aes(y = f_ddg_pred_stab_res5, Hydrophobicity, fill = f_ddg_pred_stab_res5)) +
     ggplot2::geom_violin(draw_quantiles = c(0.25, 0.5, 0.75)) +
-    ggplot2::geom_jitter(width = 0.2, height = 0.2, size = 2, pch = 21) +
+    ggplot2::geom_jitter(width = 0, height = 0.2, size = 2, pch = 21) +
     ggplot2::geom_vline(xintercept = 0, linetype = 2) +
     ggplot2::facet_grid(~protein, scales = "free") + 
     ggplot2::theme_classic() +

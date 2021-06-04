@@ -15,18 +15,19 @@ doubledeepms__allosteric_mutations_scatterplot <- function(
   colour_scheme
   ){
 
-  #dG max absolute value
-  ddg_max <- 5
-
   #Outlier changes in binding free energy
   reg_threshold <- input_dt[b_ddg_pred_conf==T & Pos_class=="binding_interface"][!duplicated(Pos_ref)][order(b_ddg_posmeanabs_conf, decreasing = T)][5][,b_ddg_posmeanabs_conf]
   input_dt[b_ddg_pred_conf==T, b_ddg_pred_outlier := p.adjust(doubledeepms__pvalue(abs(b_ddg_pred)-reg_threshold, b_ddg_pred_sd), method = "BH")<0.05 & (abs(b_ddg_pred)-reg_threshold)>0]
+
+  # #Outlier changes in binding free energy
+  # reg_threshold <- input_dt[b_ddg_pred_conf==T, mean(b_ddg_pred)]
+  # input_dt[b_ddg_pred_conf==T, b_ddg_pred_outlier := p.adjust(doubledeepms__pvalue(b_ddg_pred-reg_threshold, b_ddg_pred_sd), method = "BH")<0.05]
 
   #Allosteric mutations (not within binding interface and not at allosteric site)
   input_dt[b_ddg_pred_conf==T & is.na(allosteric), allosteric_mutation := b_ddg_pred_outlier]
 
   #Scatterplot
-  plot_dt <- input_dt[b_ddg_pred_conf & abs(b_ddg_pred)<ddg_max]
+  plot_dt <- input_dt[b_ddg_pred_conf==T]
   plot_dt[, Pos_class_plot := "Remainder"]
   plot_dt[allosteric_mutation & Pos_class=="binding_interface", Pos_class_plot := "Orthosteric mutation"]
   plot_dt[allosteric_mutation & Pos_class=="core", Pos_class_plot := "Core allosteric mutation"]

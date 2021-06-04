@@ -28,13 +28,19 @@ doubledeepms__predict_fitness <- function(
   #Folding fitness
   if(!is.null(folding_energy)){
     pred_list[["fraction_folded"]] <- doubledeepms__fraction_folded(folding_energy, RT)
-    pred_list[["fitness_folding"]] <- (pred_list[["fraction_folded"]] * modpar_list[["folding_linear_kernel"]] + modpar_list[["folding_linear_bias"]] - modpar_list[["fitness_scaler_bias"]]) / modpar_list[["fitness_scaler_kernel"]]
+    pred_list[["fitness_folding"]] <- pred_list[["fraction_folded"]] * modpar_list[["folding_linear_kernel"]] + modpar_list[["folding_linear_bias"]]
+    if("fitness_scaler_bias" %in% names(modpar_list) & "fitness_scaler_kernel" %in% names(modpar_list)){
+      pred_list[["fitness_folding"]] <- (pred_list[["fitness_folding"]] - modpar_list[["fitness_scaler_bias"]]) / modpar_list[["fitness_scaler_kernel"]]
+    }
   }
 
   #Binding fitness
   if(!is.null(folding_energy) & !is.null(binding_energy) & length(folding_energy) == length(binding_energy)){
     pred_list[["fraction_bound"]] <- doubledeepms__fraction_bound(folding_energy, binding_energy, RT)
-    pred_list[["fitness_binding"]] <- (pred_list[["fraction_bound"]] * modpar_list[["binding_linear_kernel"]] + modpar_list[["binding_linear_bias"]] - modpar_list[["fitness_scaler_bias"]]) / modpar_list[["fitness_scaler_kernel"]]
+    pred_list[["fitness_binding"]] <- pred_list[["fraction_bound"]] * modpar_list[["binding_linear_kernel"]] + modpar_list[["binding_linear_bias"]]
+    if("fitness_scaler_bias" %in% names(modpar_list) & "fitness_scaler_kernel" %in% names(modpar_list)){
+      pred_list[["fitness_binding"]] <- (pred_list[["fitness_binding"]] - modpar_list[["fitness_scaler_bias"]]) / modpar_list[["fitness_scaler_kernel"]]
+    }
   }
 
   #Return

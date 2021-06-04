@@ -55,6 +55,7 @@ doubledeepms_allostery_plots <- function(
     #Per residue metrics
     for(i in c("f_ddg", "b_ddg")){
       # temp_dt[,paste0(i, "_posmaxabs") := max(abs(.SD[[1]]), na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred"))]
+      temp_dt[,paste0(i, "_posmedianabs") := median(abs(.SD[[1]]), na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred"))]
       temp_dt[,paste0(i, "_posmeanabs") := mean(abs(.SD[[1]]), na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred"))]
       temp_dt[,paste0(i, "_posse") := sd(abs(.SD[[1]]), na.rm = T)/sqrt(sum(!is.na(.SD[[1]]))),Pos_ref,.SDcols = paste0(i, c("_pred"))]
       temp_dt[,paste0(i, "_wposmeanabs") := sum(abs(.SD[[1]])/.SD[[2]]^2, na.rm = T)/sum(1/.SD[[2]]^2, na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred", "_pred_sd"))]
@@ -66,6 +67,7 @@ doubledeepms_allostery_plots <- function(
       temp_dt[get(paste0(i, "_pred_conf"))==TRUE,paste0(i, "_pred_filtered") := .SD[[1]],,.SDcols = paste0(i, "_pred")]
       temp_dt[get(paste0(i, "_pred_conf"))==TRUE,paste0(i, "_pred_sd_filtered") := .SD[[1]],,.SDcols = paste0(i, "_pred_sd")]
       # temp_dt[,paste0(i, "_posmaxabs_conf") := max(abs(.SD[[1]]), na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred_filtered"))]
+      temp_dt[,paste0(i, "_posmedianabs_conf") := median(abs(.SD[[1]]), na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred_filtered"))]
       temp_dt[,paste0(i, "_posmeanabs_conf") := mean(abs(.SD[[1]]), na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred_filtered"))]
       temp_dt[,paste0(i, "_posse_conf") := sd(abs(.SD[[1]]), na.rm = T)/sqrt(sum(!is.na(.SD[[1]]))),Pos_ref,.SDcols = paste0(i, c("_pred_filtered"))]
       temp_dt[,paste0(i, "_wposmeanabs_conf") := sum(abs(.SD[[1]])/.SD[[2]]^2, na.rm = T)/sum(1/.SD[[2]]^2, na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred_filtered", "_pred_sd_filtered"))]
@@ -164,6 +166,68 @@ doubledeepms_allostery_plots <- function(
   dg_dt <- rbindlist(dg_list)
 
   ###########################
+  ### Where are strongest binding effects?
+  ###########################
+
+  #Thresholded data
+  plot_list <- list()
+  for(i in c(1:40)/20){
+    plot_list[[as.character(i)]] <- dg_dt[b_ddg_pred_conf==T & (b_ddg_pred-1.96*b_ddg_pred_sd)>i & f_ddg_pred_conf==T,]
+    plot_list[[as.character(i)]][, b_ddg_pred_class := i]
+    plot_list[[as.character(-i)]] <- dg_dt[b_ddg_pred_conf==T & (b_ddg_pred-1.96*b_ddg_pred_sd)<(-i) & f_ddg_pred_conf==T,]
+    plot_list[[as.character(-i)]][, b_ddg_pred_class := (-i)]
+  }
+  plot_dt <- rbindlist(plot_list)
+  
+  #Plot
+  plot_dt_all <- plot_dt[b_ddg_pred_conf==T,.(num_mutations = .N),.(b_ddg_pred_class, Pos_class, protein)]
+  d <- ggplot2::ggplot(plot_dt_all[order(Pos_class)],ggplot2::aes(b_ddg_pred_class, num_mutations, color = Pos_class)) +
+    ggplot2::geom_line(size = 1) +
+    # ggplot2::geom_point(size = 0.5) +
+    ggplot2::geom_vline(xintercept = 0, linetype = 2) +
+    ggplot2::facet_grid(protein~., scales = "free") +
+    ggplot2::xlab(expression("Binding "*Delta*Delta*"G threshold")) +
+    ggplot2::ylab("#Mutations") +
+    ggplot2::labs(color = "Residue\nposition") +
+    ggplot2::theme_bw()
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
+  }
+  ggplot2::ggsave(file.path(outpath, "binding_affinity_mutations_all.pdf"), d, width = 7, height = 5, useDingbats=FALSE)
+
+  #Plot - only PSD95-PDZ3 and GRB2-SH3
+  plot_dt_all <- plot_dt[b_ddg_pred_conf==T & protein!="GB1",.(num_mutations = .N),.(b_ddg_pred_class, Pos_class, protein)]
+  d <- ggplot2::ggplot(plot_dt_all[order(Pos_class)],ggplot2::aes(b_ddg_pred_class, num_mutations, color = Pos_class)) +
+    ggplot2::geom_line(size = 1) +
+    # ggplot2::geom_point(size = 0.5) +
+    ggplot2::geom_vline(xintercept = 0, linetype = 2) +
+    ggplot2::facet_wrap(~protein, nrow = 1, scales = "free") +
+    ggplot2::xlab(expression("Binding "*Delta*Delta*"G threshold")) +
+    ggplot2::ylab("#Mutations") +
+    ggplot2::labs(color = "Residue\nposition") +
+    ggplot2::theme_bw()
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
+  }
+  ggplot2::ggsave(file.path(outpath, "binding_affinity_mutations.pdf"), d, width = 7, height = 3, useDingbats=FALSE)
+
+  #Plot abundance unchanged
+  plot_dt_all <- plot_dt[(abs(f_ddg_pred)-1.96*f_ddg_pred_sd)<0 & b_ddg_pred_conf==T,.(num_mutations = .N),.(b_ddg_pred_class, Pos_class, protein)]
+  d <- ggplot2::ggplot(plot_dt_all[order(Pos_class)],ggplot2::aes(b_ddg_pred_class, num_mutations, color = Pos_class)) +
+    ggplot2::geom_line(size = 1) +
+    # ggplot2::geom_point(size = 0.5) +
+    ggplot2::geom_vline(xintercept = 0, linetype = 2) +
+    ggplot2::facet_grid(protein~., scales = "free") +
+    ggplot2::xlab(expression("Binding "*Delta*Delta*"G threshold")) +
+    ggplot2::ylab("#Mutations") +
+    ggplot2::labs(color = "Residue\nposition") +
+    ggplot2::theme_bw()
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
+  }
+  ggplot2::ggsave(file.path(outpath, "binding_affinity_mutations_all_abundanceunchanged.pdf"), d, width = 7, height = 5, useDingbats=FALSE)
+
+  ###########################
   ### Pleiotropy of allosteric mutations
   ###########################
 
@@ -187,14 +251,32 @@ doubledeepms_allostery_plots <- function(
   dg_dt[b_ddg_pred_outlier==T & Pos_class!="binding_interface",.N,.(protein, ddg_class)][order(protein, ddg_class)]
   dg_dt[b_ddg_pred_outlier==T & Pos_class=="binding_interface",.N,.(protein, ddg_class)][order(protein, ddg_class)]
 
-  dg_dt[allosteric_mutation==T & Pos_class!="binding_interface",.N,.(protein, ddg_class)][order(protein, ddg_class)]
-  dg_dt[allosteric_mutation==T & Pos_class=="binding_interface",.N,.(protein, ddg_class)][order(protein, ddg_class)]
-
   fisher.test(matrix(c(
     dg_dt[b_ddg_pred_outlier==T & Pos_class=="binding_interface" & ddg_class=="Antagonistic",.N],
     dg_dt[b_ddg_pred_outlier==T & Pos_class=="binding_interface" & ddg_class!="Antagonistic",.N],
     dg_dt[b_ddg_pred_outlier==T & Pos_class!="binding_interface" & ddg_class=="Antagonistic",.N],
     dg_dt[b_ddg_pred_outlier==T & Pos_class!="binding_interface" & ddg_class!="Antagonistic",.N]), nrow = 2))
+
+  # fisher.test(matrix(c(
+  #   dg_dt[protein=="PSD95-PDZ3" & b_ddg_pred_outlier==T & Pos_class=="binding_interface" & ddg_class=="Antagonistic",.N],
+  #   dg_dt[protein=="PSD95-PDZ3" & b_ddg_pred_outlier==T & Pos_class=="binding_interface" & ddg_class!="Antagonistic",.N],
+  #   dg_dt[protein=="PSD95-PDZ3" & b_ddg_pred_outlier==T & Pos_class!="binding_interface" & ddg_class=="Antagonistic",.N],
+  #   dg_dt[protein=="PSD95-PDZ3" & b_ddg_pred_outlier==T & Pos_class!="binding_interface" & ddg_class!="Antagonistic",.N]), nrow = 2))
+
+  # fisher.test(matrix(c(
+  #   dg_dt[protein=="GRB2-SH3" & b_ddg_pred_outlier==T & Pos_class=="binding_interface" & ddg_class=="Antagonistic",.N],
+  #   dg_dt[protein=="GRB2-SH3" & b_ddg_pred_outlier==T & Pos_class=="binding_interface" & ddg_class!="Antagonistic",.N],
+  #   dg_dt[protein=="GRB2-SH3" & b_ddg_pred_outlier==T & Pos_class!="binding_interface" & ddg_class=="Antagonistic",.N],
+  #   dg_dt[protein=="GRB2-SH3" & b_ddg_pred_outlier==T & Pos_class!="binding_interface" & ddg_class!="Antagonistic",.N]), nrow = 2))
+
+  # fisher.test(matrix(c(
+  #   dg_dt[protein=="GB1" & b_ddg_pred_outlier==T & Pos_class=="binding_interface" & ddg_class=="Antagonistic",.N],
+  #   dg_dt[protein=="GB1" & b_ddg_pred_outlier==T & Pos_class=="binding_interface" & ddg_class!="Antagonistic",.N],
+  #   dg_dt[protein=="GB1" & b_ddg_pred_outlier==T & Pos_class!="binding_interface" & ddg_class=="Antagonistic",.N],
+  #   dg_dt[protein=="GB1" & b_ddg_pred_outlier==T & Pos_class!="binding_interface" & ddg_class!="Antagonistic",.N]), nrow = 2))
+
+  dg_dt[allosteric_mutation==T & Pos_class!="binding_interface",.N,.(protein, ddg_class)][order(protein, ddg_class)]
+  dg_dt[allosteric_mutation==T & Pos_class=="binding_interface",.N,.(protein, ddg_class)][order(protein, ddg_class)]
 
   fisher.test(matrix(c(
     dg_dt[allosteric_mutation==T & Pos_class=="binding_interface" & ddg_class=="Antagonistic",.N],
@@ -202,20 +284,16 @@ doubledeepms_allostery_plots <- function(
     dg_dt[allosteric_mutation==T & Pos_class!="binding_interface" & ddg_class=="Antagonistic",.N],
     dg_dt[allosteric_mutation==T & Pos_class!="binding_interface" & ddg_class!="Antagonistic",.N]), nrow = 2))
 
-  dg_dt[Pos_class=="binding_interface" & b_ddg_pred_conf==T & f_ddg_pred_conf==T, .(cor = cor(f_ddg_pred, b_ddg_pred)),.(protein, Pos_ref)][,sum(cor<0, na.rm = T)/.N,protein]
-  dg_dt[Pos_class!="binding_interface" & b_ddg_pred_conf==T & f_ddg_pred_conf==T, .(cor = cor(f_ddg_pred, b_ddg_pred)),.(protein, Pos_ref)][,sum(cor<0, na.rm = T)/.N,protein]
+  # dg_dt[Pos_class=="binding_interface" & b_ddg_pred_conf==T & f_ddg_pred_conf==T, .(cor = cor(f_ddg_pred, b_ddg_pred)),.(protein, Pos_ref)][,sum(cor<0, na.rm = T)/.N,protein]
+  # dg_dt[Pos_class!="binding_interface" & b_ddg_pred_conf==T & f_ddg_pred_conf==T, .(cor = cor(f_ddg_pred, b_ddg_pred)),.(protein, Pos_ref)][,sum(cor<0, na.rm = T)/.N,protein]
 
   ###########################
   ### Free energy scatterplots
   ###########################
 
-  #dG max absolute value
-  ddg_max <- 5
-
   #Free energy scatterplots by protein - all - conf
   plot_dt <- copy(dg_dt)[,.(protein, f_ddg_pred, b_ddg_pred, f_ddg_pred_conf, b_ddg_pred_conf, Pos_class, id, allosteric, allosteric_mutation)]
-  plot_dt <- plot_dt[f_ddg_pred_conf & b_ddg_pred_conf & abs(b_ddg_pred)<ddg_max & abs(f_ddg_pred)<ddg_max,]
-  # plot_dt <- plot_dt[f_ddg_pred_conf & b_ddg_pred_conf & abs(b_ddg_pred)<ddg_max & abs(f_ddg_pred)<ddg_max,]
+  plot_dt <- plot_dt[f_ddg_pred_conf==T & b_ddg_pred_conf==T,]
   plot_dt[, Pos_class_plot := "Remainder"]
   plot_dt[Pos_class=="binding_interface", Pos_class_plot := "binding_interface"]
   plot_dt[allosteric==T & Pos_class!="binding_interface", Pos_class_plot := "allosteric_site"]
