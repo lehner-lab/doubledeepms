@@ -78,7 +78,7 @@ doubledeepms_protein_stability_plots <- function(
     pdb <- bio3d::read.pdb(pdb_file_list[[i]], rm.alt = TRUE)
     sink()
 
-    #Replace B factor with mean folding ddG 
+    #Replace B factor with mean folding ddG
     pdb_atom_dt <- as.data.table(pdb$atom)
     f_ddg_pred_mean_dt <- dg_dt[protein==i & id!="-0-"][!duplicated(Pos_ref),.(b_new = f_ddg_wposmean, resno = Pos_ref)]
     old_colnames <- names(pdb_atom_dt)
@@ -184,7 +184,6 @@ doubledeepms_protein_stability_plots <- function(
     dg_dt[protein==i & Pos_ref %in% stab_res, f_ddg_pred_stab_res5 := T]
     print(paste0("Surface stabilising residues for ", i, ": ", paste(dg_dt[protein==i & f_ddg_pred_stab_res5 & Pos_class=="surface"][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
   }
-
   ###########################
   ### Position of de-stabilising residues
   ###########################
@@ -202,6 +201,8 @@ doubledeepms_protein_stability_plots <- function(
   plot_dt[f_ddg_pred_stab_res5==T, class := "De-stabilising"]
   plot_dt[f_ddg_pred_stab_res5==F, class := "Remainder"]
   plot_dt[, class := factor(class, levels = c("Remainder", "De-stabilising"))]
+  
+  
   d <- ggplot2::ggplot(plot_dt,ggplot2::aes(y = f_ddg_pred_stab_res5, percentage, fill = Pos_class)) +
     ggplot2::geom_bar(stat="identity") +
     ggplot2::xlab("% Residues") +
