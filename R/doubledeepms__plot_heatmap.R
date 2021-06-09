@@ -72,7 +72,7 @@ doubledeepms__plot_heatmap <- function(
   colnames(heat_mat_point) <- colnames(heat_mat)
   for(aa_pos in input_dt[order(Pos_ref),unique(Pos_ref)]){
     for(aa_id in names(aa_list)){
-      temp_index <- which(input_dt[,Pos_ref==aa_pos & Mut==aa_id & .SD[[1]]==F,,.SDcols = c(paste0(variable_name, "_conf"), variable_name)])
+      temp_index <- which(input_dt[,Pos_ref==aa_pos & Mut==aa_id & !is.na(.SD[[1]]) & .SD[[2]]==F,,.SDcols = c(variable_name, paste0(variable_name, "_conf"))])
       if(length(temp_index)==1){
         heat_mat_point[aa_id,as.character(aa_pos)] <- T
       }
@@ -91,6 +91,11 @@ doubledeepms__plot_heatmap <- function(
   input_matrix_text[dim(input_matrix_text)[1],bi_residues] <- "B"
   rownames(input_matrix_text) <- rownames(heat_mat)
   colnames(input_matrix_text) <- colnames(heat_mat)
+
+  #Matrix text - add WT AA
+  for(i in 1:length(wt_seq)){
+    input_matrix_text[which(rownames(input_matrix_text)==wt_seq[i]),i] <- wt_seq[i]
+  }
 
   #Plot
   doubledeepms__tile_heatmap_wrapper(

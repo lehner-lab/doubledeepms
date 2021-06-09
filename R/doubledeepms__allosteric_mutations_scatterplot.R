@@ -16,18 +16,15 @@ doubledeepms__allosteric_mutations_scatterplot <- function(
   ){
 
   #Outlier changes in binding free energy
-  reg_threshold <- input_dt[b_ddg_pred_conf==T & Pos_class=="binding_interface"][!duplicated(Pos_ref)][order(b_ddg_posmeanabs_conf, decreasing = T)][5][,b_ddg_posmeanabs_conf]
+  trait_prefix <- "b_ddg"
+  reg_threshold <- input_dt[Pos_class=="binding_interface",sum(abs(.SD[[1]])/.SD[[2]]^2, na.rm = T)/sum(1/.SD[[2]]^2, na.rm = T),.SDcols = paste0(trait_prefix, c("_pred", "_pred_sd"))]
   input_dt[b_ddg_pred_conf==T, b_ddg_pred_outlier := p.adjust(doubledeepms__pvalue(abs(b_ddg_pred)-reg_threshold, b_ddg_pred_sd), method = "BH")<0.05 & (abs(b_ddg_pred)-reg_threshold)>0]
-
-  # #Outlier changes in binding free energy
-  # reg_threshold <- input_dt[b_ddg_pred_conf==T, mean(b_ddg_pred)]
-  # input_dt[b_ddg_pred_conf==T, b_ddg_pred_outlier := p.adjust(doubledeepms__pvalue(b_ddg_pred-reg_threshold, b_ddg_pred_sd), method = "BH")<0.05]
 
   #Allosteric mutations (not within binding interface and not at allosteric site)
   input_dt[b_ddg_pred_conf==T & is.na(allosteric), allosteric_mutation := b_ddg_pred_outlier]
 
   #Scatterplot
-  plot_dt <- input_dt[b_ddg_pred_conf==T]
+  plot_dt <- input_dt[b_ddg_pred_conf==T & id!="-0-"]
   plot_dt[, Pos_class_plot := "Remainder"]
   plot_dt[allosteric_mutation & Pos_class=="binding_interface", Pos_class_plot := "Orthosteric mutation"]
   plot_dt[allosteric_mutation & Pos_class=="core", Pos_class_plot := "Core allosteric mutation"]
@@ -50,6 +47,22 @@ doubledeepms__allosteric_mutations_scatterplot <- function(
     ggplot2::scale_colour_manual(values=plot_cols) +
     ggplot2::labs(color = "Mutation\ntype")   
   suppressWarnings(ggplot2::ggsave(outpath, d, width = 6, height = 3, useDingbats=FALSE))
+
+  #Scatterplot - ylim
+  d <- ggplot2::ggplot(plot_dt,ggplot2::aes(Pos_ref, b_ddg_pred, color = Pos_class_plot)) +
+    ggplot2::geom_point(data = plot_dt[Pos_class_plot=="Remainder"], color = "grey", size = 0.25) +
+    ggplot2::geom_point(data = plot_dt[Pos_class_plot %in% c("Allosteric site", "Orthosteric site")], size = 0.75, shape = 21) +
+    ggplot2::geom_hline(yintercept = 0, linetype = 2) +
+    ggplot2::geom_point(data = plot_dt[grepl("mutation", Pos_class_plot)], size = 1.5) +
+    ggrepel::geom_text_repel(data = plot_dt[allosteric_mutation==T & Pos_class=="surface"], ggplot2::aes(label = id_ref, color = Pos_class_plot), show.legend = F, 
+      max.overlaps = Inf) +
+    ggplot2::xlab("Amino acid position") +
+    ggplot2::ylab(expression("Binding "*Delta*Delta*"G")) +
+    ggplot2::theme_classic() +
+    ggplot2::coord_cartesian(ylim = c(-3, 3)) +
+    ggplot2::scale_colour_manual(values=plot_cols) +
+    ggplot2::labs(color = "Mutation\ntype")   
+  suppressWarnings(ggplot2::ggsave(gsub(".pdf", "_ylim.pdf", outpath), d, width = 6, height = 3, useDingbats=FALSE))
 
   return(input_dt)
 

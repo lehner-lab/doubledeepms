@@ -50,6 +50,9 @@ doubledeepms__get_model_results <- function(
   pred_dt[, b_ddg_pred_sd := boot_dt[,apply(.SD, 1, sd),,.SDcols = names(boot_dt)[grep("b_ddg_pred", names(boot_dt))]]]
   pred_dt[, mut_order := nchar(gsub("0", "", seq))]
 
+  #Remove variants with missing coefficients
+  pred_dt <- pred_dt[!(b_ddg_pred==0 & b_ddg_pred_sd==0 & id!="-0-")]
+
   #Load all model weights (dGs)
   dg_list <- list()
   for(i in c(0, 1:n_bootstraps)){

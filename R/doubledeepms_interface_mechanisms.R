@@ -7,7 +7,6 @@
 #' @param input_folder_prefix folder name where free energy heatmap data is (required)
 #' @param domain_name domain name (required)
 #' @param outpath output path for plots and saved objects (required)
-#' @param colour_scheme colour scheme file (required)
 #' @param mut_subset_list list of aa mutations to highlight in the heatmap (required)
 #' @param pos_subset_list list of domain positions to highlight in the heatmap and 3D structure (required)
 #' @param ligand_pos_list list of domain positions to highlight in the 3D structure (required)
@@ -16,6 +15,7 @@
 #' @param zoom_pdb point to zoom into the center of the pdb structure (default: 25)
 #' @param plot_width heatmap plot width in inches (default:10)
 #' @param plot_height heatmap plot height in inches (default:4)
+#' @param colour_scheme colour scheme file (required)
 #' @param execute whether or not to execute the analysis (default: TRUE)
 #'
 #' @return Nothing
@@ -26,7 +26,6 @@ doubledeepms_interface_mechanisms <- function(
   input_folder_prefix = "006_doubledeepms_free_energy_heatmaps",
   domain_name,
   outpath,
-  colour_scheme,
   mut_subset_list,
   pos_subset_list,
   ligand_pos_list,
@@ -35,8 +34,9 @@ doubledeepms_interface_mechanisms <- function(
   zoom_pdb,
   plot_width = 10,
   plot_height = 4,
+  colour_scheme,
   execute = TRUE
-){
+  ){
   
   #Return if analysis not executed
   if(!execute){

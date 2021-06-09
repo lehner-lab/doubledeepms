@@ -79,7 +79,7 @@ doubledeepms <- function(
     execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
   #PSD95-PDZ3
   doubledeepms_thermo_model_results(
-    mochi_outpath = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse"),
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse_mult"),
     literature_free_energies = file.path(base_dir, "Data", "in_vitro", "PDZ_literature_free_energies.txt"),
     position_offset = 310,
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_PSD95-PDZ3", stagenum=stagenum, base_dir=base_dir),
@@ -87,7 +87,7 @@ doubledeepms <- function(
     execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
   #GRB2-SH3
   doubledeepms_thermo_model_results(
-    mochi_outpath = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse"),
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse_mult"),
     position_offset = 0,
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_GRB2-SH3", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
@@ -138,7 +138,7 @@ doubledeepms <- function(
     colour_scheme = colour_scheme,
     execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
   
-  ### Plot free fitness heatmaps
+  ### Plot fitness heatmaps
   ###########################
 
   stagenum <- 4
@@ -228,7 +228,7 @@ doubledeepms <- function(
     colour_scheme = colour_scheme,
     execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
 
-  ### Binding interface plots (Julia to add)
+  ### Binding interface plots
   ###########################
 
   stagenum <- 8
@@ -237,7 +237,6 @@ doubledeepms <- function(
     base_dir = base_dir, 
     domain_name = "GRB2-SH3", 
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_ligand_interface_plots", stagenum=stagenum, base_dir=base_dir), 
-    colour_scheme = colour_scheme,
     mut_subset_list = list(
       c("T", "F","Q","H", "S", "V", "I", "C"),
       c("T", "S", "L", "V", "A", "K", "R")),
@@ -249,7 +248,8 @@ doubledeepms <- function(
       c(11)),
     pdb_id = "2vwf",
     pdb_view = "(0.837024331,0.261427671,0.480670929,0.209657252,0.658192515,-0.723066926,-0.505404055,0.706001341,0.496113181,0.000000000,0.000000000,-141.782043457,-2.309909821,13.775757790,0.139801025,111.782043457,171.782043457,-20.000000000 )",
-    )
+    colour_scheme = colour_scheme,
+    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
 
   ### Allostery plots
   ###########################
@@ -278,6 +278,21 @@ doubledeepms <- function(
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_allostery_plots", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
     execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+
+  ### Allostery scatterplots
+  ###########################
+
+  stagenum <- 10
+  #All domains
+  doubledeepms_allostery_scatterplots(
+    input_file = file.path(base_dir, paste0("009", "_doubledeepms_allostery_plots"), "dg_singles.txt"),
+    fitness_list = list(
+      "PSD95-PDZ3" = file.path(base_dir, "Data", "fitness", "PSD95-PDZ3"),
+      "GRB2-SH3" = file.path(base_dir, "Data", "fitness", "GRB2-SH3")),
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_allostery_scatterplots", stagenum=stagenum, base_dir=base_dir),
+    colour_scheme = colour_scheme,
+    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+
 
 }
 

@@ -24,18 +24,15 @@ doubledeepms__persite_energy_vs_distance_plot <- function(
   metric_name_plot <- ""
   if(trait_name=="folding"){
     trait_prefix <- "f_ddg"
-    metric_name_plot <- expression("Mean |Folding "*Delta*Delta*"G|")
+    metric_name_plot <- expression("Weighted mean |Folding "*Delta*Delta*"G|")
   }
   if(trait_name=="binding"){
     trait_prefix <- "b_ddg"
-    metric_name_plot <- expression("Mean |Binding "*Delta*Delta*"G|")
+    metric_name_plot <- expression("Weighted mean |Binding "*Delta*Delta*"G|")
   }
 
   #Metrics
-  metric_name <- paste0(trait_prefix, "_posmeanabs_conf")
-  # metric_name <- paste0(trait_prefix, "_wposmeanabs")
-  # metric_name <- paste0(trait_prefix, "_posmaxabs_conf")
-  # metric_name_se <- paste0(trait_prefix, "_posse_conf")
+  metric_name <- paste0(trait_prefix, "_wposmeanabs")
   metric_name_se <- paste0(trait_prefix, "_wposse")
 
   #Subset
@@ -45,11 +42,8 @@ doubledeepms__persite_energy_vs_distance_plot <- function(
   plot_dt[, plot_metric := .SD[[1]],,.SDcols = metric_name]
   plot_dt[, plot_metric_se := .SD[[1]],,.SDcols = metric_name_se]
 
-  #Threshold for binding interface modulating residues (50% of binding interface residues)
-  # reg_threshold <- plot_dt[Pos_class=="binding_interface"][order(plot_metric, decreasing = F)][ceiling(0.5*.N),plot_metric]
-  # reg_threshold <- plot_dt[Pos_class=="binding_interface"][order(plot_metric, decreasing = T)][5][,plot_metric]
-  # reg_threshold <- plot_dt[Pos_class=="binding_interface",median(plot_metric)]
-  reg_threshold <- input_dt[get(paste0(trait_prefix, "_pred_conf"))==T & Pos_class=="binding_interface",mean(abs(.SD[[1]])),,.SDcols = metric_name]
+  #Threshold for binding interface modulating residues
+  reg_threshold <- input_dt[Pos_class=="binding_interface",sum(abs(.SD[[1]])/.SD[[2]]^2, na.rm = T)/sum(1/.SD[[2]]^2, na.rm = T),.SDcols = paste0(trait_prefix, c("_pred", "_pred_sd"))]
 
   #Residue class
   allostery_pos <- plot_dt[plot_metric>=reg_threshold,Pos_ref]
@@ -70,16 +64,13 @@ doubledeepms__persite_energy_vs_distance_plot <- function(
     ggplot2::geom_vline(xintercept = 5, linetype = 2)
   if(trait_name=="binding"){
     d <- d + 
-      # ggplot2::geom_smooth(color = "black", method = "glm", formula = y ~ exp(-x)) +
       ggplot2::geom_hline(yintercept = reg_threshold, linetype = 2) +
-      # ggplot2::geom_point(alpha = 3/4, size = 3, ggplot2::aes(shape = plot_shape)) +
       ggplot2::geom_point(alpha = 3/4, size = 3, ggplot2::aes(shape = switch))# +
-      # ggplot2::scale_shape_manual(values=plot_shapes)
   }else{
     d <- d + ggplot2::geom_point(alpha = 3/4, size = 3) 
   }
   d <- d +
-    # ggplot2::geom_linerange(ggplot2::aes(ymin = plot_metric-plot_metric_se*1.96, ymax = plot_metric+plot_metric_se*1.96)) +
+    ggplot2::geom_linerange(ggplot2::aes(ymin = plot_metric-plot_metric_se*1.96, ymax = plot_metric+plot_metric_se*1.96)) +
     ggrepel::geom_text_repel(ggplot2::aes(label = Pos_ref), show.legend = F, 
                              max.overlaps = 10) +
     ggplot2::xlab(expression("Distance to ligand ("*ring(A)*")")) +
