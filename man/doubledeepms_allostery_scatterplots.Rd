@@ -4,13 +4,18 @@
 \alias{doubledeepms_allostery_scatterplots}
 \title{doubledeepms_allostery_scatterplots}
 \usage{
-doubledeepms_allostery_scatterplots(input_file, fitness_list, outpath,
-  colour_scheme, execute = TRUE)
+doubledeepms_allostery_scatterplots(input_file, temperature = 24,
+  fitness_list, mochi_outpath_list, outpath, colour_scheme,
+  execute = TRUE)
 }
 \arguments{
 \item{input_file}{path to input file (required)}
 
+\item{temperature}{temperature in degrees celcuis (default:24)}
+
 \item{fitness_list}{list of folder paths to fitness data (required)}
+
+\item{mochi_outpath_list}{list of paths to MoCHI thermo model fit results (required)}
 
 \item{outpath}{output path for plots and saved objects (required)}
 

@@ -6,13 +6,15 @@
 #' @param input_dt input data table (required)
 #' @param outpath plot output path (required)
 #' @param colour_scheme colour scheme file (required)
+#' @param yaxis_limits y-axis limits (default:-3,3)
 #'
 #' @return Allosteric mutations
 #' @export
 doubledeepms__allosteric_mutations_scatterplot <- function(
   input_dt,
   outpath,
-  colour_scheme
+  colour_scheme,
+  yaxis_limits = c(-3,3)
   ){
 
   #Outlier changes in binding free energy
@@ -59,7 +61,7 @@ doubledeepms__allosteric_mutations_scatterplot <- function(
     ggplot2::xlab("Amino acid position") +
     ggplot2::ylab(expression("Binding "*Delta*Delta*"G")) +
     ggplot2::theme_classic() +
-    ggplot2::coord_cartesian(ylim = c(-3, 3)) +
+    ggplot2::coord_cartesian(ylim = yaxis_limits) +
     ggplot2::scale_colour_manual(values=plot_cols) +
     ggplot2::labs(color = "Mutation\ntype")   
   suppressWarnings(ggplot2::ggsave(gsub(".pdf", "_ylim.pdf", outpath), d, width = 6, height = 3, useDingbats=FALSE))

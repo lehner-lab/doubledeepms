@@ -156,10 +156,14 @@ doubledeepms_allostery_plots <- function(
 
   dg_list <- list()
   for(i in dg_dt[,unique(protein)]){
+    yaxis_limits <- c(-3,3)
+    if(i=="PSD95-PDZ3"){yaxis_limits <- c(-2,2)}
     dg_list[[i]] <- doubledeepms__allosteric_mutations_scatterplot(
       input_dt = copy(dg_dt)[protein==i],
       outpath = file.path(outpath, paste0(i, "_allosteric_mutations_scatter.pdf")),
-      colour_scheme = colour_scheme)
+      colour_scheme = colour_scheme,
+      yaxis_limits = yaxis_limits)
+    print(paste0("Surface sites with allosteric mutations for ", i, ": ", paste(dg_list[[i]][allosteric_mutation & Pos_class=="surface"][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
   }
   dg_dt <- rbindlist(dg_list)
 
@@ -189,7 +193,7 @@ doubledeepms_allostery_plots <- function(
     ggplot2::geom_line(size = 1) +
     # ggplot2::geom_point(size = 0.5) +
     ggplot2::geom_vline(xintercept = 0, linetype = 2) +
-    ggplot2::facet_grid(protein~., scales = "free") +
+    ggplot2::facet_wrap(protein~., scales = "free", ncol = 1) +
     ggplot2::xlab(expression("Binding "*Delta*Delta*"G threshold")) +
     ggplot2::ylab("#Mutations") +
     ggplot2::labs(color = "Residue\nposition") +
@@ -197,7 +201,7 @@ doubledeepms_allostery_plots <- function(
   if(!is.null(colour_scheme)){
     d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
   }
-  ggplot2::ggsave(file.path(outpath, "binding_affinity_mutations_all.pdf"), d, width = 7, height = 5, useDingbats=FALSE)
+  ggplot2::ggsave(file.path(outpath, "binding_affinity_mutations_all.pdf"), d, width = 5, height = 7, useDingbats=FALSE)
 
   #Plot - only PSD95-PDZ3 and GRB2-SH3
   plot_dt_all <- plot_dt[protein!="GB1",.(num_mutations = .N),.(b_ddg_pred_class, Pos_class, protein)]
@@ -213,7 +217,7 @@ doubledeepms_allostery_plots <- function(
   if(!is.null(colour_scheme)){
     d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
   }
-  ggplot2::ggsave(file.path(outpath, "binding_affinity_mutations.pdf"), d, width = 7, height = 3, useDingbats=FALSE)
+  ggplot2::ggsave(file.path(outpath, "binding_affinity_mutations.pdf"), d, width = 7, height = 2, useDingbats=FALSE)
 
   #Plot - conf - all
   plot_dt_all <- plot_dt_conf[,.(num_mutations = .N),.(b_ddg_pred_class, Pos_class, protein)]
@@ -221,7 +225,7 @@ doubledeepms_allostery_plots <- function(
     ggplot2::geom_line(size = 1) +
     # ggplot2::geom_point(size = 0.5) +
     ggplot2::geom_vline(xintercept = 0, linetype = 2) +
-    ggplot2::facet_grid(protein~., scales = "free") +
+    ggplot2::facet_wrap(protein~., scales = "free", ncol = 1) +
     ggplot2::xlab(expression("Binding "*Delta*Delta*"G threshold")) +
     ggplot2::ylab("#Mutations") +
     ggplot2::labs(color = "Residue\nposition") +
@@ -229,7 +233,7 @@ doubledeepms_allostery_plots <- function(
   if(!is.null(colour_scheme)){
     d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
   }
-  ggplot2::ggsave(file.path(outpath, "binding_affinity_mutations_all_conf.pdf"), d, width = 7, height = 5, useDingbats=FALSE)
+  ggplot2::ggsave(file.path(outpath, "binding_affinity_mutations_all_conf.pdf"), d, width = 5, height = 7, useDingbats=FALSE)
 
   #Plot - conf - only PSD95-PDZ3 and GRB2-SH3
   plot_dt_all <- plot_dt_conf[protein!="GB1",.(num_mutations = .N),.(b_ddg_pred_class, Pos_class, protein)]
@@ -245,7 +249,7 @@ doubledeepms_allostery_plots <- function(
   if(!is.null(colour_scheme)){
     d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
   }
-  ggplot2::ggsave(file.path(outpath, "binding_affinity_mutations_conf.pdf"), d, width = 7, height = 3, useDingbats=FALSE)
+  ggplot2::ggsave(file.path(outpath, "binding_affinity_mutations_conf.pdf"), d, width = 7, height = 2, useDingbats=FALSE)
 
   # #Plot abundance unchanged
   # plot_dt_all <- plot_dt[(abs(f_ddg_pred)-1.96*f_ddg_pred_sd)<0 & b_ddg_pred_conf==T,.(num_mutations = .N),.(b_ddg_pred_class, Pos_class, protein)]

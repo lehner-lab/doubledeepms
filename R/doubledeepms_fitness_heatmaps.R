@@ -142,14 +142,16 @@ doubledeepms_fitness_heatmaps <- function(
   singles_dt[, fitness_decrease := fitness<0]
   #Fitness decrease
   singles_dt[fitness_decrease==T, ddg_class := "Remainder"]
-  singles_dt[fitness_decrease==T & (b_ddg_pred>0 & b_ddg_pred_FDR<0.05) & (f_ddg_pred>0 & f_ddg_pred_FDR<0.05), ddg_class := "Binding + Folding\nsynergistic"]
+  singles_dt[fitness_decrease==T & (b_ddg_pred>0 & b_ddg_pred_FDR<0.05) & (f_ddg_pred>0 & f_ddg_pred_FDR<0.05) & abs(b_ddg_pred) > abs(f_ddg_pred), ddg_class := "Binding synergistic"]
+  singles_dt[fitness_decrease==T & (b_ddg_pred>0 & b_ddg_pred_FDR<0.05) & (f_ddg_pred>0 & f_ddg_pred_FDR<0.05) & abs(b_ddg_pred) < abs(f_ddg_pred), ddg_class := "Folding synergistic"]
   singles_dt[fitness_decrease==T & (b_ddg_pred<0 & b_ddg_pred_FDR<0.05) & (f_ddg_pred>0 & f_ddg_pred_FDR<0.05), ddg_class := "Folding antagonistic"]
   singles_dt[fitness_decrease==T & (b_ddg_pred>0 & b_ddg_pred_FDR<0.05) & (f_ddg_pred<0 & f_ddg_pred_FDR<0.05), ddg_class := "Binding antagonistic"]
   singles_dt[fitness_decrease==T & (b_ddg_pred_FDR>=0.05) & (f_ddg_pred>0 & f_ddg_pred_FDR<0.05), ddg_class := "Folding only"]
   singles_dt[fitness_decrease==T & (b_ddg_pred>0 & b_ddg_pred_FDR<0.05) & (f_ddg_pred_FDR>=0.05), ddg_class := "Binding only"]
   #Fitness increase
   singles_dt[fitness_decrease==F, ddg_class := "Remainder"]
-  singles_dt[fitness_decrease==F & (b_ddg_pred<0 & b_ddg_pred_FDR<0.05) & (f_ddg_pred<0 & f_ddg_pred_FDR<0.05), ddg_class := "Binding + Folding\nsynergistic"]
+  singles_dt[fitness_decrease==F & (b_ddg_pred<0 & b_ddg_pred_FDR<0.05) & (f_ddg_pred<0 & f_ddg_pred_FDR<0.05) & abs(b_ddg_pred) > abs(f_ddg_pred), ddg_class := "Binding synergistic"]
+  singles_dt[fitness_decrease==F & (b_ddg_pred<0 & b_ddg_pred_FDR<0.05) & (f_ddg_pred<0 & f_ddg_pred_FDR<0.05) & abs(b_ddg_pred) < abs(f_ddg_pred), ddg_class := "Folding synergistic"]
   singles_dt[fitness_decrease==F & (b_ddg_pred>0 & b_ddg_pred_FDR<0.05) & (f_ddg_pred<0 & f_ddg_pred_FDR<0.05), ddg_class := "Folding antagonistic"]
   singles_dt[fitness_decrease==F & (b_ddg_pred<0 & b_ddg_pred_FDR<0.05) & (f_ddg_pred>0 & f_ddg_pred_FDR<0.05), ddg_class := "Binding antagonistic"]
   singles_dt[fitness_decrease==F & (b_ddg_pred_FDR>=0.05) & (f_ddg_pred<0 & f_ddg_pred_FDR<0.05), ddg_class := "Folding only"]
@@ -160,7 +162,7 @@ doubledeepms_fitness_heatmaps <- function(
   #Calculate percentage
   plot_dt[fitness_decrease==T, percentage := count/sum(count)*100]
   plot_dt[fitness_decrease==F, percentage := count/sum(count)*100]
-  plot_dt[, ddg_class := factor(ddg_class, levels = rev(c("Binding only", "Binding antagonistic", "Binding + Folding\nsynergistic", "Folding antagonistic", "Folding only", "Remainder")))]
+  plot_dt[, ddg_class := factor(ddg_class, levels = rev(c("Binding only", "Binding antagonistic", "Binding synergistic", "Folding synergistic", "Folding antagonistic", "Folding only", "Remainder")))]
   #Rename binding phenotype
   plot_dt[fitness_decrease==F, binding_phenotype := "Increase"]
   plot_dt[fitness_decrease==T, binding_phenotype := "Decrease"]
@@ -168,11 +170,12 @@ doubledeepms_fitness_heatmaps <- function(
   plot_cols = c(
     colour_scheme[["shade 3"]][[1]],
     colour_scheme[["shade 0"]][[1]],
+    colour_scheme[["shade 1"]][[1]],
     colour_scheme[["shade 1"]][[3]],
     colour_scheme[["shade 0"]][[3]],
     colour_scheme[["shade 3"]][[3]],
      "grey")
-  names(plot_cols) <- c("Binding only", "Binding antagonistic", "Binding + Folding\nsynergistic", "Folding antagonistic", "Folding only", "Remainder")
+  names(plot_cols) <- c("Binding only", "Binding antagonistic", "Binding synergistic", "Folding synergistic", "Folding antagonistic", "Folding only", "Remainder")
   d <- ggplot2::ggplot(plot_dt,ggplot2::aes(y = binding_phenotype, percentage, fill = as.factor(ddg_class))) +
     ggplot2::geom_bar(stat="identity") +
     ggplot2::ylab("Binding fitness") +

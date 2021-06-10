@@ -289,6 +289,9 @@ doubledeepms <- function(
     fitness_list = list(
       "PSD95-PDZ3" = file.path(base_dir, "Data", "fitness", "PSD95-PDZ3"),
       "GRB2-SH3" = file.path(base_dir, "Data", "fitness", "GRB2-SH3")),
+    mochi_outpath_list = list(
+      "PSD95-PDZ3" = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse_mult"),
+      "GRB2-SH3" = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse_mult")),
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_allostery_scatterplots", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
     execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))

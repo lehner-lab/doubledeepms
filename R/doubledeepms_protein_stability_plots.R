@@ -189,7 +189,7 @@ doubledeepms_protein_stability_plots <- function(
   ###########################
 
   #All proteins
-  plot_dt <- dg_dt[!duplicated(paste(Pos_ref, protein, sep = ":"))][!is.na(relative_angle),.(f_ddg_pred_stab_res5, Pos_class, protein)]
+  plot_dt <- dg_dt[!duplicated(paste(Pos_ref, protein, sep = ":"))][,.(f_ddg_pred_stab_res5, Pos_class, protein)]
   plot_dt <- plot_dt[,.(count = .N),.(protein, Pos_class, f_ddg_pred_stab_res5)]
   #Calculate percentage
   plot_dt[f_ddg_pred_stab_res5==T & protein=="GB1", percentage := count/sum(count)*100]
@@ -202,9 +202,10 @@ doubledeepms_protein_stability_plots <- function(
   plot_dt[f_ddg_pred_stab_res5==F, class := "Remainder"]
   plot_dt[, class := factor(class, levels = c("Remainder", "De-stabilising"))]
   
-  
-  d <- ggplot2::ggplot(plot_dt,ggplot2::aes(y = f_ddg_pred_stab_res5, percentage, fill = Pos_class)) +
+  #All domains
+  d <- ggplot2::ggplot(plot_dt,ggplot2::aes(y = class, percentage, fill = Pos_class)) +
     ggplot2::geom_bar(stat="identity") +
+    ggplot2::geom_text(data = plot_dt[,.(percentage = 50, text = paste0(unlist(count), collapse = ","), Pos_class),.(class, protein)], ggplot2::aes(label = text)) +
     ggplot2::xlab("% Residues") +
     ggplot2::ylab("Residue class") +
     ggplot2::facet_grid(~protein, scales = "free") + 
@@ -218,6 +219,7 @@ doubledeepms_protein_stability_plots <- function(
   #GRB2-SH3 and PSD95-PDZ3 only
   d <- ggplot2::ggplot(plot_dt[protein!="GB1"],ggplot2::aes(y = class, percentage, fill = Pos_class)) +
     ggplot2::geom_bar(stat="identity") +
+    ggplot2::geom_text(data = plot_dt[protein!="GB1",.(percentage = 50, text = paste0(unlist(count), collapse = ","), Pos_class),.(class, protein)], ggplot2::aes(label = text)) +
     ggplot2::xlab("% Residues") +
     ggplot2::ylab("Residue class") +
     ggplot2::facet_grid(~protein, scales = "free") + 
