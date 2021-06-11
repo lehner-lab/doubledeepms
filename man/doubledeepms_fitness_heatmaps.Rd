@@ -6,7 +6,7 @@
 \usage{
 doubledeepms_fitness_heatmaps(input_file, input_file_fitness, domain_name,
   outpath, colour_scheme, plot_width = 10, plot_height = 4,
-  execute = TRUE)
+  plot_traits = c("Abundance", "Binding"), execute = TRUE)
 }
 \arguments{
 \item{input_file}{path to MoCHI thermo model fit results (required)}
@@ -22,6 +22,8 @@ doubledeepms_fitness_heatmaps(input_file, input_file_fitness, domain_name,
 \item{plot_width}{heatmap plot width in inches (default:10)}
 
 \item{plot_height}{heatmap plot height in inches (default:4)}
+
+\item{plot_traits}{traits to plot (default:Abundance, Binding)}
 
 \item{execute}{whether or not to execute the analysis (default: TRUE)}
 }

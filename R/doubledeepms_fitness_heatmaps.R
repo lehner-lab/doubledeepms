@@ -10,6 +10,7 @@
 #' @param colour_scheme colour scheme file (required)
 #' @param plot_width heatmap plot width in inches (default:10)
 #' @param plot_height heatmap plot height in inches (default:4)
+#' @param plot_traits traits to plot (default:Abundance, Binding)
 #' @param execute whether or not to execute the analysis (default: TRUE)
 #'
 #' @return Nothing
@@ -23,6 +24,7 @@ doubledeepms_fitness_heatmaps <- function(
   colour_scheme,
   plot_width = 10,
   plot_height = 4,
+  plot_traits = c("Abundance", "Binding"),
   execute = TRUE
   ){
 
@@ -41,7 +43,7 @@ doubledeepms_fitness_heatmaps <- function(
   fit_list <- list()
   #Load structure metrics
   metrics_dt <- unique(fread(input_file)[id!="-0-",.(Pos, Pos_class, scHAmin_ligand, Pos_ref)])
-  for(pca_type in c("Abundance", "Binding")){
+  for(pca_type in plot_traits){
     rdata_file <- list.files(file.path(input_file_fitness, pca_type))
     load(file.path(input_file_fitness, pca_type, rdata_file))
     all_variants[Nham_aa<=1 & STOP==F & STOP_readthrough==F, pca_type := pca_type]
@@ -60,51 +62,59 @@ doubledeepms_fitness_heatmaps <- function(
   ### Folding heatmap
   ###########################
 
-  #Heatmap data
-  heatmap_dt <- fitness_dt[pca_type=="Abundance" & Nham_aa==1,.(fitness = -fitness, fitness_conf = T, Pos_ref, scHAmin_ligand, WT_AA, Mut, Pos_class)]
-  #Add dummy mutation to ensure all positions included
-  dummy_dt <- fitness_dt[Nham_aa==1 & !is.na(Pos_ref)][!duplicated(Pos_ref) & Nham_aa==1,.(fitness = -fitness, fitness_conf = T, Pos_ref, scHAmin_ligand, WT_AA, Mut, Pos_class)]
-  dummy_dt[, Mut := WT_AA]
-  dummy_dt[, fitness := NA]  
-  heatmap_dt <- rbind(heatmap_dt, dummy_dt)
+  if("Abundance" %in% plot_traits){
+    #Heatmap data
+    heatmap_dt <- fitness_dt[pca_type=="Abundance" & Nham_aa==1,.(fitness = -fitness, fitness_conf = T, Pos_ref, scHAmin_ligand, WT_AA, Mut, Pos_class)]
+    #Add dummy mutation to ensure all positions included
+    dummy_dt <- fitness_dt[Nham_aa==1 & !is.na(Pos_ref)][!duplicated(Pos_ref) & Nham_aa==1,.(fitness = -fitness, fitness_conf = T, Pos_ref, scHAmin_ligand, WT_AA, Mut, Pos_class)]
+    dummy_dt[, Mut := WT_AA]
+    dummy_dt[, fitness := NA]  
+    heatmap_dt <- rbind(heatmap_dt, dummy_dt)
 
-  doubledeepms__plot_heatmap(
-    input_dt = heatmap_dt,
-    variable_name = "fitness",
-    output_file = file.path(outpath, "abundance_heatmap.pdf"),
-    width = plot_width,
-    height = plot_height,
-    plot_title = paste0(domain_name, " amino acid position"),
-    colour_clip = 1.5,
-    colour_low = colour_scheme[["shade 0"]][[3]],
-    colour_high = colour_scheme[["shade 0"]][[1]])
+    doubledeepms__plot_heatmap(
+      input_dt = heatmap_dt,
+      variable_name = "fitness",
+      output_file = file.path(outpath, "abundance_heatmap.pdf"),
+      width = plot_width,
+      height = plot_height,
+      plot_title = paste0(domain_name, " amino acid position"),
+      colour_clip = 1.5,
+      colour_low = colour_scheme[["shade 0"]][[3]],
+      colour_high = colour_scheme[["shade 0"]][[1]])
+  }
 
   ###########################
   ### Binding heatmap
   ###########################
 
-  #Heatmap data
-  heatmap_dt <- fitness_dt[pca_type=="Binding" & Nham_aa==1,.(fitness = -fitness, fitness_conf = T, Pos_ref, scHAmin_ligand, WT_AA, Mut, Pos_class)]
-  #Add dummy mutation to ensure all positions included
-  dummy_dt <- fitness_dt[Nham_aa==1 & !is.na(Pos_ref)][!duplicated(Pos_ref) & Nham_aa==1,.(fitness = -fitness, fitness_conf = T, Pos_ref, scHAmin_ligand, WT_AA, Mut, Pos_class)]
-  dummy_dt[, Mut := WT_AA]
-  dummy_dt[, fitness := NA]  
-  heatmap_dt <- rbind(heatmap_dt, dummy_dt)
+  if("Binding" %in% plot_traits){
+    #Heatmap data
+    heatmap_dt <- fitness_dt[pca_type=="Binding" & Nham_aa==1,.(fitness = -fitness, fitness_conf = T, Pos_ref, scHAmin_ligand, WT_AA, Mut, Pos_class)]
+    #Add dummy mutation to ensure all positions included
+    dummy_dt <- fitness_dt[Nham_aa==1 & !is.na(Pos_ref)][!duplicated(Pos_ref) & Nham_aa==1,.(fitness = -fitness, fitness_conf = T, Pos_ref, scHAmin_ligand, WT_AA, Mut, Pos_class)]
+    dummy_dt[, Mut := WT_AA]
+    dummy_dt[, fitness := NA]  
+    heatmap_dt <- rbind(heatmap_dt, dummy_dt)
 
-  doubledeepms__plot_heatmap(
-    input_dt = heatmap_dt,
-    variable_name = "fitness",
-    output_file = file.path(outpath, "binding_heatmap.pdf"),
-    width = plot_width,
-    height = plot_height,
-    plot_title = paste0(domain_name, " amino acid position"),
-    colour_clip = 1.5,
-    colour_low = colour_scheme[["shade 0"]][[3]],
-    colour_high = colour_scheme[["shade 0"]][[1]])
+    doubledeepms__plot_heatmap(
+      input_dt = heatmap_dt,
+      variable_name = "fitness",
+      output_file = file.path(outpath, "binding_heatmap.pdf"),
+      width = plot_width,
+      height = plot_height,
+      plot_title = paste0(domain_name, " amino acid position"),
+      colour_clip = 1.5,
+      colour_low = colour_scheme[["shade 0"]][[3]],
+      colour_high = colour_scheme[["shade 0"]][[1]])
+  }
 
   ###########################
   ### Barplot with proportion of mutations significantly affecting binding fitness (due to change in stability/binding free energy)
   ###########################
+
+  if(!"Binding" %in% plot_traits){
+    return()
+  }
 
   #Load structure metrics
   dg_dt <- fread(input_file)[id!="-0-",]
