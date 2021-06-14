@@ -260,6 +260,16 @@ doubledeepms <- function(
     pdb_view = "(0.837024331,0.261427671,0.480670929,0.209657252,0.658192515,-0.723066926,-0.505404055,0.706001341,0.496113181,0.000000000,0.000000000,-141.782043457,-2.309909821,13.775757790,0.139801025,111.782043457,171.782043457,-20.000000000 )",
     colour_scheme = colour_scheme,
     execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+  # All domains
+  doubledeepms_binding_interface(
+    input_list = list(
+      "GB1" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_GB1"), "dg_singles.txt"),
+      "PSD95-PDZ3" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_PSD95-PDZ3"), "dg_singles.txt"),
+      "GRB2-SH3" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_GRB2-SH3"), "dg_singles.txt")),
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_binding_interface", stagenum=stagenum, base_dir=base_dir),
+    colour_scheme = colour_scheme,
+    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+  
 
   ### Allostery plots
   ###########################
