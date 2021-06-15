@@ -5,6 +5,7 @@
 #'
 #' @param input_file path to MoCHI thermo model fit results (required)
 #' @param input_file_fitness path to fitness data (required)
+#' @param input_file_MSA path to MSA frequencies data (optional)
 #' @param domain_name domain name (required)
 #' @param outpath output path for plots and saved objects (required)
 #' @param colour_scheme colour scheme file (required)
@@ -19,6 +20,7 @@
 doubledeepms_fitness_heatmaps <- function(
   input_file,
   input_file_fitness,
+  input_file_MSA = NULL,
   domain_name,
   outpath,
   colour_scheme,
@@ -68,7 +70,7 @@ doubledeepms_fitness_heatmaps <- function(
     #Add dummy mutation to ensure all positions included
     dummy_dt <- fitness_dt[Nham_aa==1 & !is.na(Pos_ref)][!duplicated(Pos_ref) & Nham_aa==1,.(fitness = -fitness, fitness_conf = T, Pos_ref, scHAmin_ligand, WT_AA, Mut, Pos_class)]
     dummy_dt[, Mut := WT_AA]
-    dummy_dt[, fitness := NA]  
+    dummy_dt[, fitness := NA]
     heatmap_dt <- rbind(heatmap_dt, dummy_dt)
 
     doubledeepms__plot_heatmap(
@@ -93,7 +95,7 @@ doubledeepms_fitness_heatmaps <- function(
     #Add dummy mutation to ensure all positions included
     dummy_dt <- fitness_dt[Nham_aa==1 & !is.na(Pos_ref)][!duplicated(Pos_ref) & Nham_aa==1,.(fitness = -fitness, fitness_conf = T, Pos_ref, scHAmin_ligand, WT_AA, Mut, Pos_class)]
     dummy_dt[, Mut := WT_AA]
-    dummy_dt[, fitness := NA]  
+    dummy_dt[, fitness := NA]
     heatmap_dt <- rbind(heatmap_dt, dummy_dt)
 
     doubledeepms__plot_heatmap(
@@ -167,7 +169,7 @@ doubledeepms_fitness_heatmaps <- function(
   singles_dt[fitness_decrease==F & (b_ddg_pred_FDR>=0.05) & (f_ddg_pred<0 & f_ddg_pred_FDR<0.05), ddg_class := "Folding only"]
   singles_dt[fitness_decrease==F & (b_ddg_pred<0 & b_ddg_pred_FDR<0.05) & (f_ddg_pred_FDR>=0.05), ddg_class := "Binding only"]
 
-  #Plot
+  #Plot - All protein positions together
   plot_dt <- singles_dt[,.(count = as.numeric(.N)), .(fitness_decrease, ddg_class)][order(fitness_decrease)]
   #Calculate percentage
   plot_dt[fitness_decrease==T, percentage := count/sum(count)*100]
@@ -177,6 +179,7 @@ doubledeepms_fitness_heatmaps <- function(
   plot_dt[fitness_decrease==F, binding_phenotype := "Increase"]
   plot_dt[fitness_decrease==T, binding_phenotype := "Decrease"]
   plot_dt[, binding_phenotype := factor(binding_phenotype, levels = c("Increase", "Decrease"))]
+  
   plot_cols = c(
     colour_scheme[["shade 3"]][[1]],
     colour_scheme[["shade 0"]][[1]],
@@ -196,7 +199,80 @@ doubledeepms_fitness_heatmaps <- function(
     d <- d + ggplot2::scale_fill_manual(values = plot_cols)
   }
   ggplot2::ggsave(file.path(outpath, "fitness_binding_mechanism_barplot.pdf"), d, width = 7, height = 3, useDingbats=FALSE)
+  
+  
+  #Plot - split per protein position class
+  plot_dt_list <- lapply(unique(singles_dt$Pos_class), function(posclass) {
+    temp_plot_dt <- singles_dt[Pos_class == posclass,.(count = as.numeric(.N)), .(fitness_decrease, ddg_class)][order(fitness_decrease)]
+    #Calculate percentage
+    temp_plot_dt[fitness_decrease==T, percentage := count/sum(count)*100]
+    temp_plot_dt[fitness_decrease==F, percentage := count/sum(count)*100]
+    temp_plot_dt[, ddg_class := factor(ddg_class, levels = rev(c("Binding only", "Binding antagonistic", "Binding synergistic", "Folding synergistic", "Folding antagonistic", "Folding only", "Remainder")))]
+    temp_plot_dt[, Pos_class := posclass]
+    temp_plot_dt
+  })  
+  plot_dt <- do.call("rbind", plot_dt_list)
+  
+  #Rename binding phenotype
+  plot_dt[fitness_decrease==F, binding_phenotype := "Increase"]
+  plot_dt[fitness_decrease==T, binding_phenotype := "Decrease"]
+  plot_dt[, binding_phenotype := factor(binding_phenotype, levels = c("Increase", "Decrease"))]
+  #Rename position class
+  plot_dt[, Pos_class_plot := stringr::str_to_title(Pos_class)]
+  plot_dt[Pos_class=="binding_interface", Pos_class_plot := "Binding interface"]
+  plot_cols = c(
+    colour_scheme[["shade 3"]][[1]],
+    colour_scheme[["shade 0"]][[1]],
+    colour_scheme[["shade 1"]][[1]],
+    colour_scheme[["shade 1"]][[3]],
+    colour_scheme[["shade 0"]][[3]],
+    colour_scheme[["shade 3"]][[3]],
+    "grey")
+  names(plot_cols) <- c("Binding only", "Binding antagonistic", "Binding synergistic", "Folding synergistic", "Folding antagonistic", "Folding only", "Remainder")
+  d <- ggplot2::ggplot(plot_dt,ggplot2::aes(y = binding_phenotype, percentage, fill = as.factor(ddg_class))) +
+    ggplot2::geom_bar(stat="identity") +
+    ggplot2::ylab("Binding fitness") +
+    ggplot2::xlab("% Mutations") +
+    ggplot2::labs(fill = "Biophysical\nmechanism") +
+    ggplot2::theme_classic() +
+    ggplot2::facet_grid(Pos_class_plot ~ ., scales = "free")
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_fill_manual(values = plot_cols)
+  }
+  ggplot2::ggsave(file.path(outpath, "fitness_binding_mechanism_barplot_per_pos_class.pdf"), d, width = 6, height = 5, useDingbats=FALSE)
+  
+  
+  ###########################
+  ### Frequency of mutations across multiple sequence alignments
+  ###########################
+  if (!is.null(input_file_MSA)){
+    
+    #Get MSA conservation and frequency
+    MSA_dt <- as.data.table(reshape2::melt(fread(file = input_file_MSA), 
+                                     id.vars = c("i", "A_i", "conservation"), 
+                                     value.name = "Freq_MSA",
+                                     variable.name = "AA_sub"))
+    #Merge with singles data
+    plot_dt <- data.table::merge.data.table(singles_dt, MSA_dt[, .(i, conservation, AA_sub, Freq_MSA)], by.x = c("Pos_ref", "Mut"), by.y = c("i", "AA_sub"))
+    #Rename position class
+    plot_dt[, Pos_class_plot := stringr::str_to_title(Pos_class)]
+    plot_dt[Pos_class=="binding_interface", Pos_class_plot := "Binding interface"]
+    plot_dt[, ddg_class := factor(ddg_class, levels = rev(c("Binding only", "Binding antagonistic", "Binding synergistic", "Folding synergistic", "Folding antagonistic", "Folding only", "Remainder")))]
+    
 
-
+    d <- ggplot2::ggplot(plot_dt,ggplot2::aes(y = Freq_MSA, as.factor(ddg_class))) +
+      ggplot2::geom_violin(ggplot2::aes(fill = as.factor(ddg_class)), draw_quantiles = c(0.25, 0.5, 0.75), show.legend = F, scale = "width") +
+      ggplot2::ylab("Biophisical mechanism") +
+      ggplot2::xlab("Frequency AA substitution in MSA") +
+      ggplot2::theme_classic() +
+      ggplot2::theme(axis.text.x  = ggplot2::element_text(angle = 45, hjust=1)) +
+      ggplot2::facet_grid(Pos_class_plot ~ ., scales = "free")
+    if(!is.null(colour_scheme)){
+      d <- d + ggplot2::scale_fill_manual(values = plot_cols)
+    }
+    suppressWarnings(ggplot2::ggsave(file.path(outpath, "fitness_binding_mechanism_FreqMSA_violins.pdf"), d, width = 4, height = 5, useDingbats=FALSE))
+    
+    }
+  
 }
 

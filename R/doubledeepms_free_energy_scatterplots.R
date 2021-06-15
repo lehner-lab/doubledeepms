@@ -4,6 +4,7 @@
 #' Plot free energy heatmaps.
 #'
 #' @param input_list path to MoCHI thermo model fit results (required)
+#' @param input_MSA_list path to MSA frequencies data (required)
 #' @param outpath output path for plots and saved objects (required)
 #' @param colour_scheme colour scheme file (required)
 #' @param execute whether or not to execute the analysis (default: TRUE)
@@ -13,6 +14,7 @@
 #' @import data.table
 doubledeepms_free_energy_scatterplots <- function(
   input_list,
+  input_MSA_list,
   outpath,
   colour_scheme,
   execute = TRUE
@@ -34,6 +36,20 @@ doubledeepms_free_energy_scatterplots <- function(
   for(protein in names(input_list)){
     temp_dt <- fread(input_list[[protein]])
     temp_dt[, protein := protein]
+    #Add WT and mutant AAs
+    temp_dt[, WT_AA := substr(id, 1, 1)]
+    temp_dt[, Mut := substr(id, nchar(id), nchar(id))]
+    #Per residue metrics
+    for(i in c("f_ddg", "b_ddg")){
+      temp_dt[,paste0(i, "_wposmean") := sum(.SD[[1]]/.SD[[2]]^2, na.rm = T)/sum(1/.SD[[2]]^2, na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred", "_pred_sd"))]
+      temp_dt[,paste0(i, "_wposse") := sqrt(1/sum(1/.SD[[2]]^2, na.rm = T)),Pos_ref,.SDcols = paste0(i, c("_pred", "_pred_sd"))]
+    }
+    if(is.null(input_MSA_list[[protein]])){
+      temp_dt[, conservation := NA]
+    } else {
+      MSA_dt <- fread(input_MSA_list[[protein]])
+      temp_dt <- data.table::merge.data.table(temp_dt, MSA_dt[, .(i, conservation)], by.x = "Pos_ref", by.y="i", all.x = T)
+    }
     dg_list[[protein]] <- temp_dt
   }
   dg_dt <- rbindlist(dg_list)
@@ -43,7 +59,7 @@ doubledeepms_free_energy_scatterplots <- function(
   ###########################
 
   #Free energy distributions by protein - all - conf
-  plot_dt <- reshape2::melt(copy(dg_dt)[,.(protein, f_ddg_pred, b_ddg_pred, f_ddg_pred_conf, b_ddg_pred_conf)], id = c("protein", "f_ddg_pred_conf", "b_ddg_pred_conf"))
+  plot_dt <- data.table::melt.data.table(copy(dg_dt)[,.(protein, f_ddg_pred, b_ddg_pred, f_ddg_pred_conf, b_ddg_pred_conf)], id = c("protein", "f_ddg_pred_conf", "b_ddg_pred_conf"))
   plot_dt <- plot_dt[(variable=="f_ddg_pred" & f_ddg_pred_conf) | (variable=="b_ddg_pred" & b_ddg_pred_conf),]
   plot_dt[variable=="f_ddg_pred", variable_plot := "Folding"]
   plot_dt[variable=="b_ddg_pred", variable_plot := "Binding"]
@@ -63,7 +79,7 @@ doubledeepms_free_energy_scatterplots <- function(
   ggplot2::ggsave(file.path(outpath, "ddG_densities_all.pdf"), d, width = 9, height = 3, useDingbats=FALSE)
 
   #Free energy distributions by protein - GRB2 and PSD95 - conf
-  plot_dt <- reshape2::melt(copy(dg_dt)[protein != "GB1",.(protein, f_ddg_pred, b_ddg_pred, f_ddg_pred_conf, b_ddg_pred_conf)], id = c("protein", "f_ddg_pred_conf", "b_ddg_pred_conf"))
+  plot_dt <- data.table::melt.data.table(copy(dg_dt)[protein != "GB1",.(protein, f_ddg_pred, b_ddg_pred, f_ddg_pred_conf, b_ddg_pred_conf)], id = c("protein", "f_ddg_pred_conf", "b_ddg_pred_conf"))
   plot_dt <- plot_dt[(variable=="f_ddg_pred" & f_ddg_pred_conf) | (variable=="b_ddg_pred" & b_ddg_pred_conf),]
   plot_dt[variable=="f_ddg_pred", variable_plot := "Folding"]
   plot_dt[variable=="b_ddg_pred", variable_plot := "Binding"]
@@ -83,7 +99,7 @@ doubledeepms_free_energy_scatterplots <- function(
   ggplot2::ggsave(file.path(outpath, "ddG_densities.pdf"), d, width = 6, height = 2, useDingbats=FALSE)
 
   #Free energy distributions by protein - GRB2 and PSD95 - conf - xlim
-  plot_dt <- reshape2::melt(copy(dg_dt)[protein != "GB1",.(protein, f_ddg_pred, b_ddg_pred, f_ddg_pred_conf, b_ddg_pred_conf)], id = c("protein", "f_ddg_pred_conf", "b_ddg_pred_conf"))
+  plot_dt <- data.table::melt.data.table(copy(dg_dt)[protein != "GB1",.(protein, f_ddg_pred, b_ddg_pred, f_ddg_pred_conf, b_ddg_pred_conf)], id = c("protein", "f_ddg_pred_conf", "b_ddg_pred_conf"))
   plot_dt <- plot_dt[(variable=="f_ddg_pred" & f_ddg_pred_conf) | (variable=="b_ddg_pred" & b_ddg_pred_conf),]
   plot_dt[variable=="f_ddg_pred", variable_plot := "Folding"]
   plot_dt[variable=="b_ddg_pred", variable_plot := "Binding"]
@@ -242,6 +258,41 @@ doubledeepms_free_energy_scatterplots <- function(
     d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
   }
   ggplot2::ggsave(file.path(outpath, "ddG_scatter_contour_PSD95-PDZ3_xylim.pdf"), d, width = 4, height = 3, useDingbats=FALSE)
-
+  
+  ###########################
+  ### Free energy vs conservation scatterplots
+  ###########################
+  
+  proteins_MSA <- names(input_MSA_list)[(do.call("c", lapply(input_MSA_list, function(x){!is.null(x)})))]
+  
+  plot_dt <- dg_dt[id!="-0-" & protein %in% proteins_MSA][!duplicated(paste(Pos_ref, protein, sep = ":"))]
+  d <- ggplot2::ggplot(plot_dt,ggplot2::aes(conservation, f_ddg_wposmean)) +
+    ggplot2::geom_point(ggplot2::aes(color = Pos_class)) +
+    ggplot2::geom_linerange(ggplot2::aes(ymin = f_ddg_wposmean-f_ddg_wposse*1.96, ymax = f_ddg_wposmean+f_ddg_wposse*1.96, color = Pos_class)) +
+    ggplot2::geom_smooth(method = "lm", formula = 'y~x', ggplot2::aes(color = Pos_class), se = F, show.legend = F) +
+    ggplot2::xlab("Residue conservation") +
+    ggplot2::ylab(expression("Mean "*Delta*Delta*"G of Folding")) +
+    ggplot2::geom_text(data = plot_dt[,.(label = paste("Pearson's r = ", round(cor(conservation, f_ddg_wposmean, use = "pairwise.complete"), 2), sep="")),.(protein)], ggplot2::aes(label=label, x=Inf, y=Inf, hjust = 1, vjust = 1)) +
+    ggplot2::facet_grid(~protein, scales = "free") + 
+    ggplot2::theme_bw()
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_color_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
+  }
+  suppressWarnings(ggplot2::ggsave(file.path(outpath, "mean_ddG_folding_conservation_scatter.pdf"), d, width = 7, height = 3))
+  
+  d <- ggplot2::ggplot(plot_dt,ggplot2::aes(conservation, b_ddg_wposmean)) +
+    ggplot2::geom_point(ggplot2::aes(color = Pos_class)) +
+    ggplot2::geom_linerange(ggplot2::aes(ymin = b_ddg_wposmean-b_ddg_wposse*1.96, ymax = b_ddg_wposmean+f_ddg_wposse*1.96, color = Pos_class)) +
+    ggplot2::geom_smooth(method = "lm", formula = 'y~x', ggplot2::aes(color = Pos_class), se = F, show.legend = F) +
+    ggplot2::xlab("Residue conservation") +
+    ggplot2::ylab(expression("Mean "*Delta*Delta*"G of Binding")) +
+    ggplot2::geom_text(data = plot_dt[,.(label = paste("Pearson's r = ", round(cor(conservation, b_ddg_wposmean, use = "pairwise.complete"), 2), sep="")),.(protein)], ggplot2::aes(label=label, x=Inf, y=Inf, hjust = 1, vjust = 1)) +
+    ggplot2::facet_grid(~protein, scales = "free") + 
+    ggplot2::theme_bw()
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_color_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
+  }
+  suppressWarnings(ggplot2::ggsave(file.path(outpath, "mean_ddG_binding_conservation_scatter.pdf"), d, width = 7, height = 3))
+  
 }
 

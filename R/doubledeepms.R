@@ -156,6 +156,7 @@ doubledeepms <- function(
   doubledeepms_fitness_heatmaps(
     input_file = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_PSD95-PDZ3"), "dg_singles.txt"),
     input_file_fitness = file.path(base_dir, "Data", "fitness", "PSD95-PDZ3"),
+    input_file_MSA = file.path(base_dir, "Data", "MSA", "PSD95-PDZ3", "frequencies.csv"),
     domain_name = "PSD95 PDZ3",
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_fitness_heatmaps_PSD95-PDZ3", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
@@ -165,6 +166,7 @@ doubledeepms <- function(
   doubledeepms_fitness_heatmaps(
     input_file = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_GRB2-SH3"), "dg_singles.txt"),
     input_file_fitness = file.path(base_dir, "Data", "fitness", "GRB2-SH3"),
+    input_file_MSA = file.path(base_dir, "Data", "MSA", "GRB2-SH3", "frequencies.csv"),
     domain_name = "GRB2 SH3",
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_fitness_heatmaps_GRB2-SH3", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
@@ -181,6 +183,11 @@ doubledeepms <- function(
       "GB1" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_GB1"), "dg_singles.txt"),
       "PSD95-PDZ3" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_PSD95-PDZ3"), "dg_singles.txt"),
       "GRB2-SH3" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_GRB2-SH3"), "dg_singles.txt")),
+    input_MSA_list = list(
+      "GB1" = NULL,
+      "PSD95-PDZ3" = file.path(base_dir, "Data", "MSA", "PSD95-PDZ3", "frequencies.csv"),
+      "GRB2-SH3" = file.path(base_dir, "Data", "MSA", "GRB2-SH3", "frequencies.csv")
+    ),
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_free_energy_scatterplots", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
     execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))

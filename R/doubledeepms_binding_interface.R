@@ -101,7 +101,7 @@ doubledeepms_binding_interface <- function(
     ggplot2::facet_grid(~protein, scales = "free") + 
     ggplot2::theme_classic() +
     ggplot2::coord_cartesian(ylim = c(-3, 8)) +
-    ggplot2::labs(fill = "Residue\nposition")
+    ggplot2::labs(fill = "Residue\nposition") 
   if(!is.null(colour_scheme)){
     d <- d + ggplot2::scale_fill_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
   }
