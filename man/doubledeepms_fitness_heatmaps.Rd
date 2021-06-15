@@ -4,14 +4,17 @@
 \alias{doubledeepms_fitness_heatmaps}
 \title{doubledeepms_fitness_heatmaps}
 \usage{
-doubledeepms_fitness_heatmaps(input_file, input_file_fitness, domain_name,
-  outpath, colour_scheme, plot_width = 10, plot_height = 4,
-  plot_traits = c("Abundance", "Binding"), execute = TRUE)
+doubledeepms_fitness_heatmaps(input_file, input_file_fitness,
+  input_file_MSA = NULL, domain_name, outpath, colour_scheme,
+  plot_width = 10, plot_height = 4, plot_traits = c("Abundance",
+  "Binding"), execute = TRUE)
 }
 \arguments{
 \item{input_file}{path to MoCHI thermo model fit results (required)}
 
 \item{input_file_fitness}{path to fitness data (required)}
+
+\item{input_file_MSA}{path to MSA frequencies data (optional)}
 
 \item{domain_name}{domain name (required)}
 

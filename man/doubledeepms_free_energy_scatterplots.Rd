@@ -4,11 +4,13 @@
 \alias{doubledeepms_free_energy_scatterplots}
 \title{doubledeepms_free_energy_scatterplots}
 \usage{
-doubledeepms_free_energy_scatterplots(input_list, outpath, colour_scheme,
-  execute = TRUE)
+doubledeepms_free_energy_scatterplots(input_list, input_MSA_list, outpath,
+  colour_scheme, execute = TRUE)
 }
 \arguments{
 \item{input_list}{path to MoCHI thermo model fit results (required)}
+
+\item{input_MSA_list}{path to MSA frequencies data (required)}
 
 \item{outpath}{output path for plots and saved objects (required)}
 

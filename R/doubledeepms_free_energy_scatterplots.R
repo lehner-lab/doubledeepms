@@ -266,13 +266,16 @@ doubledeepms_free_energy_scatterplots <- function(
   proteins_MSA <- names(input_MSA_list)[(do.call("c", lapply(input_MSA_list, function(x){!is.null(x)})))]
   
   plot_dt <- dg_dt[id!="-0-" & protein %in% proteins_MSA][!duplicated(paste(Pos_ref, protein, sep = ":"))]
+  cor_dt <- plot_dt[,.(cor = round(cor(conservation, f_ddg_wposmean, use = "pairwise.complete"), 2), sig = format(cor.test(conservation, f_ddg_wposmean, use = "pairwise.complete")$p.value), scientific = T, digits = 2),.(protein, Pos_class)]
+  cor_dt[, conservation := 0.5]
+  cor_dt[, f_ddg_wposmean := seq(0, plot_dt[,max(f_ddg_wposmean)], plot_dt[,max(f_ddg_wposmean)]/(3+1))[2:(3+1)], protein]
   d <- ggplot2::ggplot(plot_dt,ggplot2::aes(conservation, f_ddg_wposmean)) +
     ggplot2::geom_point(ggplot2::aes(color = Pos_class)) +
     ggplot2::geom_linerange(ggplot2::aes(ymin = f_ddg_wposmean-f_ddg_wposse*1.96, ymax = f_ddg_wposmean+f_ddg_wposse*1.96, color = Pos_class)) +
     ggplot2::geom_smooth(method = "lm", formula = 'y~x', ggplot2::aes(color = Pos_class), se = F, show.legend = F) +
     ggplot2::xlab("Residue conservation") +
-    ggplot2::ylab(expression("Mean "*Delta*Delta*"G of Folding")) +
-    ggplot2::geom_text(data = plot_dt[,.(label = paste("Pearson's r = ", round(cor(conservation, f_ddg_wposmean, use = "pairwise.complete"), 2), sep="")),.(protein)], ggplot2::aes(label=label, x=Inf, y=Inf, hjust = 1, vjust = 1)) +
+    ggplot2::ylab(expression("Weighted mean |Folding "*Delta*Delta*"G|")) +
+    ggplot2::geom_text(data = cor_dt, ggplot2::aes(label=paste("r = ", cor, ", P = ", sig, sep=""), color = Pos_class)) +
     ggplot2::facet_grid(~protein, scales = "free") + 
     ggplot2::theme_bw()
   if(!is.null(colour_scheme)){
@@ -280,13 +283,16 @@ doubledeepms_free_energy_scatterplots <- function(
   }
   suppressWarnings(ggplot2::ggsave(file.path(outpath, "mean_ddG_folding_conservation_scatter.pdf"), d, width = 7, height = 3))
   
+  cor_dt <- plot_dt[,.(cor = round(cor(conservation, b_ddg_wposmean, use = "pairwise.complete"), 2), sig = format(cor.test(conservation, b_ddg_wposmean, use = "pairwise.complete")$p.value), scientific = T, digits = 2),.(protein, Pos_class)]
+  cor_dt[, conservation := 0.5]
+  cor_dt[, b_ddg_wposmean := seq(0, plot_dt[,max(b_ddg_wposmean)], plot_dt[,max(b_ddg_wposmean)]/(3+1))[2:(3+1)], protein]
   d <- ggplot2::ggplot(plot_dt,ggplot2::aes(conservation, b_ddg_wposmean)) +
     ggplot2::geom_point(ggplot2::aes(color = Pos_class)) +
     ggplot2::geom_linerange(ggplot2::aes(ymin = b_ddg_wposmean-b_ddg_wposse*1.96, ymax = b_ddg_wposmean+f_ddg_wposse*1.96, color = Pos_class)) +
     ggplot2::geom_smooth(method = "lm", formula = 'y~x', ggplot2::aes(color = Pos_class), se = F, show.legend = F) +
     ggplot2::xlab("Residue conservation") +
-    ggplot2::ylab(expression("Mean "*Delta*Delta*"G of Binding")) +
-    ggplot2::geom_text(data = plot_dt[,.(label = paste("Pearson's r = ", round(cor(conservation, b_ddg_wposmean, use = "pairwise.complete"), 2), sep="")),.(protein)], ggplot2::aes(label=label, x=Inf, y=Inf, hjust = 1, vjust = 1)) +
+    ggplot2::ylab(expression("Weighted mean |Binding "*Delta*Delta*"G|")) +
+    ggplot2::geom_text(data = cor_dt, ggplot2::aes(label=paste("r = ", cor, ", P = ", sig, sep=""), color = Pos_class)) +
     ggplot2::facet_grid(~protein, scales = "free") + 
     ggplot2::theme_bw()
   if(!is.null(colour_scheme)){
