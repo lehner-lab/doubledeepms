@@ -5,8 +5,7 @@
 \title{doubledeepms_fitness_plots}
 \usage{
 doubledeepms_fitness_plots(fitness_list, val_inpath,
-  structure_metrics_list, scatter_examples_list, outpath, colour_scheme,
-  execute = TRUE)
+  structure_metrics_list, outpath, colour_scheme, execute = TRUE)
 }
 \arguments{
 \item{fitness_list}{list of folder paths to fitness data (required)}
@@ -14,8 +13,6 @@ doubledeepms_fitness_plots(fitness_list, val_inpath,
 \item{val_inpath}{path to experimental fitness validations (required)}
 
 \item{structure_metrics_list}{list of paths to structure metrics (required)}
-
-\item{scatter_examples_list}{list of two vectors containing as elements the protein, assay, replicate X and replicate Y, to plot the fitness comparison (required)}
 
 \item{outpath}{output path for plots and saved objects (required)}
 

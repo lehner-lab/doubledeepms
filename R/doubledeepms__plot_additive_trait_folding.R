@@ -48,7 +48,7 @@ doubledeepms__plot_additive_trait_folding <- function(
   d <- ggplot2::ggplot(plot_dt[mut_order>0],ggplot2::aes(f_dg_pred, observed_fitness)) +
     ggplot2::stat_binhex(bins = 100, size = 0, color = "lightgrey") +
     ggplot2::scale_fill_gradientn(colours = c("white", "black"), trans = "log10") +
-    ggplot2::xlab(expression(Delta*"G Folding (ddPCA)")) +
+    ggplot2::xlab(expression(Delta*"G Folding (inferred)")) +
     ggplot2::ylab("Fitness (Abundance)") +
     ggplot2::geom_hline(yintercept = 0, linetype = 2) +
     ggplot2::geom_vline(xintercept = 0, linetype = 2) +
@@ -62,7 +62,7 @@ doubledeepms__plot_additive_trait_folding <- function(
   d <- ggplot2::ggplot(plot_dt[mut_order>0],ggplot2::aes(f_dg_pred, observed_fitness)) +
     ggplot2::stat_binhex(bins = 100, size = 0, color = "lightgrey") +
     ggplot2::scale_fill_gradientn(colours = c("white", "black"), trans = "log10") +
-    ggplot2::xlab(expression(Delta*"G Folding (ddPCA)")) +
+    ggplot2::xlab(expression(Delta*"G Folding (inferred)")) +
     ggplot2::ylab("Fitness (Abundance)") +
     ggplot2::geom_hline(yintercept = 0, linetype = 2) +
     ggplot2::geom_vline(xintercept = 0, linetype = 2) +
@@ -76,7 +76,7 @@ doubledeepms__plot_additive_trait_folding <- function(
   d <- ggplot2::ggplot(plot_dt[mut_order>0 & f_dg_pred>plot_xlim[1] & f_dg_pred<plot_xlim[2]],ggplot2::aes(f_dg_pred, observed_fitness)) +
     ggplot2::stat_binhex(bins = 100, size = 0, color = "lightgrey") +
     ggplot2::scale_fill_gradientn(colours = c("white", "black"), trans = "log10") +
-    ggplot2::xlab(expression(Delta*"G Folding (ddPCA)")) +
+    ggplot2::xlab(expression(Delta*"G Folding (inferred)")) +
     ggplot2::ylab("Fitness (Abundance)") +
     ggplot2::geom_hline(yintercept = 0, linetype = 2) +
     ggplot2::geom_vline(xintercept = 0, linetype = 2) +
@@ -90,7 +90,7 @@ doubledeepms__plot_additive_trait_folding <- function(
   d <- ggplot2::ggplot(plot_dt[mut_order>0],ggplot2::aes(f_dg_pred, observed_fitness, colour = f_ddg_pred_conf)) +
     ggplot2::geom_point(data = plot_dt[f_ddg_pred_conf==F & mut_order>0], size = 1, alpha = 1/4) +
     ggplot2::geom_point(data = plot_dt[f_ddg_pred_conf==T & mut_order>0], size = 1, alpha = 1/4) +
-    ggplot2::xlab(expression(Delta*"G Folding (ddPCA)")) +
+    ggplot2::xlab(expression(Delta*"G Folding (inferred)")) +
     ggplot2::ylab("Fitness (Abundance)") +
     ggplot2::geom_hline(yintercept = 0, linetype = 2) +
     ggplot2::geom_vline(xintercept = 0, linetype = 2) +

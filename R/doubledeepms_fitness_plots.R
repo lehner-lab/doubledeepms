@@ -6,7 +6,6 @@
 #' @param fitness_list list of folder paths to fitness data (required)
 #' @param val_inpath  path to experimental fitness validations (required)
 #' @param structure_metrics_list list of paths to structure metrics (required)
-#' @param scatter_examples_list list of two vectors containing as elements the protein, assay, replicate X and replicate Y, to plot the fitness comparison (required)
 #' @param outpath output path for plots and saved objects (required)
 #' @param colour_scheme colour scheme file (required)
 #' @param execute whether or not to execute the analysis (default: TRUE)
@@ -18,7 +17,6 @@ doubledeepms_fitness_plots <- function(
   fitness_list,
   val_inpath,
   structure_metrics_list,
-  scatter_examples_list,
   outpath,
   colour_scheme,
   execute = TRUE
@@ -63,7 +61,6 @@ doubledeepms_fitness_plots <- function(
 
   doubledeepms__plot_fitness_replicates_cor(
     input_dt = fitness_dt,
-    scatter_examples_list = scatter_examples_list,
     outpath = outpath,
     colour_scheme = colour_scheme)
   
@@ -99,6 +96,17 @@ doubledeepms_fitness_plots <- function(
     d <- d + ggplot2::scale_fill_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3)]))
   }
   ggplot2::ggsave(file.path(outpath, "fitness_densities.pdf"), d, width = 7, height = 3, useDingbats=FALSE)
+
+  #Proportion of singles in bimodal peaks - PSD95-PDZ3
+  strong_singles <- fitness_dt[pca_type=="Binding" & protein=="PSD95-PDZ3" & Nham_aa==1 & STOP==F & STOP_readthrough==F,sum(fitness<(-0.75))/.N*100]
+  print(paste0("%Single AA substitutions strongly affecting binding in PSD95-PDZ3 (fitness < -0.75): ", round(strong_singles, 0)))
+  weak_singles <- fitness_dt[pca_type=="Binding" & protein=="PSD95-PDZ3" & Nham_aa==1 & STOP==F & STOP_readthrough==F,sum(fitness>(-0.25))/.N*100]
+  print(paste0("%Single AA substitutions strongly affecting binding in PSD95-PDZ3 (fitness > -0.25): ", round(weak_singles, 0)))
+  #Proportion of singles in bimodal peaks - GRB2-SH3
+  strong_singles <- fitness_dt[pca_type=="Binding" & protein=="GRB2-SH3" & Nham_aa==1 & STOP==F & STOP_readthrough==F,sum(fitness<(-0.75))/.N*100]
+  print(paste0("%Single AA substitutions strongly affecting binding in GRB2-SH3 (fitness < -0.75): ", round(strong_singles, 0)))
+  weak_singles <- fitness_dt[pca_type=="Binding" & protein=="GRB2-SH3" & Nham_aa==1 & STOP==F & STOP_readthrough==F,sum(fitness>(-0.25))/.N*100]
+  print(paste0("%Single AA substitutions strongly affecting binding in GRB2-SH3 (fitness > -0.25): ", round(weak_singles, 0)))
 
   ### Plot fitness scatter by protein and position class
   ###########################

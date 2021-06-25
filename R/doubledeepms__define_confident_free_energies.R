@@ -24,7 +24,7 @@ doubledeepms__define_confident_free_energies <- function(
   plot_dt <- reshape2::melt(copy(input_dt)[mut_order==1 & !duplicated(id),.(id, mut_order, f_ddg_pred_sd, b_ddg_pred_sd)], id = c("id", "mut_order"))
   plot_dt[, type := "Folding"]
   plot_dt[variable=="b_ddg_pred_sd", type := "Binding"]
-  d <- ggplot2::ggplot(plot_dt,ggplot2::aes(log10(value))) +
+  d <- ggplot2::ggplot(plot_dt[!is.na(value)],ggplot2::aes(log10(value))) +
     ggplot2::geom_density() +
     ggplot2::geom_vline(data = data.table(value = 1/(1.96*2), type = "Folding"), ggplot2::aes(xintercept = log10(value)), linetype = 2) +
     ggplot2::geom_vline(data = data.table(value = folding_energy_max_sd, type = "Folding"), ggplot2::aes(xintercept = log10(value)), linetype = 2, color = highlight_colour) +

@@ -87,12 +87,9 @@ doubledeepms__plot_validation_scatter <- function(
   for(dname in val_dt[,unique(Dataset)]){
     for(conf_level in c(T, F)){
       plot_dt <- val_dt[Dataset==dname,]
-      for(metric_lit in c("f_ddg", "b_ddg")){
+      for(metric_lit in c("f_dg", "f_ddg", "b_dg", "b_ddg")){
         if(plot_dt[!is.na(get(metric_lit)),.N]==0){
-          metric_lit <- gsub("ddg", "dg", metric_lit)
-          if(plot_dt[!is.na(get(metric_lit)),.N]==0){
-            next()
-          }
+          next()
         }
         metric_lit_sd <- paste0(metric_lit, "_sd")
         metric_data <- paste0(metric_lit, "_pred")
@@ -119,18 +116,20 @@ doubledeepms__plot_validation_scatter <- function(
           ggplot2::theme_bw()
         if(grepl("^f_", metric_lit) & grepl("_ddg$", metric_lit)){
           d <- d + ggplot2::xlab(expression(Delta*Delta*"G Folding (in vitro)")) +
-            ggplot2::ylab(expression(Delta*Delta*"G Folding (ddPCA)"))
+            ggplot2::ylab(expression(Delta*Delta*"G Folding (inferred)"))
         }else if(grepl("^b_", metric_lit) & grepl("_ddg$", metric_lit)){
           d <- d + ggplot2::xlab(expression(Delta*Delta*"G Binding (in vitro)")) +
-            ggplot2::ylab(expression(Delta*Delta*"G Binding (ddPCA)"))
+            ggplot2::ylab(expression(Delta*Delta*"G Binding (inferred)"))
         }else if(grepl("^f_", metric_lit) & grepl("_dg$", metric_lit)){
           d <- d + ggplot2::xlab(expression(Delta*"G Folding (in vitro)")) +
-            ggplot2::ylab(expression(Delta*"G Folding (ddPCA)"))
+            ggplot2::ylab(expression(Delta*"G Folding (inferred)"))
         }else if(grepl("^b_", metric_lit) & grepl("_dg$", metric_lit)){
           d <- d + ggplot2::xlab(expression(Delta*"G Binding (in vitro)")) +
-            ggplot2::ylab(expression(Delta*"G Binding (ddPCA)"))
+            ggplot2::ylab(expression(Delta*"G Binding (inferred)"))
         }
         ggplot2::ggsave(file.path(report_outpath, paste0("validation_scatter_", dname, "_", metric_lit, c("", "_conf")[as.numeric(conf_level)+1], ".pdf")), d, width = 3, height = 3, useDingbats=FALSE)
+        #Save plot data
+        write.table(plot_dt[,.(id, col_lit, col_data)], file = file.path(report_outpath, paste0("validation_scatter_", dname, "_", metric_lit, c("", "_conf")[as.numeric(conf_level)+1], ".txt")), quote = F, row.names = F)
       }
     }
   }

@@ -49,7 +49,11 @@ doubledeepms_thermo_model_results <- function(
   #Load model data
   fitness_dt <- fread(file.path(mochi_outpath, "model_data.txt"))
 
-  #Plot
+  #Plot mutation distributions
+  doubledeepms__plot_mutation_distributions(
+    input_dt = fitness_dt,
+    report_outpath = outpath,
+    colour_scheme = colour_scheme)
 
   #Load model results
   pred_dt <- doubledeepms__get_model_results(

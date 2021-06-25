@@ -4,13 +4,10 @@
 \alias{doubledeepms__plot_fitness_replicates_cor}
 \title{doubledeepms__plot_fitness_replicates_cor}
 \usage{
-doubledeepms__plot_fitness_replicates_cor(input_dt, scatter_examples_list,
-  outpath, colour_scheme)
+doubledeepms__plot_fitness_replicates_cor(input_dt, outpath, colour_scheme)
 }
 \arguments{
 \item{input_dt}{list of folder paths to fitness data (required)}
-
-\item{scatter_examples_list}{list of two vectors containing as elements the protein, assay, replicate X and replicate Y, to plot the fitness comparison (required)}
 
 \item{outpath}{output path for plots and saved objects (required)}
 
