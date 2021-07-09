@@ -130,13 +130,14 @@ doubledeepms_allostery_plots <- function(
   for(i in dg_dt[,unique(protein)]){
     allostery_pos <- doubledeepms__persite_energy_vs_distance_plot(
       input_dt = copy(dg_dt)[protein==i & id!="-0-"],
-      literature_sites = literature_list[[i]],
+      literature_sites = literature_list[[i]][["class_switching"]],
       outpath = file.path(outpath, paste0(i, "_persite_binding_energy_vs_distance_scatter.pdf")),
       colour_scheme = colour_scheme,
       trait_name = "binding")
-    dg_dt[protein==i & Pos_ref %in% allostery_pos, allosteric := T]
-    print(paste0("Allosteric residues for ", i, ": ", paste(dg_dt[protein==i & allosteric & Pos_class!="binding_interface"][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
-    print(paste0("Orthosteric residues for ", i, ": ", paste(dg_dt[protein==i & allosteric & Pos_class=="binding_interface"][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
+    dg_dt[protein==i & Pos_ref %in% allostery_pos & Pos_class!="binding_interface", allosteric := T]
+    dg_dt[protein==i & Pos_ref %in% allostery_pos & Pos_class=="binding_interface", orthosteric := T]
+    print(paste0("Allosteric residues for ", i, ": ", paste(dg_dt[protein==i & allosteric][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
+    print(paste0("Orthosteric residues for ", i, ": ", paste(dg_dt[protein==i & orthosteric][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
   }
 
   ###########################
@@ -163,9 +164,75 @@ doubledeepms_allostery_plots <- function(
       outpath = file.path(outpath, paste0(i, "_allosteric_mutations_scatter.pdf")),
       colour_scheme = colour_scheme,
       yaxis_limits = yaxis_limits)
-    print(paste0("Surface sites with allosteric mutations for ", i, ": ", paste(dg_list[[i]][allosteric_mutation & Pos_class=="surface"][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
+    print(paste0("Surface sites with allosteric mutations (not in allosteric sites) for ", i, ": ", paste(dg_list[[i]][allosteric_mutation & Pos_class=="surface" & is.na(allosteric)][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
   }
   dg_dt <- rbindlist(dg_list)
+
+  ###########################
+  ### Numbers of allosteric mutations
+  ###########################
+
+  print("Numbers of allosteric mutations: ")
+  print(dg_dt[allosteric_mutation==T,.(total_mutations = .N),.(protein, Pos_class)][order(protein, Pos_class)])
+
+  print("Numbers of unique residues with allosteric mutations: ")
+  print(dg_dt[allosteric_mutation==T,.(total_residues = length(unique(Pos_ref))),.(protein, Pos_class)])
+
+  plot_dt <- dg_dt[!is.na(allosteric_mutation),.(prop_mut = sum(allosteric_mutation)/length(allosteric_mutation)*100, scHAmin_ligand = unique(scHAmin_ligand), Pos_class=unique(Pos_class), allosteric=unique(allosteric)),.(Pos_ref, protein)]
+  cor_dt <- plot_dt[,.(cor = round(cor(scHAmin_ligand, prop_mut, use = "pairwise.complete"), 2), scHAmin_ligand = 12, prop_mut = 100),protein]
+  d <- ggplot2::ggplot(plot_dt,ggplot2::aes(scHAmin_ligand, prop_mut)) +
+    ggplot2::geom_smooth(method = "lm", se = F, color = "grey", linetype = 2) + 
+    ggplot2::geom_point(ggplot2::aes(shape = !is.na(allosteric), color = Pos_class), size = 2) +
+    ggplot2::xlab(expression("Distance to ligand ("*ring(A)*")")) +
+    ggplot2::ylab("%Allosteric mutations per residue") +
+    ggplot2::facet_wrap(protein~., scales = "free", ncol = 1) +
+    ggplot2::labs(color = "Residue\nposition", shape = "Major allosteric\nsite") +
+    ggplot2::geom_text(data = cor_dt, ggplot2::aes(label=paste("Pearson's r = ", cor, sep=""))) +
+    ggplot2::theme_bw()
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(3, 4)]))
+  }
+  ggplot2::ggsave(file.path(outpath, "allosteric_mutations_vs_distance.pdf"), d, width = 4, height = 6, useDingbats=FALSE)
+
+
+  ###########################
+  ### Proportion of mutations in allosteric sites that are allosteric mutations
+  ###########################
+
+  #Sector residues
+  for(i in dg_dt[,unique(protein)]){
+    temp_prop <- dg_dt[protein==i & allosteric & !is.na(allosteric_mutation),sum(allosteric_mutation)/.N]
+    print(paste0("Proportion of allosteric mutations at allosteric sites (", i, "): ", format(temp_prop, digits=2, scientific=T)))
+  }
+
+  ###########################
+  ### Predicting literature sites using mean absolute binding free energy changes
+  ###########################
+
+  #Sector residues
+  for(i in dg_dt[,unique(protein)]){
+    if(length(literature_list[[i]][["sector"]]!=0)){
+      in_sector_means <- dg_dt[protein==i & !is.na(b_ddg_wposmeanabs)][!duplicated(Pos_ref)][Pos_ref %in% literature_list[[i]][["sector"]],b_ddg_wposmeanabs]
+      out_sector_means <- dg_dt[protein==i & !is.na(b_ddg_wposmeanabs)][!duplicated(Pos_ref)][!Pos_ref %in% literature_list[[i]][["sector"]],b_ddg_wposmeanabs]
+      temp_test <- doubledeepms__mann_whitney_U_wrapper(in_sector_means, out_sector_means)
+      print(paste0("Predicting sector residues using position-wise weighted mean of binding free energies changes (", i, "): p-value=", format(temp_test[["p_value"]], digits=2, scientific=T), " AUC=", round(temp_test[["effect_size"]], 2)))
+    }
+  }
+
+  #Class switching residues
+  for(i in dg_dt[,unique(protein)]){
+    if(length(literature_list[[i]][["class_switching"]]!=0)){
+      in_sector_means <- dg_dt[protein==i & !is.na(b_ddg_wposmeanabs)][!duplicated(Pos_ref)][Pos_ref %in% literature_list[[i]][["class_switching"]],b_ddg_wposmeanabs]
+      out_sector_means <- dg_dt[protein==i & !is.na(b_ddg_wposmeanabs)][!duplicated(Pos_ref)][!Pos_ref %in% literature_list[[i]][["class_switching"]],b_ddg_wposmeanabs]
+      temp_test <- doubledeepms__mann_whitney_U_wrapper(in_sector_means, out_sector_means)
+      print(paste0("Predicting class-switching residues using position-wise weighted mean of binding free energies changes (", i, "): p-value=", format(temp_test[["p_value"]], digits=2, scientific=T), " AUC=", round(temp_test[["effect_size"]], 2)))
+      #Predicting class-switching residues not classified as allosteric
+      in_sector_means <- dg_dt[protein==i & !is.na(b_ddg_pred)][Pos_ref %in% literature_list[[i]][["class_switching"]] & is.na(allosteric) & is.na(orthosteric),abs(b_ddg_pred)]
+      out_sector_means <- dg_dt[protein==i & !is.na(b_ddg_pred)][!Pos_ref %in% literature_list[[i]][["class_switching"]] & is.na(allosteric) & is.na(orthosteric),abs(b_ddg_pred)]
+      temp_test <- doubledeepms__mann_whitney_U_wrapper(in_sector_means, out_sector_means)
+      print(paste0("Predicting class-switching residues using binding free energies changes of mutations at non-allosteric/orthosteric sites (", i, "): p-value=", format(temp_test[["p_value"]], digits=2, scientific=T), " AUC=", round(temp_test[["effect_size"]], 2)))
+    }
+  }
 
   ###########################
   ### Where are strongest binding effects?
@@ -177,11 +244,11 @@ doubledeepms_allostery_plots <- function(
   for(i in c(1:40)/20){
     plot_list[[as.character(i)]] <- dg_dt[(b_ddg_pred-1.96*b_ddg_pred_sd)>i & id!="-0-",]
     plot_list[[as.character(i)]][, b_ddg_pred_class := i]
-    plot_list[[as.character(-i)]] <- dg_dt[(b_ddg_pred-1.96*b_ddg_pred_sd)<(-i) & id!="-0-",]
+    plot_list[[as.character(-i)]] <- dg_dt[(b_ddg_pred+1.96*b_ddg_pred_sd)<(-i) & id!="-0-",]
     plot_list[[as.character(-i)]][, b_ddg_pred_class := (-i)]
     plot_list_conf[[as.character(i)]] <- dg_dt[b_ddg_pred_conf==T & (b_ddg_pred-1.96*b_ddg_pred_sd)>i & id!="-0-",]
     plot_list_conf[[as.character(i)]][, b_ddg_pred_class := i]
-    plot_list_conf[[as.character(-i)]] <- dg_dt[b_ddg_pred_conf==T & (b_ddg_pred-1.96*b_ddg_pred_sd)<(-i) & id!="-0-",]
+    plot_list_conf[[as.character(-i)]] <- dg_dt[b_ddg_pred_conf==T & (b_ddg_pred+1.96*b_ddg_pred_sd)<(-i) & id!="-0-",]
     plot_list_conf[[as.character(-i)]][, b_ddg_pred_class := (-i)]
   }
   plot_dt <- rbindlist(plot_list)
@@ -251,21 +318,23 @@ doubledeepms_allostery_plots <- function(
   }
   ggplot2::ggsave(file.path(outpath, "binding_affinity_mutations_conf.pdf"), d, width = 7, height = 2, useDingbats=FALSE)
 
-  # #Plot abundance unchanged
-  # plot_dt_all <- plot_dt[(abs(f_ddg_pred)-1.96*f_ddg_pred_sd)<0 & b_ddg_pred_conf==T,.(num_mutations = .N),.(b_ddg_pred_class, Pos_class, protein)]
-  # d <- ggplot2::ggplot(plot_dt_all[order(Pos_class)],ggplot2::aes(b_ddg_pred_class, num_mutations, color = Pos_class)) +
-  #   ggplot2::geom_line(size = 1) +
-  #   # ggplot2::geom_point(size = 0.5) +
-  #   ggplot2::geom_vline(xintercept = 0, linetype = 2) +
-  #   ggplot2::facet_grid(protein~., scales = "free") +
-  #   ggplot2::xlab(expression("Binding "*Delta*Delta*"G threshold")) +
-  #   ggplot2::ylab("#Mutations") +
-  #   ggplot2::labs(color = "Residue\nposition") +
-  #   ggplot2::theme_bw()
-  # if(!is.null(colour_scheme)){
-  #   d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
-  # }
-  # ggplot2::ggsave(file.path(outpath, "binding_affinity_mutations_all_abundanceunchanged_conf.pdf"), d, width = 7, height = 5, useDingbats=FALSE)
+  #Enrichment of charged/polar residues in surface mutations that increase binding affinity
+  for(i in dg_dt[,unique(protein)]){
+    surf_charge <- dg_dt[b_ddg_pred_conf==T & (b_ddg_pred+1.96*b_ddg_pred_sd)<0 & id!="-0-" & protein==i & Pos_class=="surface", sum(WT_AA %in% unlist(strsplit("RHKDESTNQ", ""))),]
+    surf_ncharge <-dg_dt[b_ddg_pred_conf==T & (b_ddg_pred-1.96*b_ddg_pred_sd)>0 & id!="-0-" & protein==i & Pos_class=="surface", sum(WT_AA %in% unlist(strsplit("RHKDESTNQ", ""))),]
+    nsurf_charge <- dg_dt[b_ddg_pred_conf==T & (b_ddg_pred+1.96*b_ddg_pred_sd)<0 & id!="-0-" & protein==i & Pos_class=="surface", sum(!WT_AA %in% unlist(strsplit("RHKDESTNQ", ""))),]
+    nsurf_ncharge <- dg_dt[b_ddg_pred_conf==T & (b_ddg_pred-1.96*b_ddg_pred_sd)>0 & id!="-0-" & protein==i & Pos_class=="surface", sum(!WT_AA %in% unlist(strsplit("RHKDESTNQ", ""))),]
+    temp_test <- fisher.test(matrix(c(surf_charge, surf_ncharge, nsurf_charge, nsurf_ncharge), nrow = 2))
+    print(paste0("Enrichment of charged/polar residues in surface mutations that increase binding affinity (", i, "): p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+  }
+
+  #Number of surface and binding interface mutations that increase and decrease binding affinity respectively
+  for(i in dg_dt[,unique(protein)]){
+    surf_inc <- dg_dt[b_ddg_pred_conf==T & (b_ddg_pred+1.96*b_ddg_pred_sd)<0 & id!="-0-" & protein==i & Pos_class=="surface", .N,]
+    bind_dec <- dg_dt[b_ddg_pred_conf==T & (b_ddg_pred-1.96*b_ddg_pred_sd)>0 & id!="-0-" & protein==i & Pos_class=="binding_interface", .N,]
+    print(paste0("Number of surface mutations that increase binding affinity (", i, "): ", surf_inc))
+    print(paste0("Number of binding interface mutations that decrease binding affinity (", i, "): ", bind_dec))
+  }
 
   ###########################
   ### Save

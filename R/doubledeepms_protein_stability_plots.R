@@ -128,6 +128,15 @@ doubledeepms_protein_stability_plots <- function(
   }
   suppressWarnings(ggplot2::ggsave(file.path(outpath, "position_violins.pdf"), d, width = 5, height = 3, useDingbats=FALSE))
 
+  #P-value for each protein separately
+  plot_dt <- dg_dt[f_ddg_pred_conf==T & id!="-0-",.(protein, f_ddg_pred, Pos_class, RSASA, scHAmin_ligand, Pos_ref)]
+  for(i in plot_dt[,unique(protein)]){
+    print(paste0("Folding free energy change of mutations in core residues vs. the remainder, Mann–Whitney U test p-value (", i, "): ", 
+    doubledeepms__mann_whitney_U_wrapper(
+      plot_dt[protein==i & Pos_class=="core",f_ddg_pred],
+      plot_dt[protein==i & Pos_class!="core",f_ddg_pred])['p_value']))
+  }
+
   ###########################
   ### Correlation of mean folding ddG with RSASA
   ###########################
@@ -290,6 +299,19 @@ doubledeepms_protein_stability_plots <- function(
     d <- d + ggplot2::scale_fill_manual(values = c(unlist(colour_scheme[["shade 0"]][c(3)]), "grey", unlist(colour_scheme[["shade 0"]][c(4)])))
   }
   ggplot2::ggsave(file.path(outpath, "destabilising_hydrophobicity_violin.pdf"), d, width = 5, height = 2, useDingbats=FALSE)
+
+  #P-value for each protein separately
+  for(i in plot_dt[,unique(protein)]){
+    print(paste0("Hydrophobicity of surface destabilising residues vs. remainder, Mann–Whitney U test p-value (", i, "): ", 
+    doubledeepms__mann_whitney_U_wrapper(
+      plot_dt[protein==i & Pos_class=="surface" & f_ddg_pred_stab_res5,Hydrophobicity],
+      plot_dt[protein==i & Pos_class=="surface" & !f_ddg_pred_stab_res5,Hydrophobicity])['p_value']))
+  }
+  #P-value for PSD95-PDZ3 and GRB2-SH3 pooled
+  print(paste0("Hydrophobicity of surface destabilising residues vs. remainder, Mann–Whitney U test p-value (GRB2-SH3 & PSD95-PDZ3): ", 
+  doubledeepms__mann_whitney_U_wrapper(
+    plot_dt[protein %in% c("GRB2-SH3", "PSD95-PDZ3") & Pos_class=="surface" & f_ddg_pred_stab_res5,Hydrophobicity],
+    plot_dt[protein %in% c("GRB2-SH3", "PSD95-PDZ3") & Pos_class=="surface" & !f_ddg_pred_stab_res5,Hydrophobicity])['p_value']))
 
   # ###########################
   # ### Relative side chain angle of stabilising residues

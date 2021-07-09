@@ -230,9 +230,11 @@ doubledeepms <- function(
   #PSD95-PDZ3 and GRB2-SH3
   doubledeepms_fitness_plots(
     fitness_list = list(
+      "GB1" = file.path(base_dir, "Data", "fitness", "GB1"),
       "PSD95-PDZ3" = file.path(base_dir, "Data", "fitness", "PSD95-PDZ3"),
       "GRB2-SH3" = file.path(base_dir, "Data", "fitness", "GRB2-SH3")),
     structure_metrics_list = list(
+      "GB1" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_GB1"), "dg_singles.txt"),
       "PSD95-PDZ3" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_PSD95-PDZ3"), "dg_singles.txt"),
       "GRB2-SH3" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_GRB2-SH3"), "dg_singles.txt")),
     val_inpath = file.path(base_dir, "Data", "experimental_validations", "GRB2-SH3", "experimenal_validations_ODs.txt"),
@@ -399,9 +401,11 @@ doubledeepms <- function(
       "PSD95-PDZ3" = "A",
       "GRB2-SH3" = "A"),
     literature_list = list(
-      "GB1" = c(),
-      "PSD95-PDZ3" = c(322, 327, 329, 330, 336, 362, 372, 375, 379),
-      "GRB2-SH3" = c()),
+      "GB1" = list(class_switching = c(), sector = c()),
+      "PSD95-PDZ3" = list(
+        class_switching = c(322, 327, 329, 330, 336, 362, 372, 375, 379), 
+        sector = c(322,323,325,327,329,330,336,345,347,351,353,362,363,364,372,375,376,379,386,388)),
+      "GRB2-SH3" = list(class_switching = c(), sector = c())),
     aaprop_file = file.path(base_dir, "Data", "amino_acid_properties", "amino_acid_properties_annotated_supplementary.txt"),
     aaprop_file_selected = file.path(base_dir, "Data", "amino_acid_properties", "selected.amino_acid_properties.txt"),
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_allostery_plots", stagenum=stagenum, base_dir=base_dir),

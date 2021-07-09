@@ -199,8 +199,10 @@ doubledeepms_fitness_heatmaps <- function(
     d <- d + ggplot2::scale_fill_manual(values = plot_cols)
   }
   ggplot2::ggsave(file.path(outpath, "fitness_binding_mechanism_barplot.pdf"), d, width = 7, height = 3, useDingbats=FALSE)
-  
-  
+  #Pleitropic % for binding increase and decrease
+  print(paste0("%mutations pleiotropic (increased binding): ", round(plot_dt[fitness_decrease==F & !grepl("only|Remainder", as.character(ddg_class)),sum(count)]/plot_dt[fitness_decrease==F,sum(count)]*100, 2)))
+  print(paste0("%mutations pleiotropic (decreased binding): ", round(plot_dt[fitness_decrease==T & !grepl("only|Remainder", as.character(ddg_class)),sum(count)]/plot_dt[fitness_decrease==T,sum(count)]*100, 2)))
+
   #Plot - split per protein position class
   plot_dt_list <- lapply(unique(singles_dt$Pos_class), function(posclass) {
     temp_plot_dt <- singles_dt[Pos_class == posclass,.(count = as.numeric(.N)), .(fitness_decrease, ddg_class)][order(fitness_decrease)]
@@ -245,8 +247,8 @@ doubledeepms_fitness_heatmaps <- function(
   ###########################
   ### Frequency of mutations across multiple sequence alignments
   ###########################
+
   if (!is.null(input_file_MSA)){
-    
     #Get MSA conservation and frequency
     MSA_dt <- as.data.table(reshape2::melt(fread(file = input_file_MSA), 
                                      id.vars = c("i", "A_i", "conservation"), 
@@ -271,8 +273,7 @@ doubledeepms_fitness_heatmaps <- function(
       d <- d + ggplot2::scale_fill_manual(values = plot_cols)
     }
     suppressWarnings(ggplot2::ggsave(file.path(outpath, "fitness_binding_mechanism_FreqMSA_violins.pdf"), d, width = 4, height = 5, useDingbats=FALSE))
-    
-    }
+  }
   
 }
 

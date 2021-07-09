@@ -17,31 +17,27 @@ doubledeepms__allosteric_mutations_scatterplot <- function(
   yaxis_limits = c(-3,3)
   ){
 
-  #Outlier changes in binding free energy
+  #Outlier changes in binding free energy not in binding interface
   trait_prefix <- "b_ddg"
   reg_threshold <- input_dt[Pos_class=="binding_interface",sum(abs(.SD[[1]])/.SD[[2]]^2, na.rm = T)/sum(1/.SD[[2]]^2, na.rm = T),.SDcols = paste0(trait_prefix, c("_pred", "_pred_sd"))]
-  input_dt[b_ddg_pred_conf==T, b_ddg_pred_outlier := p.adjust(doubledeepms__pvalue(abs(b_ddg_pred)-reg_threshold, b_ddg_pred_sd), method = "BH")<0.05 & (abs(b_ddg_pred)-reg_threshold)>0]
-
-  #Allosteric mutations (not within binding interface and not at allosteric site)
-  input_dt[b_ddg_pred_conf==T & is.na(allosteric), allosteric_mutation := b_ddg_pred_outlier]
+  input_dt[b_ddg_pred_conf==T & Pos_class!="binding_interface", allosteric_mutation := p.adjust(doubledeepms__pvalue(abs(b_ddg_pred)-reg_threshold, b_ddg_pred_sd), method = "BH")<0.05 & (abs(b_ddg_pred)-reg_threshold)>0]
 
   #Scatterplot
   plot_dt <- input_dt[b_ddg_pred_conf==T & id!="-0-"]
   plot_dt[, Pos_class_plot := "Remainder"]
-  plot_dt[allosteric_mutation & Pos_class=="binding_interface", Pos_class_plot := "Orthosteric mutation"]
   plot_dt[allosteric_mutation & Pos_class=="core", Pos_class_plot := "Core allosteric mutation"]
   plot_dt[allosteric_mutation & Pos_class=="surface", Pos_class_plot := "Surface allosteric mutation"]
-  plot_dt[!is.na(allosteric) & Pos_class=="binding_interface", Pos_class_plot := "Orthosteric site"]
-  plot_dt[!is.na(allosteric) & Pos_class!="binding_interface", Pos_class_plot := "Allosteric site"]
-  plot_dt[, Pos_class_plot := factor(Pos_class_plot, levels = c("Remainder", "Orthosteric site", "Orthosteric mutation", "Allosteric site", "Core allosteric mutation", "Surface allosteric mutation"))]
-  plot_cols = c("grey", colour_scheme[["shade 0"]][c(1,1:4)])
-  names(plot_cols) <- c("Remainder", "Orthosteric site", "Orthosteric mutation", "Allosteric site", "Core allosteric mutation", "Surface allosteric mutation")
+  plot_dt[orthosteric==T, Pos_class_plot := "Orthosteric site"]
+  plot_dt[allosteric==T, Pos_class_plot := "Allosteric site"]
+  plot_dt[, Pos_class_plot := factor(Pos_class_plot, levels = c("Remainder", "Orthosteric site", "Allosteric site", "Core allosteric mutation", "Surface allosteric mutation"))]
+  plot_cols = c("grey", colour_scheme[["shade 0"]][c(1:4)])
+  names(plot_cols) <- c("Remainder", "Orthosteric site", "Allosteric site", "Core allosteric mutation", "Surface allosteric mutation")
   d <- ggplot2::ggplot(plot_dt,ggplot2::aes(Pos_ref, b_ddg_pred, color = Pos_class_plot)) +
     ggplot2::geom_point(data = plot_dt[Pos_class_plot=="Remainder"], color = "grey", size = 0.25) +
     ggplot2::geom_point(data = plot_dt[Pos_class_plot %in% c("Allosteric site", "Orthosteric site")], size = 0.75, shape = 21) +
     ggplot2::geom_hline(yintercept = 0, linetype = 2) +
     ggplot2::geom_point(data = plot_dt[grepl("mutation", Pos_class_plot)], size = 1.5) +
-    ggrepel::geom_text_repel(data = plot_dt[allosteric_mutation==T & Pos_class=="surface"], ggplot2::aes(label = id_ref, color = Pos_class_plot), show.legend = F, 
+    ggrepel::geom_text_repel(data = plot_dt[allosteric_mutation & is.na(allosteric) & Pos_class=="surface"], ggplot2::aes(label = id_ref, color = Pos_class_plot), show.legend = F, 
       max.overlaps = Inf) +
     ggplot2::xlab("Amino acid position") +
     ggplot2::ylab(expression("Binding "*Delta*Delta*"G")) +
@@ -56,7 +52,7 @@ doubledeepms__allosteric_mutations_scatterplot <- function(
     ggplot2::geom_point(data = plot_dt[Pos_class_plot %in% c("Allosteric site", "Orthosteric site")], size = 0.75, shape = 21) +
     ggplot2::geom_hline(yintercept = 0, linetype = 2) +
     ggplot2::geom_point(data = plot_dt[grepl("mutation", Pos_class_plot)], size = 1.5) +
-    ggrepel::geom_text_repel(data = plot_dt[allosteric_mutation==T & Pos_class=="surface"], ggplot2::aes(label = id_ref, color = Pos_class_plot), show.legend = F, 
+    ggrepel::geom_text_repel(data = plot_dt[allosteric_mutation & is.na(allosteric) & Pos_class=="surface"], ggplot2::aes(label = id_ref, color = Pos_class_plot), show.legend = F, 
       max.overlaps = Inf) +
     ggplot2::xlab("Amino acid position") +
     ggplot2::ylab(expression("Binding "*Delta*Delta*"G")) +

@@ -103,9 +103,9 @@ doubledeepms_allostery_scatterplots <- function(
     #Plot
     d <- ggplot2::ggplot(plot_dt[id!="-0-"],ggplot2::aes(f_dg_pred, b_dg_pred)) +
       ggplot2::geom_point(alpha = 0.5, size = 1, color = "lightgrey") +
-      ggplot2::geom_point(data = plot_dt[allosteric==T & Pos_class !="binding_interface",], alpha = 0.5, ggplot2::aes(color = Pos_ref_plot), size = 2) +
-      ggplot2::geom_linerange(data = plot_dt[allosteric==T & Pos_class !="binding_interface",], alpha = 0.25, ggplot2::aes(ymin = b_dg_pred-b_ddg_pred_sd*1.96, ymax = b_dg_pred+b_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
-      ggplot2::geom_linerange(data = plot_dt[allosteric==T & Pos_class !="binding_interface",], alpha = 0.25, ggplot2::aes(xmin = f_dg_pred-f_ddg_pred_sd*1.96, xmax = f_dg_pred+f_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
+      ggplot2::geom_point(data = plot_dt[allosteric==T,], alpha = 0.5, ggplot2::aes(color = Pos_ref_plot), size = 2) +
+      ggplot2::geom_linerange(data = plot_dt[allosteric==T,], alpha = 0.25, ggplot2::aes(ymin = b_dg_pred-b_ddg_pred_sd*1.96, ymax = b_dg_pred+b_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
+      ggplot2::geom_linerange(data = plot_dt[allosteric==T,], alpha = 0.25, ggplot2::aes(xmin = f_dg_pred-f_ddg_pred_sd*1.96, xmax = f_dg_pred+f_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
       ggplot2::geom_vline(xintercept = 0) +
       ggplot2::geom_vline(data = plot_dt[id=="-0-",], ggplot2::aes(xintercept = f_dg_pred), linetype = 2) +
       ggplot2::geom_hline(yintercept = 0) +
@@ -118,9 +118,9 @@ doubledeepms_allostery_scatterplots <- function(
     #Plot - xylim
     d <- ggplot2::ggplot(plot_dt[id!="-0-"],ggplot2::aes(f_dg_pred, b_dg_pred)) +
       ggplot2::geom_point(alpha = 0.5, size = 1, color = "lightgrey") +
-      ggplot2::geom_point(data = plot_dt[allosteric==T & Pos_class !="binding_interface",], alpha = 0.5, ggplot2::aes(color = Pos_ref_plot), size = 2) +
-      ggplot2::geom_linerange(data = plot_dt[allosteric==T & Pos_class !="binding_interface",], alpha = 0.25, ggplot2::aes(ymin = b_dg_pred-b_ddg_pred_sd*1.96, ymax = b_dg_pred+b_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
-      ggplot2::geom_linerange(data = plot_dt[allosteric==T & Pos_class !="binding_interface",], alpha = 0.25, ggplot2::aes(xmin = f_dg_pred-f_ddg_pred_sd*1.96, xmax = f_dg_pred+f_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
+      ggplot2::geom_point(data = plot_dt[allosteric==T,], alpha = 0.5, ggplot2::aes(color = Pos_ref_plot), size = 2) +
+      ggplot2::geom_linerange(data = plot_dt[allosteric==T,], alpha = 0.25, ggplot2::aes(ymin = b_dg_pred-b_ddg_pred_sd*1.96, ymax = b_dg_pred+b_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
+      ggplot2::geom_linerange(data = plot_dt[allosteric==T,], alpha = 0.25, ggplot2::aes(xmin = f_dg_pred-f_ddg_pred_sd*1.96, xmax = f_dg_pred+f_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
       ggplot2::geom_vline(xintercept = 0) +
       ggplot2::geom_vline(data = plot_dt[id=="-0-",], ggplot2::aes(xintercept = f_dg_pred), linetype = 2) +
       ggplot2::geom_hline(yintercept = 0) +
@@ -145,7 +145,7 @@ doubledeepms_allostery_scatterplots <- function(
     plot_dt <- plot_dt[f_ddg_pred_conf==T & b_ddg_pred_conf==T,]
     plot_dt[, Pos_ref_plot := "Remainder"]
     plot_dt[allosteric==T & Pos_class != "binding_interface", Pos_ref_plot := "Site"]
-    plot_dt[allosteric_mutation==T & Pos_class != "binding_interface", Pos_ref_plot := "Mutation"]
+    plot_dt[is.na(allosteric) & allosteric_mutation==T, Pos_ref_plot := "Mutation"]
     plot_cols = c("grey", colour_scheme[["shade 0"]][c(2,4)])
     names(plot_cols) <- c("Remainder", "Site", "Mutation")
     #Plot
@@ -196,9 +196,9 @@ doubledeepms_allostery_scatterplots <- function(
     #Plot
     d <- ggplot2::ggplot(plot_dt[id!="-0-"],ggplot2::aes(fitness_abundance, fitness_binding)) +
       ggplot2::geom_point(alpha = 0.5, size = 1, color = "lightgrey") +
-      ggplot2::geom_point(data = plot_dt[allosteric==T & Pos_class !="binding_interface",], alpha = 0.5, ggplot2::aes(color = Pos_ref_plot), size = 2) +
-      ggplot2::geom_linerange(data = plot_dt[allosteric==T & Pos_class !="binding_interface",], alpha = 0.25, ggplot2::aes(ymin = fitness_binding-sigma_binding*1.96, ymax = fitness_binding+sigma_binding*1.96, color = Pos_ref_plot)) +
-      ggplot2::geom_linerange(data = plot_dt[allosteric==T & Pos_class !="binding_interface",], alpha = 0.25, ggplot2::aes(xmin = fitness_abundance-sigma_abundance*1.96, xmax = fitness_abundance+sigma_abundance*1.96, color = Pos_ref_plot)) +
+      ggplot2::geom_point(data = plot_dt[allosteric==T,], alpha = 0.5, ggplot2::aes(color = Pos_ref_plot), size = 2) +
+      ggplot2::geom_linerange(data = plot_dt[allosteric==T,], alpha = 0.25, ggplot2::aes(ymin = fitness_binding-sigma_binding*1.96, ymax = fitness_binding+sigma_binding*1.96, color = Pos_ref_plot)) +
+      ggplot2::geom_linerange(data = plot_dt[allosteric==T,], alpha = 0.25, ggplot2::aes(xmin = fitness_abundance-sigma_abundance*1.96, xmax = fitness_abundance+sigma_abundance*1.96, color = Pos_ref_plot)) +
       ggplot2::geom_line(data = plot_dt[fitness_binding_zbm>=min(fitness_binding)], ggplot2::aes(fitness_abundance, fitness_binding_zbm), color = colour_scheme[["shade 0"]][[1]]) +
       ggplot2::geom_vline(xintercept = 0) +
       ggplot2::geom_abline(linetype = 2) +
@@ -219,7 +219,7 @@ doubledeepms_allostery_scatterplots <- function(
     plot_dt <- copy(fitness_dt)[protein==i][,.(fitness_abundance, sigma_abundance, fitness_binding, fitness_binding_zbm, sigma_binding, Pos_class, allosteric, allosteric_mutation, id, Pos_ref)]
     plot_dt[, Pos_ref_plot := "Remainder"]
     plot_dt[allosteric==T & Pos_class != "binding_interface", Pos_ref_plot := "Site"]
-    plot_dt[allosteric_mutation==T & Pos_class != "binding_interface", Pos_ref_plot := "Mutation"]
+    plot_dt[is.na(allosteric) & allosteric_mutation==T, Pos_ref_plot := "Mutation"]
     plot_cols = c("grey", colour_scheme[["shade 0"]][c(2,4)])
     names(plot_cols) <- c("Remainder", "Site", "Mutation")
     #Plot
