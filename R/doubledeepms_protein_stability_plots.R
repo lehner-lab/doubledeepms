@@ -8,6 +8,7 @@
 #' @param pdb_chain_query_list query chain id (required)
 #' @param aaprop_file path to amino acid properties file (required)
 #' @param aaprop_file_selected path to file with selected subset of identifiers
+#' @param input_MSA_list path to MSA frequencies data (required)
 #' @param outpath output path for plots and saved objects (required)
 #' @param colour_scheme colour scheme file (required)
 #' @param execute whether or not to execute the analysis (default: TRUE)
@@ -21,6 +22,7 @@ doubledeepms_protein_stability_plots <- function(
   pdb_chain_query_list,
   aaprop_file,
   aaprop_file_selected,
+  input_MSA_list,
   outpath,
   colour_scheme,
   execute = TRUE
@@ -312,7 +314,46 @@ doubledeepms_protein_stability_plots <- function(
   doubledeepms__mann_whitney_U_wrapper(
     plot_dt[protein %in% c("GRB2-SH3", "PSD95-PDZ3") & Pos_class=="surface" & f_ddg_pred_stab_res5,Hydrophobicity],
     plot_dt[protein %in% c("GRB2-SH3", "PSD95-PDZ3") & Pos_class=="surface" & !f_ddg_pred_stab_res5,Hydrophobicity])['p_value']))
+  
+  
+  ###########################
+  ### Hydrophobicity of destabilizing residues vs. conservation
+  ###########################
+  
+  MSA_list <- list()
+  for (domain in names(input_MSA_list)) {
+    if(is.null(input_MSA_list[[domain]])){
+      msa_dt = data.table::data.table(Pos_ref = plot_dt[protein == domain, Pos_ref])
+      msa_dt[, conservation := NA]
+      temp_dt <- data.table::merge.data.table(plot_dt[protein == domain, ], 
+                                           msa_dt, 
+                                           by = "Pos_ref", all.x = T)
+    } else {
+      msa_dt <- fread(input_MSA_list[[domain]])
+      temp_dt <- data.table::merge.data.table(plot_dt[protein == domain, ], 
+                                              msa_dt[, .(i, conservation)], 
+                                              by.x = "Pos_ref", by.y="i", all.x = T)
+    }
+    MSA_list[[domain]] <- temp_dt
+  }
+  MSA_dt<- rbindlist(MSA_list)
+  
+  #Plot
+  d <- ggplot2::ggplot(MSA_dt[Pos_class_plot!="binding_interface",], ggplot2::aes(x=Hydrophobicity, y=conservation, color=Pos_class_plot)) +
+    ggplot2::geom_point() + 
+    ggplot2::geom_smooth(method = "lm", se=FALSE, formula = "y ~ x", linetype=2) +
+    ggplot2::facet_grid(Pos_class_plot~protein, scales = "free") +
+    ggplot2::theme_classic() +
+    ggrepel::geom_label_repel(data = MSA_dt[Pos_class_plot!="binding_interface" & f_ddg_pred_stab_res5,], ggplot2::aes(label=paste0(WT_AA,Pos_ref)))
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_color_manual(values = c(unlist(colour_scheme[["shade 0"]][c(3)]), "grey", unlist(colour_scheme[["shade 0"]][c(4)])))
+  }
+  ggplot2::ggsave(file.path(outpath, "destabilising_hydrophobicity_vs_conservation.pdf"), d, width = 7, height = 5, useDingbats=FALSE)
+  
 
+  
+  
+  
   # ###########################
   # ### Relative side chain angle of stabilising residues
   # ###########################
