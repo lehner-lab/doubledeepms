@@ -406,6 +406,10 @@ doubledeepms <- function(
         class_switching = c(322, 327, 329, 330, 336, 362, 372, 375, 379), 
         sector = c(322,323,325,327,329,330,336,345,347,351,353,362,363,364,372,375,376,379,386,388)),
       "GRB2-SH3" = list(class_switching = c(), sector = c())),
+    ohm_file_list = list(
+      "GB1" = file.path(base_dir, "Data", "ohm", "ohm_2gb1_ddPCA_GB1only.txt"), 
+      "PSD95-PDZ3" = file.path(base_dir, "Data", "ohm", "ohm_1be9_ddPCA_PDZonly.txt"),
+      "GRB2-SH3" = file.path(base_dir, "Data", "ohm", "ohm_2vwf_ddPCA_GRB2only.txt")),
     aaprop_file = file.path(base_dir, "Data", "amino_acid_properties", "amino_acid_properties_annotated_supplementary.txt"),
     aaprop_file_selected = file.path(base_dir, "Data", "amino_acid_properties", "selected.amino_acid_properties.txt"),
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_allostery_plots", stagenum=stagenum, base_dir=base_dir),

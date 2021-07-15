@@ -191,7 +191,8 @@ doubledeepms_protein_stability_plots <- function(
     stab_res <- as.integer(names(temp)[temp>=5])
     if(length(stab_res)==0){stab_res <- as.integer(names(temp))}
     dg_dt[protein==i & Pos_ref %in% stab_res, f_ddg_pred_stab_res5 := T]
-    print(paste0("Surface stabilising residues for ", i, ": ", paste(dg_dt[protein==i & f_ddg_pred_stab_res5 & Pos_class=="surface"][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
+    print(paste0("Destabilising residues for ", i, ": ", paste(dg_dt[protein==i & f_ddg_pred_stab_res5][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
+    print(paste0("Surface destabilising residues for ", i, ": ", paste(dg_dt[protein==i & f_ddg_pred_stab_res5 & Pos_class=="surface"][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
   }
   ###########################
   ### Position of de-stabilising residues
