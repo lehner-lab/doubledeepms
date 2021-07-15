@@ -268,9 +268,6 @@ doubledeepms_protein_stability_plots <- function(
   plot_dt <- aa_pca_dt[!duplicated(paste(Pos_ref, protein, sep = ":")) & id!="-0-"]
   plot_dt[, Hydrophobicity := .SD[[1]],,.SDcols = "PC1 (Hydrophobicity)"]
   plot_dt[, Hydrophobic_AA := WT_AA %in% unlist(strsplit("AVILMFYW", ""))]
-  t.test(
-    plot_dt[Pos_class=="surface" & f_ddg_pred_stab_res5,Hydrophobicity],
-    plot_dt[Pos_class=="surface" & !f_ddg_pred_stab_res5,Hydrophobicity])
   set.seed(2)
   plot_dt[, Pos_class_plot := Pos_class]
   plot_dt[Pos_class=="surface" & f_ddg_pred_stab_res5, Pos_class_plot := "surface_s"]
@@ -287,9 +284,6 @@ doubledeepms_protein_stability_plots <- function(
   ggplot2::ggsave(file.path(outpath, "destabilising_hydrophobicity_violin_all.pdf"), d, width = 7, height = 2, useDingbats=FALSE)
 
   #GRB2-SH3 and PSD95-PDZ3 only
-  t.test(
-    plot_dt[Pos_class=="surface" & f_ddg_pred_stab_res5 & protein!="GB1",Hydrophobicity],
-    plot_dt[Pos_class=="surface" & !f_ddg_pred_stab_res5 & protein!="GB1",Hydrophobicity])
   set.seed(1)
   d <- ggplot2::ggplot(plot_dt[Pos_class_plot!="binding_interface" & protein!="GB1"],ggplot2::aes(y = Pos_class_plot, Hydrophobicity, fill = Pos_class_plot)) +
     ggplot2::geom_violin(draw_quantiles = c(0.25, 0.5, 0.75)) +
@@ -337,7 +331,7 @@ doubledeepms_protein_stability_plots <- function(
     }
     MSA_list[[domain]] <- temp_dt
   }
-  MSA_dt<- rbindlist(MSA_list)
+  MSA_dt<- rbindlist(MSA_list)[!is.na(conservation)]
   
   #Plot
   d <- ggplot2::ggplot(MSA_dt[Pos_class_plot!="binding_interface",], ggplot2::aes(x=Hydrophobicity, y=conservation, color=Pos_class_plot)) +
@@ -368,9 +362,6 @@ doubledeepms_protein_stability_plots <- function(
     d <- d + ggplot2::scale_fill_manual(values = c(unlist(colour_scheme[["shade 0"]][c(3)]), "grey", unlist(colour_scheme[["shade 0"]][c(4)])))
   }
   ggplot2::ggsave(file.path(outpath, "destabilising_conservation_violin.pdf"), d, width = 8, height = 3, useDingbats=FALSE)
-  
-  
-  
   
   # ###########################
   # ### Plot examples quaternary structure destabilizing residues interactions
@@ -427,76 +418,5 @@ doubledeepms_protein_stability_plots <- function(
   
   write(x = pymol_script, file = file.path(outpath, "PSD95-PDZ3_example_destabilising_residues_quaternary_struct.txt"))
   
-  
-  # ###########################
-  # ### Relative side chain angle of stabilising residues
-  # ###########################
-
-  # #All residues
-  # angle_stab_res <- dg_dt[!duplicated(paste(Pos_ref, protein, sep = ":"))][f_ddg_pred_stab_res3==T & !is.na(relative_angle),relative_angle]
-  # angle_nstab_res <- dg_dt[!duplicated(paste(Pos_ref, protein, sep = ":"))][f_ddg_pred_stab_res3==F & !is.na(relative_angle),relative_angle]
-  # t.test(angle_nstab_res, angle_stab_res)
-  # plot_dt <- data.table(
-  #   relative_angle = c(angle_stab_res, angle_nstab_res),
-  #   type = c(rep("Stabilising", length(angle_stab_res)), rep("Remainder", length(angle_nstab_res))))
-  # plot_dt[, type := factor(type, levels = c("Stabilising", "Remainder"))]
-  # d <- ggplot2::ggplot(plot_dt,ggplot2::aes(relative_angle)) +
-  #   ggplot2::geom_histogram(ggplot2::aes(y = ..density.., fill = type), bins = 30) +
-  #   ggplot2::geom_density() +
-  #   ggplot2::xlab("Relative side-chain angle (degrees)") +
-  #   ggplot2::ylab("Density") +
-  #   ggplot2::geom_vline(xintercept = 90, linetype = 2) +
-  #   ggplot2::facet_grid(type~., scales = "free") + 
-  #   ggplot2::theme_bw() +
-  #   ggplot2::labs(color = "Residue\ttype")
-  # if(!is.null(colour_scheme)){
-  #   d <- d + ggplot2::scale_fill_manual(values = c(unlist(colour_scheme[["shade 0"]][c(4)]), "grey"))
-  # }
-  # ggplot2::ggsave(file.path(outpath, "stabilising_relative_angle_density.pdf"), d, width = 7, height = 3, useDingbats=FALSE)
-
-  # #Non binding interface residues
-  # angle_stab_res <- dg_dt[!duplicated(paste(Pos_ref, protein, sep = ":"))][f_ddg_pred_stab_res3==T & !is.na(relative_angle) & Pos_class!="binding_interface",relative_angle]
-  # angle_nstab_res <- dg_dt[!duplicated(paste(Pos_ref, protein, sep = ":"))][f_ddg_pred_stab_res3==F & !is.na(relative_angle) & Pos_class!="binding_interface",relative_angle]
-  # t.test(angle_nstab_res, angle_stab_res)
-  # plot_dt <- data.table(
-  #   relative_angle = c(angle_stab_res, angle_nstab_res),
-  #   type = c(rep("Stabilising", length(angle_stab_res)), rep("Remainder", length(angle_nstab_res))))
-  # plot_dt[, type := factor(type, levels = c("Stabilising", "Remainder"))]
-  # d <- ggplot2::ggplot(plot_dt,ggplot2::aes(relative_angle)) +
-  #   ggplot2::geom_histogram(ggplot2::aes(y = ..density.., fill = type), bins = 30) +
-  #   ggplot2::geom_density() +
-  #   ggplot2::xlab("Relative side-chain angle (degrees)") +
-  #   ggplot2::ylab("Density") +
-  #   ggplot2::geom_vline(xintercept = 90, linetype = 2) +
-  #   ggplot2::facet_grid(type~., scales = "free") + 
-  #   ggplot2::theme_bw() +
-  #   ggplot2::labs(color = "Residue\ttype")
-  # if(!is.null(colour_scheme)){
-  #   d <- d + ggplot2::scale_fill_manual(values = c(unlist(colour_scheme[["shade 0"]][c(4)]), "grey"))
-  # }
-  # ggplot2::ggsave(file.path(outpath, "stabilising_relative_angle_density_nobindinginterface.pdf"), d, width = 7, height = 3, useDingbats=FALSE)
-
-  # #Surface residues
-  # angle_stab_res <- dg_dt[!duplicated(paste(Pos_ref, protein, sep = ":"))][f_ddg_pred_stab_res3==T & !is.na(relative_angle) & Pos_class=="surface",relative_angle]
-  # angle_nstab_res <- dg_dt[!duplicated(paste(Pos_ref, protein, sep = ":"))][f_ddg_pred_stab_res3==F & !is.na(relative_angle) & Pos_class=="surface",relative_angle]
-  # t.test(angle_nstab_res, angle_stab_res)
-  # plot_dt <- data.table(
-  #   relative_angle = c(angle_stab_res, angle_nstab_res),
-  #   type = c(rep("Stabilising", length(angle_stab_res)), rep("Remainder", length(angle_nstab_res))))
-  # plot_dt[, type := factor(type, levels = c("Stabilising", "Remainder"))]
-  # d <- ggplot2::ggplot(plot_dt,ggplot2::aes(relative_angle)) +
-  #   ggplot2::geom_histogram(ggplot2::aes(y = ..density.., fill = type), bins = 30) +
-  #   ggplot2::geom_density() +
-  #   ggplot2::xlab("Relative side-chain angle (degrees)") +
-  #   ggplot2::ylab("Density") +
-  #   ggplot2::geom_vline(xintercept = 90, linetype = 2) +
-  #   ggplot2::facet_grid(type~., scales = "free") + 
-  #   ggplot2::theme_bw() +
-  #   ggplot2::labs(color = "Residue\ttype")
-  # if(!is.null(colour_scheme)){
-  #   d <- d + ggplot2::scale_fill_manual(values = c(unlist(colour_scheme[["shade 0"]][c(4)]), "grey"))
-  # }
-  # ggplot2::ggsave(file.path(outpath, "stabilising_relative_angle_density_surface.pdf"), d, width = 7, height = 3, useDingbats=FALSE)
-
 }
 

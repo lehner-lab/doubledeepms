@@ -70,10 +70,10 @@ doubledeepms_binding_interface <- function(
   plot_dt[Pos_class=="binding_interface", Pos_class_plot := "Binding\ninterface"]
   
   for(domain in names(input_list)){
-    print(domain)
-    print(t.test(
+    temp_test <- t.test(
       plot_dt[Pos_class=="binding_interface" & protein == domain, b_ddg_pred],
-      plot_dt[!Pos_class=="binding_interface" & protein == domain, b_ddg_pred]))
+      plot_dt[!Pos_class=="binding_interface" & protein == domain, b_ddg_pred])
+    print(paste0("Binding free energy change of mutations in binding interface higher than remainder (", i, "): p-value=", format(temp_test[["p.value"]], digits=2, scientific=T)))
   }
   
   d <- ggplot2::ggplot(plot_dt,ggplot2::aes(Pos_class_plot, b_ddg_pred, fill = Pos_class_plot)) +

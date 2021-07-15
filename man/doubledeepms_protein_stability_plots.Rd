@@ -5,8 +5,8 @@
 \title{doubledeepms_protein_stability_plots}
 \usage{
 doubledeepms_protein_stability_plots(input_list, pdb_file_list,
-  pdb_chain_query_list, aaprop_file, aaprop_file_selected, outpath,
-  colour_scheme, execute = TRUE)
+  pdb_chain_query_list, aaprop_file, aaprop_file_selected, input_MSA_list,
+  outpath, colour_scheme, execute = TRUE)
 }
 \arguments{
 \item{input_list}{path to MoCHI thermo model fit results (required)}
@@ -18,6 +18,8 @@ doubledeepms_protein_stability_plots(input_list, pdb_file_list,
 \item{aaprop_file}{path to amino acid properties file (required)}
 
 \item{aaprop_file_selected}{path to file with selected subset of identifiers}
+
+\item{input_MSA_list}{path to MSA frequencies data (required)}
 
 \item{outpath}{output path for plots and saved objects (required)}
 

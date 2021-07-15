@@ -5,8 +5,8 @@
 \title{doubledeepms_allostery_plots}
 \usage{
 doubledeepms_allostery_plots(input_list, pdb_file_list,
-  pdb_chain_query_list, literature_list, aaprop_file, aaprop_file_selected,
-  outpath, colour_scheme, execute = TRUE)
+  pdb_chain_query_list, literature_list, ohm_file_list, aaprop_file,
+  aaprop_file_selected, outpath, colour_scheme, execute = TRUE)
 }
 \arguments{
 \item{input_list}{path to MoCHI thermo model fit results (required)}
@@ -16,6 +16,8 @@ doubledeepms_allostery_plots(input_list, pdb_file_list,
 \item{pdb_chain_query_list}{query chain id (required)}
 
 \item{literature_list}{literature allosteric sites (required)}
+
+\item{ohm_file_list}{ohm output file list (required)}
 
 \item{aaprop_file}{path to amino acid properties file (required)}
 
