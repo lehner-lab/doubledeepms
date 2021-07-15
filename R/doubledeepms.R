@@ -288,7 +288,7 @@ doubledeepms <- function(
       "PSD95-PDZ3" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_PSD95-PDZ3"), "dg_singles.txt"),
       "GRB2-SH3" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_GRB2-SH3"), "dg_singles.txt")),
     input_MSA_list = list(
-      "GB1" = NULL,
+      "GB1" = file.path(base_dir, "Data", "MSA", "GB1", "frequencies.csv"),
       "PSD95-PDZ3" = file.path(base_dir, "Data", "MSA", "PSD95-PDZ3", "frequencies.csv"),
       "GRB2-SH3" = file.path(base_dir, "Data", "MSA", "GRB2-SH3", "frequencies.csv")
     ),
@@ -345,6 +345,11 @@ doubledeepms <- function(
       "GRB2-SH3" = "A"),
     aaprop_file = file.path(base_dir, "Data", "amino_acid_properties", "amino_acid_properties_annotated_supplementary.txt"),
     aaprop_file_selected = file.path(base_dir, "Data", "amino_acid_properties", "selected.amino_acid_properties.txt"),
+    input_MSA_list = list(
+      "GB1" = file.path(base_dir, "Data", "MSA", "GB1", "frequencies.csv"),
+      "PSD95-PDZ3" = file.path(base_dir, "Data", "MSA", "PSD95-PDZ3", "frequencies.csv"),
+      "GRB2-SH3" = file.path(base_dir, "Data", "MSA", "GRB2-SH3", "frequencies.csv")
+    ),
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_protein_stability_plots", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
     execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))

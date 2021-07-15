@@ -8,6 +8,7 @@
 #' @param pdb_chain_query_list query chain id (required)
 #' @param aaprop_file path to amino acid properties file (required)
 #' @param aaprop_file_selected path to file with selected subset of identifiers
+#' @param input_MSA_list path to MSA frequencies data (required)
 #' @param outpath output path for plots and saved objects (required)
 #' @param colour_scheme colour scheme file (required)
 #' @param execute whether or not to execute the analysis (default: TRUE)
@@ -21,6 +22,7 @@ doubledeepms_protein_stability_plots <- function(
   pdb_chain_query_list,
   aaprop_file,
   aaprop_file_selected,
+  input_MSA_list,
   outpath,
   colour_scheme,
   execute = TRUE
@@ -313,7 +315,119 @@ doubledeepms_protein_stability_plots <- function(
   doubledeepms__mann_whitney_U_wrapper(
     plot_dt[protein %in% c("GRB2-SH3", "PSD95-PDZ3") & Pos_class=="surface" & f_ddg_pred_stab_res5,Hydrophobicity],
     plot_dt[protein %in% c("GRB2-SH3", "PSD95-PDZ3") & Pos_class=="surface" & !f_ddg_pred_stab_res5,Hydrophobicity])['p_value']))
-
+  
+  
+  ###########################
+  ### Hydrophobicity of destabilizing residues vs. conservation
+  ###########################
+  
+  MSA_list <- list()
+  for (domain in names(input_MSA_list)) {
+    if(is.null(input_MSA_list[[domain]])){
+      msa_dt = data.table::data.table(Pos_ref = plot_dt[protein == domain, Pos_ref])
+      msa_dt[, conservation := NA]
+      temp_dt <- data.table::merge.data.table(plot_dt[protein == domain, ], 
+                                           msa_dt, 
+                                           by = "Pos_ref", all.x = T)
+    } else {
+      msa_dt <- fread(input_MSA_list[[domain]])
+      temp_dt <- data.table::merge.data.table(plot_dt[protein == domain, ], 
+                                              msa_dt[, .(i, conservation)], 
+                                              by.x = "Pos_ref", by.y="i", all.x = T)
+    }
+    MSA_list[[domain]] <- temp_dt
+  }
+  MSA_dt<- rbindlist(MSA_list)
+  
+  #Plot
+  d <- ggplot2::ggplot(MSA_dt[Pos_class_plot!="binding_interface",], ggplot2::aes(x=Hydrophobicity, y=conservation, color=Pos_class_plot)) +
+    ggplot2::geom_point() + 
+    ggplot2::geom_smooth(method = "lm", se=FALSE, formula = "y ~ x", linetype=2) +
+    ggplot2::facet_grid(Pos_class_plot~protein, scales = "free") +
+    ggplot2::theme_classic() +
+    ggrepel::geom_label_repel(data = MSA_dt[Pos_class_plot!="binding_interface" & f_ddg_pred_stab_res5,], ggplot2::aes(label=paste0(WT_AA,Pos_ref)))
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_color_manual(values = c(unlist(colour_scheme[["shade 0"]][c(3)]), "grey", unlist(colour_scheme[["shade 0"]][c(4)])))
+  }
+  ggplot2::ggsave(file.path(outpath, "destabilising_hydrophobicity_vs_conservation.pdf"), d, width = 7, height = 5, useDingbats=FALSE)
+  
+  
+  # ###########################
+  # ### Conservation of destabilizing residues
+  # ###########################
+  
+  set.seed(1)
+  d <- ggplot2::ggplot(MSA_dt[Pos_class_plot!="binding_interface"],ggplot2::aes(y = Pos_class_plot, conservation, fill = Pos_class_plot)) +
+    ggplot2::geom_violin(draw_quantiles = c(0.25, 0.5, 0.75)) +
+    ggplot2::geom_jitter(width = 0, height = 0.2, pch = 1) +
+    ggrepel::geom_text_repel(data = MSA_dt[Pos_class_plot!="binding_interface" & f_ddg_pred_stab_res5,], ggplot2::aes(label=paste0(WT_AA,Pos_ref))) + 
+    ggplot2::facet_grid(~protein, scales = "free") + 
+    ggplot2::theme_classic() +
+    ggplot2::labs(fill = "Residue\ntype")
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_fill_manual(values = c(unlist(colour_scheme[["shade 0"]][c(3)]), "grey", unlist(colour_scheme[["shade 0"]][c(4)])))
+  }
+  ggplot2::ggsave(file.path(outpath, "destabilising_conservation_violin.pdf"), d, width = 8, height = 3, useDingbats=FALSE)
+  
+  
+  
+  
+  # ###########################
+  # ### Plot examples quaternary structure destabilizing residues interactions
+  # ###########################
+  
+  # GRB2-SH3
+  
+  pymol_script = "reinitialize"
+  pymol_script[length(pymol_script)+1] = "fetch 1GRI"
+  pymol_script[length(pymol_script)+1] = "bg_color white"
+  pymol_script[length(pymol_script)+1] = "color paleyellow, chain A"
+  pymol_script[length(pymol_script)+1] = "color grey80, chain B"
+  pymol_script[length(pymol_script)+1] = "select V53, resi 211 and chain A"
+  pymol_script[length(pymol_script)+1] = "show sticks, V53"
+  pymol_script[length(pymol_script)+1] = "color atomic,  V53 & (not elem C)"
+  pymol_script[length(pymol_script)+1] = "select S31, resi 189 and chain B"
+  pymol_script[length(pymol_script)+1] = "show sticks, S31"
+  pymol_script[length(pymol_script)+1] = "color atomic,  S31 & (not elem C)"
+  pymol_script[length(pymol_script)+1] = "set_view (-0.957919061,-0.034897089,-0.284906834,-0.187024251,0.828841031,0.527293384,0.217741489,0.558390021,-0.800491571,0.000000000,0.000000000, -195.653869629,29.452850342,72.807014465,21.840946198,154.255004883,  237.052734375,  -20.000000000 )"
+  pymol_script[length(pymol_script)+1] = "select Y2, resi 160 and chain A"
+  pymol_script[length(pymol_script)+1] = "show sticks, Y2"
+  pymol_script[length(pymol_script)+1] = "color atomic, Y2 & (not elem C)"
+  pymol_script[length(pymol_script)+1] = "select SH2_Glu, resi 87 & chain B"
+  pymol_script[length(pymol_script)+1] = "select SH2_Glu, resi 87 & chain B"
+  pymol_script[length(pymol_script)+1] = "show sticks, SH2_Glu"
+  pymol_script[length(pymol_script)+1] = "color atomic, SH2_Glu & (not elem C)"
+  pymol_script[length(pymol_script)+1] = "zoom center, 25"
+  pymol_script[length(pymol_script)+1] = "zoom center, 25"
+  pymol_script[length(pymol_script)+1] = "ray 2400,2400"
+  pymol_script[length(pymol_script)+1] = "png pymol_SH3_example_destabilising_residues_quaternary_struct.png, dpi=600"
+  
+  write(x = pymol_script, file = file.path(outpath, "GRB2-SH3_example_destabilising_residues_quaternary_struct.txt"))
+  
+  # PSD95-PDZ3
+  pymol_script = "reinitialize"
+  pymol_script[length(pymol_script)+1] = "fetch 1be9"
+  pymol_script[length(pymol_script)+1] = "bg_color white"
+  pymol_script[length(pymol_script)+1] = "hide everything"
+  pymol_script[length(pymol_script)+1] = "show cartoon, chain A"
+  pymol_script[length(pymol_script)+1] = "color grey80, chain A"
+  pymol_script[length(pymol_script)+1] = "select PDZ, resi  311-394"
+  pymol_script[length(pymol_script)+1] = "color paleyellow, PDZ"
+  pymol_script[length(pymol_script)+1] = "show sticks, chain B"
+  pymol_script[length(pymol_script)+1] = "color black, chain B"
+  pymol_script[length(pymol_script)+1] = "select Y392, resi 392 and chain A"
+  pymol_script[length(pymol_script)+1] = "show sticks, Y392"
+  pymol_script[length(pymol_script)+1] = "color atomic,  Y392 & (not elem C)"
+  pymol_script[length(pymol_script)+1] = "select P394, resi 394 and chain A"
+  pymol_script[length(pymol_script)+1] = "show sticks, P394"
+  pymol_script[length(pymol_script)+1] = "color atomic,  Y394 & (not elem C)"
+  pymol_script[length(pymol_script)+1] = "set_view (     0.823759854,   -0.005460032,   -0.566911936,    -0.272597969,    0.872961581,   -0.404510409,     0.497101754,    0.487758458,    0.717621565,     0.000000000,    0.000000000, -125.236885071,    40.318359375,   59.448665619,   32.835613251,    98.737716675,  151.736053467,  -20.000000000 )"
+  pymol_script[length(pymol_script)+1] = "ray 2400,2400"
+  pymol_script[length(pymol_script)+1] = "png pymol_SH3_example_destabilising_residues_quaternary_struct.png, dpi=600"
+  
+  write(x = pymol_script, file = file.path(outpath, "PSD95-PDZ3_example_destabilising_residues_quaternary_struct.txt"))
+  
+  
   # ###########################
   # ### Relative side chain angle of stabilising residues
   # ###########################

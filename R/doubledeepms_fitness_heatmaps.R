@@ -146,10 +146,11 @@ doubledeepms_fitness_heatmaps <- function(
   #Significant change in ddG folding
   singles_dt[f_ddg_pred_conf==T, f_ddg_pred_pvalue := doubledeepms__pvalue(f_ddg_pred, f_ddg_pred_sd)]
   singles_dt[f_ddg_pred_conf==T, f_ddg_pred_FDR := p.adjust(f_ddg_pred_pvalue, method = "BH")]
-
+  
   #Subset to significant binding fitness effects and confident ddGs
+  singles_dt_conf <- singles_dt[f_ddg_pred_conf==T & b_ddg_pred_conf==T]
   singles_dt <- singles_dt[fitness_FDR<0.05 & f_ddg_pred_conf==T & b_ddg_pred_conf==T]
-
+  
   #Fitness effect
   singles_dt[, fitness_decrease := fitness<0]
   #Fitness decrease
@@ -243,6 +244,32 @@ doubledeepms_fitness_heatmaps <- function(
   }
   ggplot2::ggsave(file.path(outpath, "fitness_binding_mechanism_barplot_per_pos_class.pdf"), d, width = 6, height = 5, useDingbats=FALSE)
   
+  ###########################
+  ### Change in folding or binding free energy depending on bindingPCA fitness
+  ###########################
+  
+  # Bin fitness into 5 quantiles
+  fitness_breaks <- quantile(singles_dt_conf$fitness, seq(0,1, 0.2))
+  fitness_labels <- sapply(1:(length(fitness_breaks)-1), function(i){
+    paste0(names(fitness_breaks)[i], " - ", names(fitness_breaks)[i+1], "\n [", round(fitness_breaks[i], 2), ", ", round(fitness_breaks[i+1], 2), "]")
+    }) 
+  singles_dt_conf[, fitness_bin := cut(fitness, breaks = fitness_breaks, labels = fitness_labels)]
+  
+  # Plot 
+  plot_dt <- data.table::as.data.table(reshape2::melt(singles_dt_conf[, .(fitness_bin, f_ddg_pred, b_ddg_pred)], id.vars = c("fitness_bin"), variable.name = "ddG_class", value.name = "ddG"))
+  plot_dt[ddG_class == "f_ddg_pred", ddG_class := "folding"]
+  plot_dt[ddG_class == "b_ddg_pred", ddG_class := "binding"]
+
+  p <- ggplot2::ggplot(plot_dt[!is.na(fitness_bin),], ggplot2::aes(x=fitness_bin, y=ddG, fill=ddG_class)) +
+    ggplot2::geom_violin(draw_quantiles = c(0.25, 0.5, 0.75), scale = "width") +
+    ggplot2::labs(x="bindingPCA fitness", y="ddG (kcal/mol)") +
+    ggplot2::geom_hline(yintercept = 0, linetype=2) +
+    ggplot2::theme_classic() +
+    ggplot2::ggtitle(domain_name)
+  if(!is.null(colour_scheme)){
+    p <- p + ggplot2::scale_fill_manual(values = unlist(colour_scheme[["shade 2"]][c(3, 1)]))
+  }
+  ggplot2::ggsave(file.path(outpath, "fitness_binding_bins_ddG.pdf"), p, width = 7, height = 3, useDingbats=FALSE)
   
   ###########################
   ### Frequency of mutations across multiple sequence alignments
