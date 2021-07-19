@@ -222,7 +222,7 @@ doubledeepms_allostery_plots <- function(
     cor_dt <- plot_dt[,.(cor = round(cor(ACI, b_ddg_wposmeanabs, use = "pairwise.complete", method = "spearman"), 2), ACI = 0.6, b_ddg_wposmeanabs = 0.9),protein]
     #Plot
     d <- ggplot2::ggplot(plot_dt,ggplot2::aes(ACI, b_ddg_wposmeanabs)) +
-      ggplot2::geom_smooth(method = "lm", se = F, color = "black", linetype = 2, formula = 'y ~ x') + 
+      ggplot2::geom_smooth(method = "lm", se = F, color = "black", linetype = 2, formula = 'y ~ x') +
       ggplot2::geom_point(ggplot2::aes(color = !is.na(allosteric)), size = 2) +
       ggplot2::xlab("Allosteric coupling intensity") +
       ggplot2::ylab(expression("Weighted mean |Binding "*Delta*Delta*"G|")) +
@@ -251,7 +251,7 @@ doubledeepms_allostery_plots <- function(
     cor_dt <- plot_dt[,.(cor = round(cor(ACI, prop_mut, use = "pairwise.complete", method = "spearman"), 2), ACI = 0.6, prop_mut = 90),protein]
     #Plot
     d <- ggplot2::ggplot(plot_dt,ggplot2::aes(ACI, prop_mut)) +
-      ggplot2::geom_smooth(method = "lm", se = F, color = "black", linetype = 2, formula = 'y ~ x') + 
+      ggplot2::geom_smooth(method = "lm", se = F, color = "black", linetype = 2, formula = 'y ~ x') +
       ggplot2::geom_point(ggplot2::aes(color = allosteric), size = 2) +
       ggplot2::xlab("Allosteric coupling intensity") +
       ggplot2::ylab("%Allosteric mutations per residue") +

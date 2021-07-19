@@ -133,7 +133,8 @@ doubledeepms_fitness_plots <- function(
     d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
   }
   ggplot2::ggsave(file.path(outpath, "fitness_scatter_singles_overlay.pdf"), d, width = 7, height = 3, useDingbats=FALSE)
-
+  
+  
   ###########################
   ### Where are strongest binding effects?
   ###########################
@@ -199,6 +200,42 @@ doubledeepms_fitness_plots <- function(
     d <- d + ggplot2::scale_color_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
   }
   ggplot2::ggsave(file.path(outpath, "binding_fitness_mutations_abundanceunchanged.pdf"), d, width = 7, height = 2, useDingbats=FALSE)
+  
+  
+  ###########################
+  ### Binding ROC plot
+  ###########################
+  
+  
+  #Per residue metrics
+  fitness_dt_pos_list <- list()
+  for(protein in names(fitness_list)){
+    temp_dt <- fitness_dt_merge[protein == protein,]
+    for(i in c("", "_abundance")){
+      temp_dt[,paste0("fitness", i, "_posmeanabs") := mean(abs(.SD[[1]]), na.rm = T),Pos,.SDcols = paste0(c("fitness"), i)]
+      temp_dt[,paste0("fitness", i, "_wposmeanabs") := sum(abs(.SD[[1]])/.SD[[2]]^2, na.rm = T)/sum(1/.SD[[2]]^2, na.rm = T),Pos,.SDcols = c(paste0("fitness", i), paste0("sigma", i))]
+    }
+    fitness_dt_pos_list[[protein]] <- temp_dt
+  }
+  fitness_dt_pos <- rbindlist(fitness_dt_pos_list)
+  fitness_dt_pos[, Pos_ref := Pos]
 
-
+  
+  #ROC curves using w
+  for(i in unique(fitness_dt_pos$protein)){
+    doubledeepms__plot_binding_site_ROC(
+      input_dt = copy(fitness_dt_pos)[protein==i & Pos!=0],
+      outpath = file.path(outpath, paste0(i, "_fitness_binding_site_ROC.pdf")),
+      colour_scheme = colour_scheme,
+      metric_names <- c("fitness_posmeanabs",
+                        "fitness_wposmeanabs",
+                        "fitness_abundance_posmeanabs",
+                        "fitness_abundance_wposmeanabs"),
+    metric_names_plot <- c("Mean |bindingPCA fitness|",
+                           "Weighted mean |bindingPCA fitness|",
+                           "Mean |abundancePCA fitness|",
+                           "Weighted mean |abundancePCA fitness|"))
+  }
+  
+  
 }

@@ -6,17 +6,23 @@
 #' @param input_dt input data table (required)
 #' @param outpath plot output path (required)
 #' @param colour_scheme colour scheme file (required)
+#' @param metric_names vector of variable names of the input data with the metric to compute the ROC curve 
+#' @param metric_names_plot vector of characters with the names of each metric to appear in the ROC plot 
+#' 
 #'
 #' @return Nothing
 #' @export
 doubledeepms__plot_binding_site_ROC <- function(
   input_dt, 
   outpath,
-  colour_scheme
+  colour_scheme,
+  metric_names,
+  metric_names_plot
   ){
 
   #Metric names
-  metric_names <- c(
+  if(is.null(metric_names)){
+    metric_names <- c(
     # "b_ddg_posmaxabs", 
     # "b_ddg_posmaxabs_conf",
     # "effect_size_mean",
@@ -24,29 +30,25 @@ doubledeepms__plot_binding_site_ROC <- function(
     "b_ddg_posmeanabs_conf",
     "b_ddg_wposmeanabs", 
     "b_ddg_wposmeanabs_conf")
-  metric_names_plot <- c(
-    # "Max |Binding ddG|",
-    # "Max |Binding ddG| (conf.)",
-    # "Effect size |Binding ddG| (conf.)",
-    "Mean |Binding ddG|",
-    "Mean |Binding ddG| (conf.)",
-    "Weighted mean |Binding ddG|",
-    "Weighted mean |Binding ddG| (conf.)")
+    }
+  if(is.null(metric_names_plot)){
+    metric_names_plot <- c(
+      # "Max |Binding ddG|",
+      # "Max |Binding ddG| (conf.)",
+      # "Effect size |Binding ddG| (conf.)",
+      "Mean |Binding ddG|",
+      "Mean |Binding ddG| (conf.)",
+      "Weighted mean |Binding ddG|",
+      "Weighted mean |Binding ddG| (conf.)")
+    }
   names(metric_names_plot) <- metric_names
-
+  
   #Subset
   subset_dt <- input_dt[order(Pos_ref)][!duplicated(Pos_ref)]
 
   #Performance of all metrics
   perf_list <- list()
-  for(metric_name in c(
-    # "b_ddg_posmaxabs", 
-    # "b_ddg_posmaxabs_conf",
-    # "effect_size_mean",
-    "b_ddg_posmeanabs", 
-    "b_ddg_posmeanabs_conf",
-    "b_ddg_wposmeanabs", 
-    "b_ddg_wposmeanabs_conf")){
+  for(metric_name in metric_names){
     #Metric
     subset_dt[, plot_metric := .SD[[1]],,.SDcols = metric_name]
     #ROC curve data
