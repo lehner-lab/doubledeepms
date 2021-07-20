@@ -150,7 +150,17 @@ doubledeepms_allostery_plots <- function(
     doubledeepms__plot_binding_site_ROC(
       input_dt = copy(dg_dt)[protein==i & id!="-0-"],
       outpath = file.path(outpath, paste0(i, "_binding_site_ROC.pdf")),
-      colour_scheme = colour_scheme)
+      colour_scheme = colour_scheme,
+      metric_names <- c(
+        "b_ddg_posmeanabs", 
+        "b_ddg_posmeanabs_conf",
+        "b_ddg_wposmeanabs", 
+        "b_ddg_wposmeanabs_conf"),
+      metric_names_plot <- c(
+        "Mean |Binding ddG|",
+        "Mean |Binding ddG| (conf.)",
+        "Weighted mean |Binding ddG|",
+        "Weighted mean |Binding ddG| (conf.)"))
   }
 
   ###########################

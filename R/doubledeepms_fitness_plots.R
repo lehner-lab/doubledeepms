@@ -206,7 +206,6 @@ doubledeepms_fitness_plots <- function(
   ### Binding ROC plot
   ###########################
   
-  
   #Per residue metrics
   fitness_dt_pos_list <- list()
   for(protein in names(fitness_list)){
@@ -220,22 +219,22 @@ doubledeepms_fitness_plots <- function(
   fitness_dt_pos <- rbindlist(fitness_dt_pos_list)
   fitness_dt_pos[, Pos_ref := Pos]
 
-  
-  #ROC curves using w
-  for(i in unique(fitness_dt_pos$protein)){
+  #Plot ROC curves
+  for(i in unique(fitness_dt_pos[,protein])){
     doubledeepms__plot_binding_site_ROC(
       input_dt = copy(fitness_dt_pos)[protein==i & Pos!=0],
       outpath = file.path(outpath, paste0(i, "_fitness_binding_site_ROC.pdf")),
       colour_scheme = colour_scheme,
-      metric_names <- c("fitness_posmeanabs",
-                        "fitness_wposmeanabs",
-                        "fitness_abundance_posmeanabs",
-                        "fitness_abundance_wposmeanabs"),
-    metric_names_plot <- c("Mean |bindingPCA fitness|",
-                           "Weighted mean |bindingPCA fitness|",
-                           "Mean |abundancePCA fitness|",
-                           "Weighted mean |abundancePCA fitness|"))
+      metric_names <- c(
+        "fitness_posmeanabs",
+        "fitness_wposmeanabs",
+        "fitness_abundance_posmeanabs",
+        "fitness_abundance_wposmeanabs"),
+      metric_names_plot <- c(
+        "Mean |bindingPCA fitness|",
+        "Weighted mean |bindingPCA fitness|",
+        "Mean |abundancePCA fitness|",
+        "Weighted mean |abundancePCA fitness|"))
   }
-  
   
 }

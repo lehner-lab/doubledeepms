@@ -4,7 +4,8 @@
 \alias{doubledeepms__plot_binding_site_ROC}
 \title{doubledeepms__plot_binding_site_ROC}
 \usage{
-doubledeepms__plot_binding_site_ROC(input_dt, outpath, colour_scheme)
+doubledeepms__plot_binding_site_ROC(input_dt, outpath, colour_scheme,
+  metric_names, metric_names_plot)
 }
 \arguments{
 \item{input_dt}{input data table (required)}
@@ -12,6 +13,10 @@ doubledeepms__plot_binding_site_ROC(input_dt, outpath, colour_scheme)
 \item{outpath}{plot output path (required)}
 
 \item{colour_scheme}{colour scheme file (required)}
+
+\item{metric_names}{vector of variable names of the input data with the metric to compute the ROC curve}
+
+\item{metric_names_plot}{vector of characters with the names of each metric to appear in the ROC plot}
 }
 \value{
 Nothing

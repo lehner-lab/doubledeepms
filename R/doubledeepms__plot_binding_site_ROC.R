@@ -21,26 +21,6 @@ doubledeepms__plot_binding_site_ROC <- function(
   ){
 
   #Metric names
-  if(is.null(metric_names)){
-    metric_names <- c(
-    # "b_ddg_posmaxabs", 
-    # "b_ddg_posmaxabs_conf",
-    # "effect_size_mean",
-    "b_ddg_posmeanabs", 
-    "b_ddg_posmeanabs_conf",
-    "b_ddg_wposmeanabs", 
-    "b_ddg_wposmeanabs_conf")
-    }
-  if(is.null(metric_names_plot)){
-    metric_names_plot <- c(
-      # "Max |Binding ddG|",
-      # "Max |Binding ddG| (conf.)",
-      # "Effect size |Binding ddG| (conf.)",
-      "Mean |Binding ddG|",
-      "Mean |Binding ddG| (conf.)",
-      "Weighted mean |Binding ddG|",
-      "Weighted mean |Binding ddG| (conf.)")
-    }
   names(metric_names_plot) <- metric_names
   
   #Subset
@@ -55,7 +35,9 @@ doubledeepms__plot_binding_site_ROC <- function(
     roc_df <- data.frame(
       predictions = subset_dt[,plot_metric], 
       labels = subset_dt[,as.numeric(Pos_class=="binding_interface")])
-    pred <- ROCR::prediction(roc_df$predictions, roc_df$labels)
+    #Feed metric through simple linear model to correct sign
+    roc_df[,"predictions_lm"] <- unlist(lm(labels~predictions, data = roc_df)["fitted.values"])
+    pred <- ROCR::prediction(roc_df$predictions_lm, roc_df$labels)
     perf <- ROCR::performance(pred,"tpr","fpr")
     auc <- round(ROCR::performance(pred, measure = "auc")@'y.values'[[1]], 2)
     #Save
