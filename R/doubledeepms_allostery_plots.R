@@ -216,7 +216,23 @@ doubledeepms_allostery_plots <- function(
     names(ohm_dt) <- c("Pos_ref", "ACI")
     ohm_dt[, protein := i]
     plot_dt <- merge(dg_dt[,.(Pos_ref, b_ddg_wposmeanabs, Pos_class, protein, allosteric)], ohm_dt, by = c("Pos_ref", "protein"), all.x = T)
+    plot_dt <- plot_dt[protein==i & Pos_class!="binding_interface"][!duplicated(Pos_ref)]
+    cor_dt <- plot_dt[,.(cor = round(cor(ACI, b_ddg_wposmeanabs, use = "pairwise.complete", method = "spearman"), 2), ACI = 0.6, b_ddg_wposmeanabs = 0.9),protein]
+    #Plot
+    d <- ggplot2::ggplot(plot_dt,ggplot2::aes(ACI, b_ddg_wposmeanabs)) +
+      ggplot2::geom_smooth(method = "lm", se = F, color = "black", linetype = 2, formula = 'y ~ x') + 
+      ggplot2::geom_point(ggplot2::aes(color = !is.na(allosteric)), size = 2) +
+      ggplot2::xlab("Allosteric coupling intensity") +
+      ggplot2::ylab(expression("Weighted mean |Binding "*Delta*Delta*"G|")) +
+      ggplot2::labs(color = "Major\nallosteric\nsite") +
+      ggplot2::geom_text(data = cor_dt, ggplot2::aes(label=paste("Spearman's rho = ", cor, sep=""))) +
+      ggplot2::theme_bw()
+    if(!is.null(colour_scheme)){
+      d <- d + ggplot2::scale_colour_manual(values = c("darkgrey", unlist(colour_scheme[["shade 0"]][[2]])))
+    }
+    ggplot2::ggsave(file.path(outpath, paste0("ohm_scatter_", i, ".pdf")), d, width = 4, height = 3, useDingbats=FALSE)
     #Remove binding interface adjacent residues
+    plot_dt <- merge(dg_dt[,.(Pos_ref, b_ddg_wposmeanabs, Pos_class, protein, allosteric)], ohm_dt, by = c("Pos_ref", "protein"), all.x = T)
     bi_residues <- plot_dt[protein==i & Pos_class=="binding_interface",unique(Pos_ref)]
     plot_dt <- plot_dt[protein==i & !(Pos_ref-1) %in% bi_residues & !(Pos_ref+1) %in% bi_residues & Pos_class!="binding_interface"][!duplicated(Pos_ref)]
     cor_dt <- plot_dt[,.(cor = round(cor(ACI, b_ddg_wposmeanabs, use = "pairwise.complete", method = "spearman"), 2), ACI = 0.6, b_ddg_wposmeanabs = 0.9),protein]
@@ -232,7 +248,26 @@ doubledeepms_allostery_plots <- function(
     if(!is.null(colour_scheme)){
       d <- d + ggplot2::scale_colour_manual(values = c("darkgrey", unlist(colour_scheme[["shade 0"]][[2]])))
     }
-    ggplot2::ggsave(file.path(outpath, paste0("ohm_scatter_", i, ".pdf")), d, width = 4, height = 3, useDingbats=FALSE)
+    ggplot2::ggsave(file.path(outpath, paste0("ohm_scatter_", i, "_noadjacent.pdf")), d, width = 4, height = 3, useDingbats=FALSE)
+    #Set binding interface adjacent residue scores to 1
+    plot_dt <- merge(dg_dt[,.(Pos_ref, b_ddg_wposmeanabs, Pos_class, protein, allosteric)], ohm_dt, by = c("Pos_ref", "protein"), all.x = T)
+    bi_residues <- plot_dt[protein==i & Pos_class=="binding_interface",unique(Pos_ref)]
+    plot_dt <- plot_dt[protein==i & Pos_class!="binding_interface"][!duplicated(Pos_ref)]
+    plot_dt[(Pos_ref-1) %in% bi_residues | (Pos_ref+1) %in% bi_residues, ACI := 1]
+    cor_dt <- plot_dt[,.(cor = round(cor(ACI, b_ddg_wposmeanabs, use = "pairwise.complete", method = "spearman"), 2), ACI = 0.6, b_ddg_wposmeanabs = 0.9),protein]
+    #Plot
+    d <- ggplot2::ggplot(plot_dt,ggplot2::aes(ACI, b_ddg_wposmeanabs)) +
+      ggplot2::geom_smooth(method = "lm", se = F, color = "black", linetype = 2, formula = 'y ~ x') + 
+      ggplot2::geom_point(ggplot2::aes(color = !is.na(allosteric)), size = 2) +
+      ggplot2::xlab("Allosteric coupling intensity") +
+      ggplot2::ylab(expression("Weighted mean |Binding "*Delta*Delta*"G|")) +
+      ggplot2::labs(color = "Major\nallosteric\nsite") +
+      ggplot2::geom_text(data = cor_dt, ggplot2::aes(label=paste("Spearman's rho = ", cor, sep=""))) +
+      ggplot2::theme_bw()
+    if(!is.null(colour_scheme)){
+      d <- d + ggplot2::scale_colour_manual(values = c("darkgrey", unlist(colour_scheme[["shade 0"]][[2]])))
+    }
+    ggplot2::ggsave(file.path(outpath, paste0("ohm_scatter_", i, "_adjacent1.pdf")), d, width = 4, height = 3, useDingbats=FALSE)
   }
 
   ###########################
@@ -245,14 +280,13 @@ doubledeepms_allostery_plots <- function(
     ohm_dt[, protein := i]
     plot_dt <- dg_dt[,.(prop_mut = sum(allosteric_mutation, na.rm = T)/sum(!is.na(allosteric_mutation))*100, Pos_class=unique(Pos_class), allosteric=sum(allosteric, na.rm = T)!=0),.(Pos_ref, protein)]
     plot_dt <- merge(plot_dt[,.(Pos_ref, Pos_class, protein, prop_mut, allosteric)], ohm_dt, by = c("Pos_ref", "protein"), all.x = T)
-    #Remove binding interface adjacent residues
-    bi_residues <- plot_dt[protein==i & Pos_class=="binding_interface",unique(Pos_ref)]
-    plot_dt <- plot_dt[protein==i & !(Pos_ref-1) %in% bi_residues & !(Pos_ref+1) %in% bi_residues & Pos_class!="binding_interface"][!duplicated(Pos_ref)]
+    plot_dt <- plot_dt[protein==i & Pos_class!="binding_interface"][!duplicated(Pos_ref)]
     cor_dt <- plot_dt[,.(cor = round(cor(ACI, prop_mut, use = "pairwise.complete", method = "spearman"), 2), ACI = 0.6, prop_mut = 90),protein]
     #Plot
     d <- ggplot2::ggplot(plot_dt,ggplot2::aes(ACI, prop_mut)) +
       ggplot2::geom_smooth(method = "lm", se = F, color = "black", linetype = 2, formula = 'y ~ x') + 
-      ggplot2::geom_point(ggplot2::aes(color = allosteric), size = 2) +
+      ggplot2::geom_point(data = plot_dt[allosteric==F], ggplot2::aes(color = allosteric), size = 2) +
+      ggplot2::geom_point(data = plot_dt[allosteric==T],ggplot2::aes(color = allosteric), size = 2) +
       ggplot2::xlab("Allosteric coupling intensity") +
       ggplot2::ylab("%Allosteric mutations per residue") +
       ggplot2::labs(color = "Major\nallosteric\nsite") +
@@ -262,6 +296,47 @@ doubledeepms_allostery_plots <- function(
       d <- d + ggplot2::scale_colour_manual(values = c("darkgrey", unlist(colour_scheme[["shade 0"]][[2]])))
     }
     ggplot2::ggsave(file.path(outpath, paste0("ohm_scatter_", i, "_allosteric_mutations.pdf")), d, width = 4, height = 3, useDingbats=FALSE)
+    #Remove binding interface adjacent residues
+    plot_dt <- dg_dt[,.(prop_mut = sum(allosteric_mutation, na.rm = T)/sum(!is.na(allosteric_mutation))*100, Pos_class=unique(Pos_class), allosteric=sum(allosteric, na.rm = T)!=0),.(Pos_ref, protein)]
+    plot_dt <- merge(plot_dt[,.(Pos_ref, Pos_class, protein, prop_mut, allosteric)], ohm_dt, by = c("Pos_ref", "protein"), all.x = T)
+    bi_residues <- plot_dt[protein==i & Pos_class=="binding_interface",unique(Pos_ref)]
+    plot_dt <- plot_dt[protein==i & !(Pos_ref-1) %in% bi_residues & !(Pos_ref+1) %in% bi_residues & Pos_class!="binding_interface"][!duplicated(Pos_ref)]
+    cor_dt <- plot_dt[,.(cor = round(cor(ACI, prop_mut, use = "pairwise.complete", method = "spearman"), 2), ACI = 0.6, prop_mut = 90),protein]
+    #Plot
+    d <- ggplot2::ggplot(plot_dt,ggplot2::aes(ACI, prop_mut)) +
+      ggplot2::geom_smooth(method = "lm", se = F, color = "black", linetype = 2, formula = 'y ~ x') + 
+      ggplot2::geom_point(data = plot_dt[allosteric==F], ggplot2::aes(color = allosteric), size = 2) +
+      ggplot2::geom_point(data = plot_dt[allosteric==T],ggplot2::aes(color = allosteric), size = 2) +
+      ggplot2::xlab("Allosteric coupling intensity") +
+      ggplot2::ylab("%Allosteric mutations per residue") +
+      ggplot2::labs(color = "Major\nallosteric\nsite") +
+      ggplot2::geom_text(data = cor_dt, ggplot2::aes(label=paste("Spearman's rho = ", cor, sep=""))) +
+      ggplot2::theme_bw()
+    if(!is.null(colour_scheme)){
+      d <- d + ggplot2::scale_colour_manual(values = c("darkgrey", unlist(colour_scheme[["shade 0"]][[2]])))
+    }
+    ggplot2::ggsave(file.path(outpath, paste0("ohm_scatter_", i, "_allosteric_mutations_noadjacent.pdf")), d, width = 4, height = 3, useDingbats=FALSE)
+    #Set binding interface adjacent residue scores to 1
+    plot_dt <- dg_dt[,.(prop_mut = sum(allosteric_mutation, na.rm = T)/sum(!is.na(allosteric_mutation))*100, Pos_class=unique(Pos_class), allosteric=sum(allosteric, na.rm = T)!=0),.(Pos_ref, protein)]
+    plot_dt <- merge(plot_dt[,.(Pos_ref, Pos_class, protein, prop_mut, allosteric)], ohm_dt, by = c("Pos_ref", "protein"), all.x = T)
+    bi_residues <- plot_dt[protein==i & Pos_class=="binding_interface",unique(Pos_ref)]
+    plot_dt <- plot_dt[protein==i & Pos_class!="binding_interface"][!duplicated(Pos_ref)]
+    plot_dt[(Pos_ref-1) %in% bi_residues | (Pos_ref+1) %in% bi_residues, ACI := 1]
+    cor_dt <- plot_dt[,.(cor = round(cor(ACI, prop_mut, use = "pairwise.complete", method = "spearman"), 2), ACI = 0.6, prop_mut = 90),protein]
+    #Plot
+    d <- ggplot2::ggplot(plot_dt,ggplot2::aes(ACI, prop_mut)) +
+      ggplot2::geom_smooth(method = "lm", se = F, color = "black", linetype = 2, formula = 'y ~ x') + 
+      ggplot2::geom_point(data = plot_dt[allosteric==F], ggplot2::aes(color = allosteric), size = 2) +
+      ggplot2::geom_point(data = plot_dt[allosteric==T],ggplot2::aes(color = allosteric), size = 2) +
+      ggplot2::xlab("Allosteric coupling intensity") +
+      ggplot2::ylab("%Allosteric mutations per residue") +
+      ggplot2::labs(color = "Major\nallosteric\nsite") +
+      ggplot2::geom_text(data = cor_dt, ggplot2::aes(label=paste("Spearman's rho = ", cor, sep=""))) +
+      ggplot2::theme_bw()
+    if(!is.null(colour_scheme)){
+      d <- d + ggplot2::scale_colour_manual(values = c("darkgrey", unlist(colour_scheme[["shade 0"]][[2]])))
+    }
+    ggplot2::ggsave(file.path(outpath, paste0("ohm_scatter_", i, "_allosteric_mutations_adjacent1.pdf")), d, width = 4, height = 3, useDingbats=FALSE)
   }
 
   ###########################

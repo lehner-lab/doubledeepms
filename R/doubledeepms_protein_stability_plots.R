@@ -277,11 +277,12 @@ doubledeepms_protein_stability_plots <- function(
     ggplot2::geom_vline(xintercept = 0) +
     ggplot2::facet_grid(~protein, scales = "free") + 
     ggplot2::theme_classic() +
+    ggrepel::geom_text_repel(data = plot_dt[Pos_class_plot!="binding_interface" & f_ddg_pred_stab_res5,], ggplot2::aes(label=paste0(WT_AA,Pos_ref))) + 
     ggplot2::labs(fill = "Residue\ntype")
   if(!is.null(colour_scheme)){
     d <- d + ggplot2::scale_fill_manual(values = c(unlist(colour_scheme[["shade 0"]][c(3)]), "grey", unlist(colour_scheme[["shade 0"]][c(4)])))
   }
-  ggplot2::ggsave(file.path(outpath, "destabilising_hydrophobicity_violin_all.pdf"), d, width = 7, height = 2, useDingbats=FALSE)
+  ggplot2::ggsave(file.path(outpath, "destabilising_hydrophobicity_violin_all.pdf"), d, width = 8, height = 3, useDingbats=FALSE)
 
   #GRB2-SH3 and PSD95-PDZ3 only
   set.seed(1)
@@ -356,6 +357,7 @@ doubledeepms_protein_stability_plots <- function(
     ggplot2::geom_jitter(width = 0, height = 0.2, pch = 1) +
     ggrepel::geom_text_repel(data = MSA_dt[Pos_class_plot!="binding_interface" & f_ddg_pred_stab_res5,], ggplot2::aes(label=paste0(WT_AA,Pos_ref))) + 
     ggplot2::facet_grid(~protein, scales = "free") + 
+    ggplot2::xlab("Conservation") +
     ggplot2::theme_classic() +
     ggplot2::labs(fill = "Residue\ntype")
   if(!is.null(colour_scheme)){
