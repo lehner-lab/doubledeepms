@@ -192,7 +192,7 @@ doubledeepms_allostery_plots <- function(
   print(dg_dt[allosteric_mutation==T,.(total_residues = length(unique(Pos_ref))),.(protein, Pos_class)])
 
   plot_dt <- dg_dt[!is.na(allosteric_mutation),.(prop_mut = sum(allosteric_mutation)/length(allosteric_mutation)*100, scHAmin_ligand = unique(scHAmin_ligand), Pos_class=unique(Pos_class), allosteric=unique(allosteric)),.(Pos_ref, protein)]
-  cor_dt <- plot_dt[,.(cor = round(cor(scHAmin_ligand, prop_mut, use = "pairwise.complete"), 2), scHAmin_ligand = 12, prop_mut = 100),protein]
+  cor_dt <- plot_dt[,.(cor = round(cor(scHAmin_ligand, prop_mut, use = "pairwise.complete", method = "spearman"), 2), scHAmin_ligand = 12, prop_mut = 100),protein]
   d <- ggplot2::ggplot(plot_dt,ggplot2::aes(scHAmin_ligand, prop_mut)) +
     ggplot2::geom_smooth(method = "lm", se = F, color = "grey", linetype = 2, formula = 'y ~ x') + 
     ggplot2::geom_point(ggplot2::aes(shape = !is.na(allosteric), color = Pos_class), size = 2) +
@@ -200,7 +200,7 @@ doubledeepms_allostery_plots <- function(
     ggplot2::ylab("%Allosteric mutations per residue") +
     ggplot2::facet_wrap(protein~., scales = "free", ncol = 1) +
     ggplot2::labs(color = "Residue\nposition", shape = "Major allosteric\nsite") +
-    ggplot2::geom_text(data = cor_dt, ggplot2::aes(label=paste("Pearson's r = ", cor, sep=""))) +
+    ggplot2::geom_text(data = cor_dt, ggplot2::aes(label=paste("Spearman's rho = ", cor, sep=""))) +
     ggplot2::theme_bw()
   if(!is.null(colour_scheme)){
     d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(3, 4)]))
