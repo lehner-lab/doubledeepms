@@ -47,7 +47,11 @@ There are a number of options available for running the doubledeepms pipeline de
 
 * ## Basic (default)
 
-Default pipeline functionality ('_rerun_raw_' = F) uses prefit thermodynamic models and fitness scores from DMS experiments (already processed with MoCHI and DiMSum respectively; see [Required Data](#required-data)) to reproduce all figures in the publication.
+Default pipeline functionality ('_startStage_' = 1) uses prefit thermodynamic models and fitness scores from DMS experiments (already processed with MoCHI and DiMSum respectively; see [Required Data](#required-data)) to reproduce all figures in the publication.
+
+* ## Fit thermodynamic models
+
+Pipeline stage 0 ('doubledeepms_fit_thermo_model') fits thermodynamic models to DMS data for the specified domains ('_tmodel_protein_'), using all available data or subsets of phenotypes/variants ('_tmodel_subset_'). Parallel computing using job arrays is reccommended while running monte carlo simluations to determine confidence intervals of model-inferred free energies ('_tmodel_job_number_'). **Note:** this stage can be resource intensive (up to 48h with 30GB of RAM required for running the parameter sweep for GB1 i.e. with '_tmodel_grid_search_' = TRUE). 
 
 * ## Raw read processing
 
