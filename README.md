@@ -19,7 +19,7 @@ To run the doubledeepms pipeline you will need the following software and associ
 The following software is optional:
 
 * **[_Python_](https://www.python.org/) v3.8.6** (pandas, numpy, matplotlib, tensorflow, scikit-learn) 
-* **[DiMSum](https://github.com/lehner-lab/DiMSum)** (pipeline for pre-processing deep mutational scanning data i.e. FASTQ to counts)
+* **[DiMSum](https://github.com/lehner-lab/DiMSum) v1.2.8** (pipeline for pre-processing deep mutational scanning data i.e. FASTQ to counts)
 
 # Installation Instructions
 
