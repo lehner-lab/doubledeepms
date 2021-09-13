@@ -6,7 +6,7 @@
 #' @param input_list path to MoCHI thermo model fit results (required)
 #' @param pdb_file_list path to PDB file (required)
 #' @param pdb_chain_query_list query chain id (required)
-#' @param literature_list literature allosteric sites (required)
+#' @param annotation_list annotations of allosteric sites (required)
 #' @param ohm_file_list ohm output file list (required)
 #' @param aaprop_file path to amino acid properties file (required)
 #' @param aaprop_file_selected path to file with selected subset of identifiers
@@ -21,7 +21,7 @@ doubledeepms_allostery_plots <- function(
   input_list,
   pdb_file_list,
   pdb_chain_query_list,
-  literature_list,
+  annotation_list,
   ohm_file_list,
   aaprop_file,
   aaprop_file_selected,
@@ -92,6 +92,20 @@ doubledeepms_allostery_plots <- function(
   dg_dt <- rbindlist(dg_list)
 
   ###########################
+  ### Literature sites
+  ###########################
+
+  literature_list <- list()
+  for(protein in names(input_list)){
+    literature_list[[protein]] <- list(class_switching = c(), sector = c())
+    if(protein %in% names(annotation_list)){
+      anno_dt <- fread(annotation_list[[protein]])
+      literature_list[[protein]][["class_switching"]] <- anno_dt[get("CS;Mclaughlin2012")==1,Pos_ref]
+      literature_list[[protein]][["sector"]] <- anno_dt[get("SCA;Mclaughlin2012")==1,Pos_ref]
+    }
+  }
+
+  ###########################
   ### Save mean binding ddG to file
   ###########################
 
@@ -136,6 +150,15 @@ doubledeepms_allostery_plots <- function(
       outpath = file.path(outpath, paste0(i, "_persite_binding_energy_vs_distance_scatter.pdf")),
       colour_scheme = colour_scheme,
       trait_name = "binding")
+    #Limit y axis to sites with weighted mean ddG<3
+    if(dg_dt[,max(b_ddg_wposmeanabs)]>3){
+      doubledeepms__persite_energy_vs_distance_plot(
+        input_dt = copy(dg_dt)[protein==i & id!="-0-" & b_ddg_wposmeanabs<3],
+        literature_sites = literature_list[[i]][["class_switching"]],
+        outpath = file.path(outpath, paste0(i, "_persite_binding_energy_vs_distance_scatter_l3.pdf")),
+        colour_scheme = colour_scheme,
+        trait_name = "binding")
+    }
     dg_dt[protein==i & Pos_ref %in% allostery_pos & Pos_class!="binding_interface", allosteric := T]
     dg_dt[protein==i & Pos_ref %in% allostery_pos & Pos_class=="binding_interface", orthosteric := T]
     print(paste0("Allosteric residues for ", i, ": ", paste(dg_dt[protein==i & allosteric][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
@@ -211,7 +234,6 @@ doubledeepms_allostery_plots <- function(
   ### Proportion of mutations in allosteric sites that are allosteric mutations
   ###########################
 
-  #Sector residues
   for(i in dg_dt[,unique(protein)]){
     temp_prop <- dg_dt[protein==i & allosteric & !is.na(allosteric_mutation),sum(allosteric_mutation)/.N]
     print(paste0("Proportion of allosteric mutations at allosteric sites (", i, "): ", format(temp_prop, digits=2, scientific=T)))
@@ -382,17 +404,173 @@ doubledeepms_allostery_plots <- function(
   ### Enrichment of allosteric mutations in literature sites
   ###########################
 
-  #Sector residues
+  #Literature sites
+  result_list <- list()
   for(i in dg_dt[,unique(protein)]){
-    if(length(literature_list[[i]][["sector"]]!=0)){
-      in_sector_allo <- dg_dt[protein==i & Pos_class!="binding_interface"][Pos_ref %in% literature_list[[i]][["sector"]] & allosteric_mutation==T,.N]
-      out_sector_allo <- dg_dt[protein==i & Pos_class!="binding_interface"][!Pos_ref %in% literature_list[[i]][["sector"]] & allosteric_mutation==T,.N]
-      in_sector_nallo <- dg_dt[protein==i & Pos_class!="binding_interface"][Pos_ref %in% literature_list[[i]][["sector"]] & is.na(allosteric_mutation),.N]
-      out_sector_nallo <- dg_dt[protein==i & Pos_class!="binding_interface"][!Pos_ref %in% literature_list[[i]][["sector"]] & is.na(allosteric_mutation),.N]
-      temp_test <- fisher.test(matrix(c(in_sector_allo, out_sector_allo, in_sector_nallo, out_sector_nallo), nrow = 2))
-      print(paste0("Enrichment of allosteric mutations in sector (", i, "): p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+    if(i %in% names(annotation_list)){
+      anno_dt <- fread(annotation_list[[i]])
+      for(lset_name in names(anno_dt[,-1])){
+        lset <- anno_dt[get(lset_name)==1,Pos_ref]
+        in_lset_allo <- dg_dt[protein==i & Pos_class!="binding_interface"][Pos_ref %in% lset & allosteric_mutation==T,.N]
+        out_lset_allo <- dg_dt[protein==i & Pos_class!="binding_interface"][!Pos_ref %in% lset & allosteric_mutation==T,.N]
+        in_lset_nallo <- dg_dt[protein==i & Pos_class!="binding_interface"][Pos_ref %in% lset & allosteric_mutation==F,.N]
+        out_lset_nallo <- dg_dt[protein==i & Pos_class!="binding_interface"][!Pos_ref %in% lset & allosteric_mutation==F,.N]
+        temp_test <- fisher.test(matrix(c(in_lset_allo, out_lset_allo, in_lset_nallo, out_lset_nallo), nrow = 2))
+        print(paste0("Enrichment of allosteric mutations in ", lset_name, " (", i, "): p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+        result_list <- c(result_list, list(data.table(protein = i, set_name = paste0(lset_name, " (n = ", length(lset), ")"), mutation = "in", odds_ratio = temp_test$estimate, p_value = temp_test$p.value)))
+      }
     }
   }
+
+  #Plot
+  plot_dt <- rbindlist(result_list)
+  plot_dt[, set_name := factor(set_name, levels = plot_dt[order(odds_ratio, decreasing = T),set_name])]
+  d <- ggplot2::ggplot(plot_dt,ggplot2::aes(set_name, log2(odds_ratio), alpha = p_value<2.2e-16)) +
+    ggplot2::geom_col(position = "dodge") +
+    ggplot2::facet_wrap(protein~., scales = "free", ncol = 1) +
+    ggplot2::xlab("Dataset") +
+    ggplot2::ylab("log2(odds ratio)") +
+    ggplot2::theme_bw() +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 2)]))
+    d <- d + ggplot2::scale_alpha_manual(values = c(0.5, 1))
+  }
+  ggplot2::ggsave(file.path(outpath, "allosteric_mutations_literature_associations.pdf"), d, width = 5, height = 4, useDingbats=FALSE)
+
+  ###########################
+  ### Enrichment of allosteric mutations in certain mutant residues
+  ###########################
+
+  #Mutant residues
+  result_list <- list()
+  bset_list <- list(
+    "Charged" = c("R", "H", "D", "E", "K"), 
+    "Hydrophobic" = c("A", "V", "I", "L", "M", "F", "Y", "W"))
+  aa_list <- as.list(unlist(strsplit("GAVLMIFYWKRHDESTCNQP", "")))
+  names(aa_list) <- unlist(aa_list)
+  bset_list <- c(bset_list, aa_list)
+  for(lset_name in names(bset_list)){
+    for(i in dg_dt[,unique(protein)]){
+      lset <- bset_list[[lset_name]]
+      in_lset_allo <- dg_dt[protein==i & Pos_class!="binding_interface"][WT_AA %in% lset & allosteric_mutation==T,.N]
+      out_lset_allo <- dg_dt[protein==i & Pos_class!="binding_interface"][!WT_AA %in% lset & allosteric_mutation==T,.N]
+      in_lset_nallo <- dg_dt[protein==i & Pos_class!="binding_interface"][WT_AA %in% lset & allosteric_mutation==F,.N]
+      out_lset_nallo <- dg_dt[protein==i & Pos_class!="binding_interface"][!WT_AA %in% lset & allosteric_mutation==F,.N]
+      temp_test <- fisher.test(matrix(c(in_lset_allo, out_lset_allo, in_lset_nallo, out_lset_nallo), nrow = 2))
+      if(lset_name %in% c("G", "P")){
+        print(paste0("Enrichment of allosteric mutations from ", lset_name, " (", i, "): p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+      }
+      result_list <- c(result_list, list(data.table(protein = i, set_name = lset_name, mutation = "WT", odds_ratio = temp_test$estimate, p_value = temp_test$p.value)))
+      in_lset_allo <- dg_dt[protein==i & Pos_class!="binding_interface"][Mut %in% lset & allosteric_mutation==T,.N]
+      out_lset_allo <- dg_dt[protein==i & Pos_class!="binding_interface"][!Mut %in% lset & allosteric_mutation==T,.N]
+      in_lset_nallo <- dg_dt[protein==i & Pos_class!="binding_interface"][Mut %in% lset & allosteric_mutation==F,.N]
+      out_lset_nallo <- dg_dt[protein==i & Pos_class!="binding_interface"][!Mut %in% lset & allosteric_mutation==F,.N]
+      temp_test <- fisher.test(matrix(c(in_lset_allo, out_lset_allo, in_lset_nallo, out_lset_nallo), nrow = 2))
+      if(lset_name %in% c("G", "P")){
+        print(paste0("Enrichment of allosteric mutations to ", lset_name, " (", i, "): p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+      }
+      result_list <- c(result_list, list(data.table(protein = i, set_name = lset_name, mutation = "Mutant", odds_ratio = temp_test$estimate, p_value = temp_test$p.value)))
+    }
+  }
+
+  #Plot
+  plot_dt <- rbindlist(result_list)
+  plot_dt[, set_name := factor(set_name, levels = plot_dt[,.(moddsratio = mean(odds_ratio)),set_name][order(moddsratio, decreasing = T),set_name])]
+  plot_dt[, mutation := factor(mutation, levels = c("WT", "Mutant"))]
+  d <- ggplot2::ggplot(plot_dt,ggplot2::aes(set_name, log2(odds_ratio), fill = mutation, alpha = p_value<0.05)) +
+    ggplot2::geom_col(position = "dodge") +
+    ggplot2::facet_wrap(protein~., scales = "free", ncol = 1) +
+    ggplot2::xlab("Residue type") +
+    ggplot2::ylab("log2(odds ratio)") +
+    ggplot2::theme_bw() +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_fill_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3)]))
+    d <- d + ggplot2::scale_alpha_manual(values = c(0.5, 1))
+  }
+  ggplot2::ggsave(file.path(outpath, "allosteric_mutations_mutated_residues.pdf"), d, width = 6, height = 7, useDingbats=FALSE)
+  #Save
+  plot_dt_allres <- plot_dt
+
+  ###########################
+  ### Enrichment of allosteric mutations in certain mutant residues - no loops
+  ###########################
+
+  #Mutant residues
+  result_list <- list()
+  bset_list <- list(
+    "Charged" = c("R", "H", "D", "E", "K"), 
+    "Hydrophobic" = c("A", "V", "I", "L", "M", "F", "Y", "W"))
+  aa_list <- as.list(unlist(strsplit("GAVLMIFYWKRHDESTCNQP", "")))
+  names(aa_list) <- unlist(aa_list)
+  bset_list <- c(bset_list, aa_list)
+  for(lset_name in names(bset_list)){
+    for(i in dg_dt[,unique(protein)]){
+      lset <- bset_list[[lset_name]]
+      in_lset_allo <- dg_dt[protein==i & Pos_class!="binding_interface" & !is.na(SS)][WT_AA %in% lset & allosteric_mutation==T,.N]
+      out_lset_allo <- dg_dt[protein==i & Pos_class!="binding_interface" & !is.na(SS)][!WT_AA %in% lset & allosteric_mutation==T,.N]
+      in_lset_nallo <- dg_dt[protein==i & Pos_class!="binding_interface" & !is.na(SS)][WT_AA %in% lset & allosteric_mutation==F,.N]
+      out_lset_nallo <- dg_dt[protein==i & Pos_class!="binding_interface" & !is.na(SS)][!WT_AA %in% lset & allosteric_mutation==F,.N]
+      temp_test <- fisher.test(matrix(c(in_lset_allo, out_lset_allo, in_lset_nallo, out_lset_nallo), nrow = 2))
+      if(lset_name %in% c("G", "P")){
+        print(paste0("Enrichment of allosteric mutations (not in loops) from ", lset_name, " (", i, "): p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+      }
+      result_list <- c(result_list, list(data.table(protein = i, set_name = lset_name, mutation = "WT", odds_ratio = temp_test$estimate, p_value = temp_test$p.value)))
+      in_lset_allo <- dg_dt[protein==i & Pos_class!="binding_interface" & !is.na(SS)][Mut %in% lset & allosteric_mutation==T,.N]
+      out_lset_allo <- dg_dt[protein==i & Pos_class!="binding_interface" & !is.na(SS)][!Mut %in% lset & allosteric_mutation==T,.N]
+      in_lset_nallo <- dg_dt[protein==i & Pos_class!="binding_interface" & !is.na(SS)][Mut %in% lset & allosteric_mutation==F,.N]
+      out_lset_nallo <- dg_dt[protein==i & Pos_class!="binding_interface" & !is.na(SS)][!Mut %in% lset & allosteric_mutation==F,.N]
+      temp_test <- fisher.test(matrix(c(in_lset_allo, out_lset_allo, in_lset_nallo, out_lset_nallo), nrow = 2))
+      if(lset_name %in% c("G", "P")){
+        print(paste0("Enrichment of allosteric mutations (not in loops) to ", lset_name, " (", i, "): p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+      }
+      result_list <- c(result_list, list(data.table(protein = i, set_name = lset_name, mutation = "Mutant", odds_ratio = temp_test$estimate, p_value = temp_test$p.value)))
+    }
+  }
+
+  #Plot
+  plot_dt <- rbindlist(result_list)
+  plot_dt[, set_name := factor(set_name, levels = plot_dt[,.(moddsratio = mean(odds_ratio)),set_name][order(moddsratio, decreasing = T),set_name])]
+  plot_dt[, mutation := factor(mutation, levels = c("WT", "Mutant"))]
+  d <- ggplot2::ggplot(plot_dt,ggplot2::aes(set_name, log2(odds_ratio), fill = mutation, alpha = p_value<0.05)) +
+    ggplot2::geom_col(position = "dodge") +
+    ggplot2::facet_wrap(protein~., scales = "free", ncol = 1) +
+    ggplot2::xlab("Residue type") +
+    ggplot2::ylab("log2(odds ratio)") +
+    ggplot2::theme_bw() +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_fill_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3)]))
+    d <- d + ggplot2::scale_alpha_manual(values = c(0.5, 1))
+  }
+  ggplot2::ggsave(file.path(outpath, "allosteric_mutations_mutated_residues_noloops.pdf"), d, width = 6, height = 7, useDingbats=FALSE)
+
+  #Plot restricting to G and P
+  plot_dt <- plot_dt[set_name %in% c("G", "P")]
+  plot_dt[, subset := "noloop"]
+  plot_dt_allres <- plot_dt_allres[set_name %in% c("G", "P")]
+  plot_dt_allres[, subset := "all"]
+  plot_dt_combined <- rbind(plot_dt, plot_dt_allres)
+  d <- ggplot2::ggplot(plot_dt_combined,ggplot2::aes(mutation, log2(odds_ratio), fill = subset)) +
+    ggplot2::geom_col(position = "dodge") +
+    ggplot2::facet_grid(protein~set_name, scales = "free") +
+    ggplot2::xlab("Residue type") +
+    ggplot2::ylab("log2(odds ratio)") +
+    ggplot2::theme_classic() +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_fill_manual(values = c("grey", unlist(colour_scheme[["shade 0"]][c(1)])))
+  }
+  ggplot2::ggsave(file.path(outpath, "allosteric_mutations_mutated_residues_noloops_GP.pdf"), d, width = 3, height = 4, useDingbats=FALSE)
+
+  # Enrichment of major allosteric sites in non-loop Glycines
+  nloop_allo <- dg_dt[!duplicated(paste0(protein, ":", Pos_ref))][WT_AA=="G" & Pos_class != "binding_interface"][allosteric==T & !is.na(SS),.N]
+  loop_allo <- dg_dt[!duplicated(paste0(protein, ":", Pos_ref))][WT_AA=="G" & Pos_class != "binding_interface"][allosteric==T & is.na(SS),.N]
+  nloop_nallo <- dg_dt[!duplicated(paste0(protein, ":", Pos_ref))][WT_AA=="G" & Pos_class != "binding_interface"][is.na(allosteric) & !is.na(SS),.N]
+  loop_nallo <- dg_dt[!duplicated(paste0(protein, ":", Pos_ref))][WT_AA=="G" & Pos_class != "binding_interface"][is.na(allosteric) & is.na(SS),.N]
+  temp_test <- fisher.test(matrix(c(nloop_allo, loop_allo, nloop_nallo, loop_nallo), nrow = 2))
+  print(paste0("Enrichment of non-loop Glycine residues (not in binding interface) for major allosteric sites: p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
 
   ###########################
   ### Where are strongest binding effects?

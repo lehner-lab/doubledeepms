@@ -4,26 +4,29 @@
 #' Main analysis script.
 #'
 #' @param startStage Start at a specified analysis stage (default:1)
-#' @param stopStage Stop at a specified analysis stage (default:0 i.e. no stop condition)
-#' @param base_dir Base directory for all output file (default:NB private CRG server path; change accordingly)
-#' @param rerun_raw re-run raw data preprocessing (default:F)
-#' @param Ncores # cores available to parallelize leave-one-out cross validation workflow (stage 4)
+#' @param stopStage Stop at a specified analysis stage (default:11)
+#' @param base_dir Base directory for all output files (default:NB private CRG server path; change accordingly)
+#' @param tmodel_job_number Thermodynamic model fit job number: 1:final model, 2-11: monte carlo simluations for confidence intervals of model-inferred free energies (default:1)
+#' @param tmodel_grid_search Thermodynamic model fit grid search to determine optimal hyperparameters (default:FALSE)
+#' @param tmodel_protein Thermodynamic model fit proteins: comma-separated list of names or 'all' (default:'GRB2-SH3')
+#' @param tmodel_subset Thermodynamic model fit data subset: either an integer percentage of subsampled doubles (1-100) or "binding_only" or "singles_only" (default:100)
 #'
 #' @return Nothing
 #' @export
 doubledeepms <- function(
-  startStage=1,
-  stopStage=0,
+  startStage = 1,
+  stopStage = 11,
   base_dir = "/users/project/prj004631/afaure/DMS/Results/doubledeepms_proj",
-  rerun_raw = F,
-  Ncores = 1
+  tmodel_job_number = 1,
+  tmodel_grid_search = FALSE,
+  tmodel_protein = "GRB2-SH3",
+  tmodel_subset = 100
   ){
 
   # startStage=1
   # stopStage=0
   # base_dir = "/users/project/prj004631/afaure/DMS/Results/doubledeepms_proj"
   # rerun_raw = F
-  # Ncores = 1
 
   colour_scheme <- list(
     "shade 0" = list(
@@ -62,141 +65,199 @@ doubledeepms <- function(
   first_stage <- startStage
   last_stage <- stopStage
 
-  ### Fit thermo model
+  ### Fit thermo models
   ###########################
+
+  stagenum <- 0
+  doubledeepms_fit_thermo_model(
+    base_dir = base_dir,
+    tmodel_job_number = tmodel_job_number,
+    tmodel_grid_search = tmodel_grid_search,
+    tmodel_protein = tmodel_protein,
+    tmodel_subset = as.character(tmodel_subset),
+    tmodel_hyperparameters = file.path(base_dir, "Data", "mochi", "hyperparameters.txt"),
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
 
   ### Evaluate thermo model results
   ###########################
 
   stagenum <- 1
-  #GB1 - Olson et al.
+  #GB1
   doubledeepms_thermo_model_results(
-    mochi_outpath = file.path(base_dir, "Data", "mochi", "GB1", "mochi__fit_tmodel_3state_sparse_mult"),
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "GB1", "mochi__fit_tmodel_3state_sparse_dimsum128"),
     literature_free_energies = file.path(base_dir, "Data", "in_vitro", "GB1_literature_free_energies.txt"),
     position_offset = 1,
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_GB1", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
+  #GB1 - subsample doubles 2%
+  doubledeepms_thermo_model_results(
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "GB1", "mochi__fit_tmodel_3state_sparse_dimsum128_subsample2p"),
+    literature_free_energies = file.path(base_dir, "Data", "in_vitro", "GB1_literature_free_energies.txt"),
+    position_offset = 1,
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_GB1subsample2p", stagenum=stagenum, base_dir=base_dir),
+    colour_scheme = colour_scheme,
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
+  #GB1 - subsample doubles 5%
+  doubledeepms_thermo_model_results(
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "GB1", "mochi__fit_tmodel_3state_sparse_dimsum128_subsample5p"),
+    literature_free_energies = file.path(base_dir, "Data", "in_vitro", "GB1_literature_free_energies.txt"),
+    position_offset = 1,
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_GB1subsample5p", stagenum=stagenum, base_dir=base_dir),
+    colour_scheme = colour_scheme,
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
+  #GB1 - subsample doubles 10%
+  doubledeepms_thermo_model_results(
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "GB1", "mochi__fit_tmodel_3state_sparse_dimsum128_subsample10p"),
+    literature_free_energies = file.path(base_dir, "Data", "in_vitro", "GB1_literature_free_energies.txt"),
+    position_offset = 1,
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_GB1subsample10p", stagenum=stagenum, base_dir=base_dir),
+    colour_scheme = colour_scheme,
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
+  #GB1 - subsample doubles 20%
+  doubledeepms_thermo_model_results(
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "GB1", "mochi__fit_tmodel_3state_sparse_dimsum128_subsample20p"),
+    literature_free_energies = file.path(base_dir, "Data", "in_vitro", "GB1_literature_free_energies.txt"),
+    position_offset = 1,
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_GB1subsample20p", stagenum=stagenum, base_dir=base_dir),
+    colour_scheme = colour_scheme,
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
+  #GB1 - subsample doubles 50%
+  doubledeepms_thermo_model_results(
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "GB1", "mochi__fit_tmodel_3state_sparse_dimsum128_subsample50p"),
+    literature_free_energies = file.path(base_dir, "Data", "in_vitro", "GB1_literature_free_energies.txt"),
+    position_offset = 1,
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_GB1subsample50p", stagenum=stagenum, base_dir=base_dir),
+    colour_scheme = colour_scheme,
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #PSD95-PDZ3
   doubledeepms_thermo_model_results(
-    mochi_outpath = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse_mult"),
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse_dimsum128"),
     literature_free_energies = file.path(base_dir, "Data", "in_vitro", "PDZ_literature_free_energies.txt"),
     position_offset = 310,
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_PSD95-PDZ3", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #PSD95-PDZ3 - binding only
   doubledeepms_thermo_model_results(
-    mochi_outpath = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse_mult_bindingonly"),
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse_dimsum128_bindingonly"),
     literature_free_energies = file.path(base_dir, "Data", "in_vitro", "PDZ_literature_free_energies.txt"),
     position_offset = 310,
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_PSD95-PDZ3bindingonly", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #PSD95-PDZ3 - singles only
   doubledeepms_thermo_model_results(
-    mochi_outpath = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse_mult_singlesonly"),
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse_dimsum128_singlesonly"),
     literature_free_energies = file.path(base_dir, "Data", "in_vitro", "PDZ_literature_free_energies.txt"),
     position_offset = 310,
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_PSD95-PDZ3singlesonly", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #PSD95-PDZ3 - subsample doubles 2%
   doubledeepms_thermo_model_results(
-    mochi_outpath = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse_mult_subsample2p"),
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse_dimsum128_subsample2p"),
     literature_free_energies = file.path(base_dir, "Data", "in_vitro", "PDZ_literature_free_energies.txt"),
     position_offset = 310,
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_PSD95-PDZ3subsample2p", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #PSD95-PDZ3 - subsample doubles 5%
   doubledeepms_thermo_model_results(
-    mochi_outpath = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse_mult_subsample5p"),
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse_dimsum128_subsample5p"),
     literature_free_energies = file.path(base_dir, "Data", "in_vitro", "PDZ_literature_free_energies.txt"),
     position_offset = 310,
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_PSD95-PDZ3subsample5p", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #PSD95-PDZ3 - subsample doubles 10%
   doubledeepms_thermo_model_results(
-    mochi_outpath = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse_mult_subsample10p"),
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse_dimsum128_subsample10p"),
     literature_free_energies = file.path(base_dir, "Data", "in_vitro", "PDZ_literature_free_energies.txt"),
     position_offset = 310,
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_PSD95-PDZ3subsample10p", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #PSD95-PDZ3 - subsample doubles 20%
   doubledeepms_thermo_model_results(
-    mochi_outpath = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse_mult_subsample20p"),
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse_dimsum128_subsample20p"),
     literature_free_energies = file.path(base_dir, "Data", "in_vitro", "PDZ_literature_free_energies.txt"),
     position_offset = 310,
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_PSD95-PDZ3subsample20p", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #PSD95-PDZ3 - subsample doubles 50%
   doubledeepms_thermo_model_results(
-    mochi_outpath = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse_mult_subsample50p"),
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse_dimsum128_subsample50p"),
     literature_free_energies = file.path(base_dir, "Data", "in_vitro", "PDZ_literature_free_energies.txt"),
     position_offset = 310,
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_PSD95-PDZ3subsample50p", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #GRB2-SH3
   doubledeepms_thermo_model_results(
-    mochi_outpath = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse_mult"),
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse_dimsum128"),
+    literature_free_energies = file.path(base_dir, "Data", "in_vitro", "GRB2_literature_free_energies.txt"),
     position_offset = 0,
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_GRB2-SH3", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #GRB2-SH3 - binding only
   doubledeepms_thermo_model_results(
-    mochi_outpath = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse_mult_bindingonly"),
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse_dimsum128_bindingonly"),
+    literature_free_energies = file.path(base_dir, "Data", "in_vitro", "GRB2_literature_free_energies.txt"),
     position_offset = 0,
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_GRB2-SH3bindingonly", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #GRB2-SH3 - singles only
   doubledeepms_thermo_model_results(
-    mochi_outpath = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse_mult_singlesonly"),
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse_dimsum128_singlesonly"),
+    literature_free_energies = file.path(base_dir, "Data", "in_vitro", "GRB2_literature_free_energies.txt"),
     position_offset = 0,
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_GRB2-SH3singlesonly", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #GRB2-SH3 - subsample doubles 2%
   doubledeepms_thermo_model_results(
-    mochi_outpath = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse_mult_subsample2p"),
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse_dimsum128_subsample2p"),
+    literature_free_energies = file.path(base_dir, "Data", "in_vitro", "GRB2_literature_free_energies.txt"),
     position_offset = 0,
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_GRB2-SH3subsample2p", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #GRB2-SH3 - subsample doubles 5%
   doubledeepms_thermo_model_results(
-    mochi_outpath = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse_mult_subsample5p"),
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse_dimsum128_subsample5p"),
+    literature_free_energies = file.path(base_dir, "Data", "in_vitro", "GRB2_literature_free_energies.txt"),
     position_offset = 0,
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_GRB2-SH3subsample5p", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #GRB2-SH3 - subsample doubles 10%
   doubledeepms_thermo_model_results(
-    mochi_outpath = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse_mult_subsample10p"),
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse_dimsum128_subsample10p"),
+    literature_free_energies = file.path(base_dir, "Data", "in_vitro", "GRB2_literature_free_energies.txt"),
     position_offset = 0,
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_GRB2-SH3subsample10p", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #GRB2-SH3 - subsample doubles 20%
   doubledeepms_thermo_model_results(
-    mochi_outpath = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse_mult_subsample20p"),
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse_dimsum128_subsample20p"),
+    literature_free_energies = file.path(base_dir, "Data", "in_vitro", "GRB2_literature_free_energies.txt"),
     position_offset = 0,
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_GRB2-SH3subsample20p", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #GRB2-SH3 - subsample doubles 50%
   doubledeepms_thermo_model_results(
-    mochi_outpath = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse_mult_subsample50p"),
+    mochi_outpath = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse_dimsum128_subsample50p"),
+    literature_free_energies = file.path(base_dir, "Data", "in_vitro", "GRB2_literature_free_energies.txt"),
     position_offset = 0,
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_thermo_model_results_GRB2-SH3subsample50p", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
 
   ### Add 3D structure metrics
   ###########################
@@ -209,19 +270,19 @@ doubledeepms <- function(
     pdb_file = file.path(base_dir, "Data", "pdb", "1fcc.pdb"),
     pdb_chain_query = "C",
     pdb_chain_target = "A",
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #PSD95-PDZ3
   doubledeepms_structure_metrics(
     input_file = file.path(base_dir, paste0("001", "_doubledeepms_thermo_model_results_PSD95-PDZ3"), "dg_singles.txt"),
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_structure_metrics_PSD95-PDZ3", stagenum=stagenum, base_dir=base_dir),
     pdb_file = file.path(base_dir, "Data", "pdb", "1be9.pdb"),
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #GRB2-SH3
   doubledeepms_structure_metrics(
     input_file = file.path(base_dir, paste0("001", "_doubledeepms_thermo_model_results_GRB2-SH3"), "dg_singles.txt"),
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_structure_metrics_GRB2-SH3", stagenum=stagenum, base_dir=base_dir),
     pdb_file = file.path(base_dir, "Data", "pdb", "2vwf.pdb"),
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
 
   ### Fitness plots
   ###########################
@@ -240,7 +301,7 @@ doubledeepms <- function(
     val_inpath = file.path(base_dir, "Data", "experimental_validations", "GRB2-SH3", "experimenal_validations_ODs.txt"),
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_fitness_plots", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   
   ### Plot fitness heatmaps
   ###########################
@@ -255,7 +316,7 @@ doubledeepms <- function(
     colour_scheme = colour_scheme,
     plot_width = 11,
     plot_traits = "Binding",
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #PSD95-PDZ3
   doubledeepms_fitness_heatmaps(
     input_file = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_PSD95-PDZ3"), "dg_singles.txt"),
@@ -265,7 +326,7 @@ doubledeepms <- function(
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_fitness_heatmaps_PSD95-PDZ3", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
     plot_width = 15,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #GRB2-SH3
   doubledeepms_fitness_heatmaps(
     input_file = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_GRB2-SH3"), "dg_singles.txt"),
@@ -275,7 +336,7 @@ doubledeepms <- function(
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_fitness_heatmaps_GRB2-SH3", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
     plot_width = 11,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
 
   ### Plot free energy scatterplots
   ###########################
@@ -294,7 +355,7 @@ doubledeepms <- function(
     ),
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_free_energy_scatterplots", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
 
   ### Plot free energy heatmaps
   ###########################
@@ -307,7 +368,7 @@ doubledeepms <- function(
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_free_energy_heatmaps_GB1", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
     plot_width = 11,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #PSD95-PDZ3
   doubledeepms_free_energy_heatmaps(
     input_file = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_PSD95-PDZ3"), "dg_singles.txt"),
@@ -315,7 +376,7 @@ doubledeepms <- function(
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_free_energy_heatmaps_PSD95-PDZ3", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
     plot_width = 15,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #GRB2-SH3
   doubledeepms_free_energy_heatmaps(
     input_file = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_GRB2-SH3"), "dg_singles.txt"),
@@ -323,7 +384,7 @@ doubledeepms <- function(
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_free_energy_heatmaps_GRB2-SH3", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
     plot_width = 11,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
 
   ### Protein stability plots
   ###########################
@@ -352,7 +413,7 @@ doubledeepms <- function(
     ),
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_protein_stability_plots", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
 
   ### Binding interface plots
   ###########################
@@ -375,7 +436,7 @@ doubledeepms <- function(
     pdb_id = "2vwf",
     pdb_view = "(0.837024331,0.261427671,0.480670929,0.209657252,0.658192515,-0.723066926,-0.505404055,0.706001341,0.496113181,0.000000000,0.000000000,-141.782043457,-2.309909821,13.775757790,0.139801025,111.782043457,171.782043457,-20.000000000 )",
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   # All domains
   doubledeepms_binding_interface(
     input_list = list(
@@ -384,7 +445,7 @@ doubledeepms <- function(
       "GRB2-SH3" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_GRB2-SH3"), "dg_singles.txt")),
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_binding_interface", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   
 
   ### Allostery plots
@@ -405,12 +466,8 @@ doubledeepms <- function(
       "GB1" = "C",
       "PSD95-PDZ3" = "A",
       "GRB2-SH3" = "A"),
-    literature_list = list(
-      "GB1" = list(class_switching = c(), sector = c()),
-      "PSD95-PDZ3" = list(
-        class_switching = c(322, 327, 329, 330, 336, 362, 372, 375, 379), 
-        sector = c(322,323,325,327,329,330,336,345,347,351,353,362,363,364,372,375,376,379,386,388)),
-      "GRB2-SH3" = list(class_switching = c(), sector = c())),
+    annotation_list = list(
+      "PSD95-PDZ3" = file.path(base_dir, "Data", "annotations", "PSD95-PDZ3", "PSD95-PDZ3_annotations.txt")),
     ohm_file_list = list(
       "GB1" = file.path(base_dir, "Data", "ohm", "ohm_2gb1_ddPCA_GB1only.txt"), 
       "PSD95-PDZ3" = file.path(base_dir, "Data", "ohm", "ohm_1be9_ddPCA_PDZonly.txt"),
@@ -419,7 +476,7 @@ doubledeepms <- function(
     aaprop_file_selected = file.path(base_dir, "Data", "amino_acid_properties", "selected.amino_acid_properties.txt"),
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_allostery_plots", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
 
   ### Allostery scatterplots
   ###########################
@@ -432,26 +489,36 @@ doubledeepms <- function(
       "PSD95-PDZ3" = file.path(base_dir, "Data", "fitness", "PSD95-PDZ3"),
       "GRB2-SH3" = file.path(base_dir, "Data", "fitness", "GRB2-SH3")),
     mochi_outpath_list = list(
-      "PSD95-PDZ3" = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse_mult"),
-      "GRB2-SH3" = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse_mult")),
+      "PSD95-PDZ3" = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse_dimsum128"),
+      "GRB2-SH3" = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse_dimsum128")),
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_allostery_scatterplots", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
 
   ### Downsampling analysis
   ###########################
 
   stagenum <- 11
+  #GB1
+  doubledeepms_downsampling_analysis(
+    mochi_outpath_prefix = file.path(base_dir, "Data", "mochi", "GB1", "mochi__fit_tmodel_3state_sparse_dimsum128_subsample"),
+    sample_percentage = c(2, 5, 10, 20, 50, 100),
+    literature_comparison_prefix = file.path(base_dir, paste0("001", "_doubledeepms_thermo_model_results_GB1subsample")),
+    literature_comparison_list = list(
+      "folding" = "validation_scatter_(mAvg)_mean_f_ddg_conf.txt"),
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_downsampling_analysis_GB1", stagenum=stagenum, base_dir=base_dir),
+    colour_scheme = colour_scheme,
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #GRB2-SH3
   doubledeepms_downsampling_analysis(
-    mochi_outpath_prefix = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse_mult_subsample"),
+    mochi_outpath_prefix = file.path(base_dir, "Data", "mochi", "GRB2-SH3", "mochi__fit_tmodel_3state_sparse_dimsum128_subsample"),
     sample_percentage = c(2, 5, 10, 20, 50, 100),
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_downsampling_analysis_GRB2-SH3", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
   #PSD95-PDZ3
   doubledeepms_downsampling_analysis(
-    mochi_outpath_prefix = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse_mult_subsample"),
+    mochi_outpath_prefix = file.path(base_dir, "Data", "mochi", "PSD95-PDZ3", "mochi__fit_tmodel_3state_sparse_dimsum128_subsample"),
     sample_percentage = c(2, 5, 10, 20, 50, 100),
     literature_comparison_prefix = file.path(base_dir, paste0("001", "_doubledeepms_thermo_model_results_PSD95-PDZ3subsample")),
     literature_comparison_list = list(
@@ -459,9 +526,7 @@ doubledeepms <- function(
       "binding" = "validation_scatter_Laursen_2020_b_ddg_conf.txt"),
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_downsampling_analysis_PSD95-PDZ3", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
-    execute = (first_stage <= stagenum & (last_stage == 0 | last_stage >= stagenum)))
-
-
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
 
 
 }

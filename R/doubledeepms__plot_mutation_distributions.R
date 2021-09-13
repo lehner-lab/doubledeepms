@@ -28,6 +28,7 @@ doubledeepms__plot_mutation_distributions <- function(
   d <- ggplot2::ggplot(plot_dt,ggplot2::aes(count, color = phenotype)) +
     ggplot2::geom_density() +
     ggplot2::geom_vline(data = median_dt, ggplot2::aes(xintercept = median_count, color = phenotype), linetype = 2) + 
+    ggplot2::geom_text(data = median_dt[,.(label = paste("median = ", median_count, sep=""), count = 50, y = 0.5),.(phenotype)], ggplot2::aes(x = count, y = y, color = phenotype, label = label)) +
     ggplot2::scale_x_continuous(trans = "log10") +
     ggplot2::xlab("Number of double mutants") +
     ggplot2::ylab("density") +
@@ -38,5 +39,4 @@ doubledeepms__plot_mutation_distributions <- function(
   ggplot2::ggsave(file.path(report_outpath, "double_count_density.pdf"), d, width = 4, height = 3, useDingbats=FALSE)
   #Save median counts
   write.table(median_dt, file = file.path(report_outpath, "double_count_density.txt"), quote = F, row.names = F)
-
 }

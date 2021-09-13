@@ -4,7 +4,7 @@
 #' Evaluate thermo model results.
 #'
 #' @param mochi_outpath path to MoCHI thermo model fit results (required)
-#' @param temperature temperature in degrees celcuis (default:24)
+#' @param temperature temperature in degrees celcuis (default:30)
 #' @param literature_free_energies path to literature free energies (default:NA)
 #' @param position_offset residue position offset (default:0)
 #' @param folding_energy_max_sd maximum folding energy standard deviation (default:1/(1.96*2))
@@ -18,7 +18,7 @@
 #' @import data.table
 doubledeepms_thermo_model_results <- function(
   mochi_outpath,
-  temperature = 24,
+  temperature = 30,
   literature_free_energies = NA,
   position_offset = 0,
   folding_energy_max_sd = 1/(1.96*2),

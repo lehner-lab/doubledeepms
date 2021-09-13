@@ -83,6 +83,15 @@ doubledeepms_fitness_heatmaps <- function(
       colour_clip = 1.5,
       colour_low = colour_scheme[["shade 0"]][[3]],
       colour_high = colour_scheme[["shade 0"]][[1]])
+
+    #Full colour key
+    doubledeepms__plot_heatmap(
+      input_dt = heatmap_dt[,fitness := fitness/abs(fitness)*1.5],
+      variable_name = "fitness",
+      output_file = file.path(outpath, "abundance_heatmap_colkey.pdf"),
+      colour_clip = 1.5,
+      colour_low = colour_scheme[["shade 0"]][[3]],
+      colour_high = colour_scheme[["shade 0"]][[1]])
   }
 
   ###########################
@@ -105,6 +114,15 @@ doubledeepms_fitness_heatmaps <- function(
       width = plot_width,
       height = plot_height,
       plot_title = paste0(domain_name, " amino acid position"),
+      colour_clip = 1.5,
+      colour_low = colour_scheme[["shade 0"]][[3]],
+      colour_high = colour_scheme[["shade 0"]][[1]])
+
+    #Full colour key
+    doubledeepms__plot_heatmap(
+      input_dt = heatmap_dt[,fitness := fitness/abs(fitness)*1.5],
+      variable_name = "fitness",
+      output_file = file.path(outpath, "binding_heatmap_colkey.pdf"),
       colour_clip = 1.5,
       colour_low = colour_scheme[["shade 0"]][[3]],
       colour_high = colour_scheme[["shade 0"]][[1]])

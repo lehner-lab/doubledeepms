@@ -191,10 +191,16 @@ doubledeepms_protein_stability_plots <- function(
   for(i in names(pdb_file_list)){
     temp <- dg_dt[protein==i & f_ddg_pred_stab==1,table(Pos_ref)]
     stab_res <- as.integer(names(temp)[temp>=5])
-    if(length(stab_res)==0){stab_res <- as.integer(names(temp))}
-    dg_dt[protein==i & Pos_ref %in% stab_res, f_ddg_pred_stab_res5 := T]
-    print(paste0("Destabilising residues for ", i, ": ", paste(dg_dt[protein==i & f_ddg_pred_stab_res5][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
-    print(paste0("Surface destabilising residues for ", i, ": ", paste(dg_dt[protein==i & f_ddg_pred_stab_res5 & Pos_class=="surface"][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
+    if(length(stab_res)==0){
+      stab_res <- as.integer(names(temp))
+      dg_dt[protein==i & Pos_ref %in% stab_res, f_ddg_pred_stab_res5 := T]
+      print(paste0("Destabilising residues (1+) for ", i, ": ", paste(dg_dt[protein==i & f_ddg_pred_stab_res5][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
+      print(paste0("Surface destabilising (1+) residues for ", i, ": ", paste(dg_dt[protein==i & f_ddg_pred_stab_res5 & Pos_class=="surface"][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
+    }else{
+      dg_dt[protein==i & Pos_ref %in% stab_res, f_ddg_pred_stab_res5 := T]
+      print(paste0("Destabilising residues (3+) for ", i, ": ", paste(dg_dt[protein==i & f_ddg_pred_stab_res5][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
+      print(paste0("Surface destabilising (3+) residues for ", i, ": ", paste(dg_dt[protein==i & f_ddg_pred_stab_res5 & Pos_class=="surface"][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
+    }
   }
   ###########################
   ### Position of de-stabilising residues
@@ -277,7 +283,7 @@ doubledeepms_protein_stability_plots <- function(
     ggplot2::geom_vline(xintercept = 0) +
     ggplot2::facet_grid(~protein, scales = "free") + 
     ggplot2::theme_classic() +
-    ggrepel::geom_text_repel(data = plot_dt[Pos_class_plot!="binding_interface" & f_ddg_pred_stab_res5,], ggplot2::aes(label=paste0(WT_AA,Pos_ref))) + 
+    ggrepel::geom_text_repel(data = plot_dt[Pos_class_plot!="binding_interface" & f_ddg_pred_stab_res5,], ggplot2::aes(label=paste0(WT_AA,Pos_ref)), max.overlaps = 30) + 
     ggplot2::labs(fill = "Residue\ntype")
   if(!is.null(colour_scheme)){
     d <- d + ggplot2::scale_fill_manual(values = c(unlist(colour_scheme[["shade 0"]][c(3)]), "grey", unlist(colour_scheme[["shade 0"]][c(4)])))

@@ -191,7 +191,7 @@ doubledeepms_free_energy_scatterplots <- function(
   ggplot2::ggsave(file.path(outpath, "ddG_scatter_contour_xylim.pdf"), d, width = 4, height = 3, useDingbats=FALSE)
 
   #Free energy scatterplots by protein - GB1 - conf - xylim
-  plot_dt <- copy(dg_dt)[,.(protein, f_dg_pred, b_dg_pred, f_ddg_pred_conf, b_ddg_pred_conf, Pos_class, id)]
+  plot_dt <- copy(dg_dt)[,.(protein, f_dg_pred, b_dg_pred, f_ddg_pred, b_ddg_pred, f_ddg_pred_conf, b_ddg_pred_conf, Pos_class, id)]
   plot_dt <- plot_dt[f_ddg_pred_conf & b_ddg_pred_conf,]
   plot_dt[, Pos_class_plot := stringr::str_to_title(Pos_class)]
   plot_dt[Pos_class=="binding_interface", Pos_class_plot := "Binding\ninterface"]
@@ -211,10 +211,29 @@ doubledeepms_free_energy_scatterplots <- function(
   if(!is.null(colour_scheme)){
     d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
   }
+  ggplot2::ggsave(file.path(outpath, "dG_scatter_contour_GB1_xylim.pdf"), d, width = 4, height = 3, useDingbats=FALSE)
+
+  #Free energy change scatterplots by protein - GB1 - conf - xylim
+  #Plot
+  d <- ggplot2::ggplot(plot_dt[id!="-0-" & protein=="GB1"],ggplot2::aes(f_ddg_pred, b_ddg_pred, colour = Pos_class_plot)) +
+    ggplot2::geom_point(alpha = 0.5, size = 1) +
+    ggplot2::geom_density_2d(contour_var = "ndensity", bins = 6) +
+    ggplot2::geom_vline(xintercept = 0) +
+    # ggplot2::geom_vline(data = plot_dt[id=="-0-" & protein=="GB1",], ggplot2::aes(xintercept = f_dg_pred), linetype = 2) +
+    ggplot2::geom_hline(yintercept = 0) +
+    # ggplot2::geom_hline(data = plot_dt[id=="-0-" & protein=="GB1",], ggplot2::aes(yintercept = b_dg_pred), linetype = 2) +
+    ggplot2::xlab(expression("Folding "*Delta*Delta*"G")) +
+    ggplot2::ylab(expression("Binding "*Delta*Delta*"G")) +
+    ggplot2::labs(color = "Residue\nposition") +
+    ggplot2::coord_cartesian(ylim = c(-1, 2.5), xlim = c(-2,5)) +
+    ggplot2::theme_classic()
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
+  }
   ggplot2::ggsave(file.path(outpath, "ddG_scatter_contour_GB1_xylim.pdf"), d, width = 4, height = 3, useDingbats=FALSE)
 
   #Free energy scatterplots by protein - GRB2 - conf - xylim
-  plot_dt <- copy(dg_dt)[protein != "GB1",.(protein, f_dg_pred, b_dg_pred, f_ddg_pred_conf, b_ddg_pred_conf, Pos_class, id)]
+  plot_dt <- copy(dg_dt)[protein != "GB1",.(protein, f_dg_pred, b_dg_pred, f_ddg_pred, b_ddg_pred, f_ddg_pred_conf, b_ddg_pred_conf, Pos_class, id)]
   plot_dt <- plot_dt[f_ddg_pred_conf & b_ddg_pred_conf,]
   plot_dt[, Pos_class_plot := stringr::str_to_title(Pos_class)]
   plot_dt[Pos_class=="binding_interface", Pos_class_plot := "Binding\ninterface"]
@@ -234,10 +253,29 @@ doubledeepms_free_energy_scatterplots <- function(
   if(!is.null(colour_scheme)){
     d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
   }
+  ggplot2::ggsave(file.path(outpath, "dG_scatter_contour_GRB2-SH3_xylim.pdf"), d, width = 4, height = 3, useDingbats=FALSE)
+
+  #Free energy scatterplots by protein - GRB2 - conf - xylim
+  #Plot
+  d <- ggplot2::ggplot(plot_dt[id!="-0-" & protein=="GRB2-SH3"],ggplot2::aes(f_ddg_pred, b_ddg_pred, colour = Pos_class_plot)) +
+    ggplot2::geom_point(alpha = 0.5, size = 1) +
+    ggplot2::geom_density_2d(contour_var = "ndensity", bins = 6) +
+    ggplot2::geom_vline(xintercept = 0) +
+    # ggplot2::geom_vline(data = plot_dt[id=="-0-" & protein=="GRB2-SH3",], ggplot2::aes(xintercept = f_dg_pred), linetype = 2) +
+    ggplot2::geom_hline(yintercept = 0) +
+    # ggplot2::geom_hline(data = plot_dt[id=="-0-" & protein=="GRB2-SH3",], ggplot2::aes(yintercept = b_dg_pred), linetype = 2) +
+    ggplot2::xlab(expression("Folding "*Delta*Delta*"G")) +
+    ggplot2::ylab(expression("Binding "*Delta*Delta*"G")) +
+    ggplot2::labs(color = "Residue\nposition") +
+    ggplot2::coord_cartesian(ylim = c(-1.5, 3), xlim = c(-1,3.5)) +
+    ggplot2::theme_classic()
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
+  }
   ggplot2::ggsave(file.path(outpath, "ddG_scatter_contour_GRB2-SH3_xylim.pdf"), d, width = 4, height = 3, useDingbats=FALSE)
 
   #Free energy scatterplots by protein - PSD95 - conf - xylim
-  plot_dt <- copy(dg_dt)[protein != "GB1",.(protein, f_dg_pred, b_dg_pred, f_ddg_pred_conf, b_ddg_pred_conf, Pos_class, id)]
+  plot_dt <- copy(dg_dt)[protein != "GB1",.(protein, f_dg_pred, b_dg_pred, f_ddg_pred, b_ddg_pred, f_ddg_pred_conf, b_ddg_pred_conf, Pos_class, id)]
   plot_dt <- plot_dt[f_ddg_pred_conf & b_ddg_pred_conf,]
   plot_dt[, Pos_class_plot := stringr::str_to_title(Pos_class)]
   plot_dt[Pos_class=="binding_interface", Pos_class_plot := "Binding\ninterface"]
@@ -257,8 +295,27 @@ doubledeepms_free_energy_scatterplots <- function(
   if(!is.null(colour_scheme)){
     d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
   }
+  ggplot2::ggsave(file.path(outpath, "dG_scatter_contour_PSD95-PDZ3_xylim.pdf"), d, width = 4, height = 3, useDingbats=FALSE)
+
+  #Free energy scatterplots by protein - PSD95 - conf - xylim
+  #Plot
+  d <- ggplot2::ggplot(plot_dt[id!="-0-" & protein=="PSD95-PDZ3"],ggplot2::aes(f_ddg_pred, b_ddg_pred, colour = Pos_class_plot)) +
+    ggplot2::geom_point(alpha = 0.5, size = 1) +
+    ggplot2::geom_density_2d(contour_var = "ndensity", bins = 6) +
+    ggplot2::geom_vline(xintercept = 0) +
+    # ggplot2::geom_vline(data = plot_dt[id=="-0-" & protein=="PSD95-PDZ3",], ggplot2::aes(xintercept = f_dg_pred), linetype = 2) +
+    ggplot2::geom_hline(yintercept = 0) +
+    # ggplot2::geom_hline(data = plot_dt[id=="-0-" & protein=="PSD95-PDZ3",], ggplot2::aes(yintercept = b_dg_pred), linetype = 2) +
+    ggplot2::xlab(expression("Folding "*Delta*Delta*"G")) +
+    ggplot2::ylab(expression("Binding "*Delta*Delta*"G")) +
+    ggplot2::labs(color = "Residue\nposition") +
+    ggplot2::coord_cartesian(ylim = c(-1, 1.7), xlim = c(-1,3)) +
+    ggplot2::theme_classic()
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
+  }
   ggplot2::ggsave(file.path(outpath, "ddG_scatter_contour_PSD95-PDZ3_xylim.pdf"), d, width = 4, height = 3, useDingbats=FALSE)
-  
+
   ###########################
   ### Free energy vs conservation scatterplots
   ###########################

@@ -41,6 +41,8 @@ doubledeepms__plot_additive_trait_folding <- function(
   pred_fitness_dt <- data.table(
     f_dg_pred = rep(folding_energy_grid, 2),
     b_dg_pred = rep(binding_energy_grid, 2),
+    f_ddg_pred = rep(folding_energy_grid, 2)-plot_dt[mut_order==0,f_dg_pred][1],
+    b_ddg_pred = rep(binding_energy_grid, 2)-plot_dt[mut_order==0,b_dg_pred][1],
     observed_fitness = pred_fitness_list[["fitness_folding"]],
     mut_order = rep(c(1, 2), each = length(folding_energy_grid)))
 
@@ -86,6 +88,20 @@ doubledeepms__plot_additive_trait_folding <- function(
     ggplot2::theme_classic()
   ggplot2::ggsave(file.path(report_outpath, "dG_observed_folding_binhex_xlim.pdf"), d, width = 4, height = 3, useDingbats=FALSE)
 
+  #Binhex no facet - xlim [-2, 7]
+  plot_xlim <- c(-2, 7)
+  d <- ggplot2::ggplot(plot_dt[mut_order>0 & f_ddg_pred>plot_xlim[1] & f_ddg_pred<plot_xlim[2]],ggplot2::aes(f_ddg_pred, observed_fitness)) +
+    ggplot2::stat_binhex(bins = 100, size = 0, color = "lightgrey") +
+    ggplot2::scale_fill_gradientn(colours = c("white", "black"), trans = "log10") +
+    ggplot2::xlab(expression(Delta*Delta*"G Folding (inferred)")) +
+    ggplot2::ylab("Fitness (Abundance)") +
+    ggplot2::geom_hline(yintercept = 0, linetype = 2) +
+    ggplot2::geom_vline(xintercept = 0, linetype = 2) +
+    ggplot2::geom_line(data = pred_fitness_dt[mut_order==1 & f_ddg_pred>plot_xlim[1] & f_ddg_pred<plot_xlim[2]], color = colour_scheme[["shade 0"]][[1]]) +
+    ggplot2::coord_cartesian(xlim = plot_xlim) +
+    ggplot2::theme_classic()
+  ggplot2::ggsave(file.path(report_outpath, "ddG_observed_folding_binhex_xlim.pdf"), d, width = 4, height = 3, useDingbats=FALSE)
+
   #Scatter facet highlighting confidenct dGs
   d <- ggplot2::ggplot(plot_dt[mut_order>0],ggplot2::aes(f_dg_pred, observed_fitness, colour = f_ddg_pred_conf)) +
     ggplot2::geom_point(data = plot_dt[f_ddg_pred_conf==F & mut_order>0], size = 1, alpha = 1/4) +
@@ -103,4 +119,22 @@ doubledeepms__plot_additive_trait_folding <- function(
     d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3)]))
   }
   ggplot2::ggsave(file.path(report_outpath, "dG_observed_folding_scatter_conf_facet.pdf"), d, width = 8, height = 4, useDingbats=FALSE)
+
+  #Scatter facet highlighting confidenct ddGs
+  d <- ggplot2::ggplot(plot_dt[mut_order>0],ggplot2::aes(f_ddg_pred, observed_fitness, colour = f_ddg_pred_conf)) +
+    ggplot2::stat_binhex(bins = 20, size = 0) +
+    ggplot2::scale_fill_gradientn(colours = c("white", "black"), trans = "log10") +
+    ggplot2::xlab(expression(Delta*Delta*"G Folding (inferred)")) +
+    ggplot2::ylab("Fitness (Abundance)") +
+    ggplot2::geom_hline(yintercept = 0, linetype = 2) +
+    ggplot2::geom_vline(xintercept = 0, linetype = 2) +
+    ggplot2::geom_line(data = pred_fitness_dt, color = colour_scheme[["shade 0"]][[1]]) +
+    ggplot2::labs(color = "Confident\nfree energy") +
+    ggplot2::facet_wrap(f_ddg_pred_conf~mut_order) +
+    ggplot2::theme_classic()
+  if(!is.null(colour_scheme)){
+    d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3)]))
+  }
+  ggplot2::ggsave(file.path(report_outpath, "ddG_observed_folding_binhex_conf_facet.pdf"), d, width = 8, height = 4, useDingbats=FALSE)
+
 }

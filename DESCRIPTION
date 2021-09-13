@@ -5,7 +5,7 @@ Authors@R: c(
 	person("Andre", "Faure", email = "ajfaure@gmail.com", role = c("aut", "cre")),
 	person("Julia", "Domingo", email = "julia.domingo.espinos@gmail.com", role = "aut"),
 	person("Joern", "Schmiedel", email = "jschmiedel@gmail.com", role = "aut"))
-Description: "A comprehensive map of allosteric sites in a protein domain", Domingo, Faure and Schmiedel et al. 2021
+Description: "Global mapping of the energetic and allosteric landscapes of protein binding domains", Domingo, Faure and Schmiedel et al. 2021
 Depends: R (>= 3.6.1)
 Imports:
 	bio3d,
@@ -16,14 +16,11 @@ Imports:
 	ggplot2,
 	GGally,
 	hexbin,
-	optparse,
-	parallel,
 	plot3D,
 	reshape2,
 	RColorBrewer,
 	ROCR,
 	stringr,
-	gridExtra,
 	ggrepel
 License: MIT + file LICENSE
 Encoding: UTF-8

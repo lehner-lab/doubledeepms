@@ -4,20 +4,25 @@
 \alias{doubledeepms}
 \title{doubledeepms}
 \usage{
-doubledeepms(startStage = 1, stopStage = 0,
+doubledeepms(startStage = 1, stopStage = 11,
   base_dir = "/users/project/prj004631/afaure/DMS/Results/doubledeepms_proj",
-  rerun_raw = F, Ncores = 1)
+  tmodel_job_number = 1, tmodel_grid_search = FALSE,
+  tmodel_protein = "GRB2-SH3", tmodel_subset = 100)
 }
 \arguments{
 \item{startStage}{Start at a specified analysis stage (default:1)}
 
-\item{stopStage}{Stop at a specified analysis stage (default:0 i.e. no stop condition)}
+\item{stopStage}{Stop at a specified analysis stage (default:11)}
 
-\item{base_dir}{Base directory for all output file (default:NB private CRG server path; change accordingly)}
+\item{base_dir}{Base directory for all output files (default:NB private CRG server path; change accordingly)}
 
-\item{rerun_raw}{re-run raw data preprocessing (default:F)}
+\item{tmodel_job_number}{Thermodynamic model fit job number: 1:final model, 2-11: monte carlo simluations for confidence intervals of model-inferred free energies (default:1)}
 
-\item{Ncores}{# cores available to parallelize leave-one-out cross validation workflow (stage 4)}
+\item{tmodel_grid_search}{Thermodynamic model fit grid search to determine optimal hyperparameters (default:FALSE)}
+
+\item{tmodel_protein}{Thermodynamic model fit proteins: comma-separated list of names or 'all' (default:'GRB2-SH3')}
+
+\item{tmodel_subset}{Thermodynamic model fit data subset: either an integer percentage of subsampled doubles (1-100) or "binding_only" or "singles_only" (default:100)}
 }
 \value{
 Nothing

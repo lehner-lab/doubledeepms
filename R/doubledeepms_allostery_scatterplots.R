@@ -4,7 +4,7 @@
 #' Plot free energy scatterplots for allosteric mutations
 #'
 #' @param input_file path to input file (required)
-#' @param temperature temperature in degrees celcuis (default:24)
+#' @param temperature temperature in degrees celcuis (default:30)
 #' @param fitness_list list of folder paths to fitness data (required)
 #' @param mochi_outpath_list list of paths to MoCHI thermo model fit results (required)
 #' @param outpath output path for plots and saved objects (required)
@@ -16,7 +16,7 @@
 #' @import data.table
 doubledeepms_allostery_scatterplots <- function(
   input_file,
-  temperature = 24,
+  temperature = 30,
   fitness_list,
   mochi_outpath_list,
   outpath,
@@ -92,47 +92,43 @@ doubledeepms_allostery_scatterplots <- function(
   }
 
   ###########################
-  ### Free energy scatterplots for allosteric sites
+  ### Free energy change scatterplots for allosteric sites
   ###########################
 
-  #Free energy scatterplots by protein - all - conf
+  #Free energy change scatterplots by protein - all - conf
   for(i in dg_dt[,unique(protein)]){
-    plot_dt <- copy(dg_dt)[protein==i][,.(f_dg_pred, f_ddg_pred_sd, b_dg_pred, b_ddg_pred_sd, f_ddg_pred_conf, b_ddg_pred_conf, Pos_class, allosteric, id, Pos_ref)]
+    plot_dt <- copy(dg_dt)[protein==i][,.(f_dg_pred, f_ddg_pred, f_ddg_pred_sd, b_dg_pred, b_ddg_pred, b_ddg_pred_sd, f_ddg_pred_conf, b_ddg_pred_conf, Pos_class, allosteric, id, Pos_ref)]
     plot_dt <- plot_dt[f_ddg_pred_conf==T & b_ddg_pred_conf==T,]
     plot_dt[, Pos_ref_plot := factor(Pos_ref)]
     #Plot
-    d <- ggplot2::ggplot(plot_dt[id!="-0-"],ggplot2::aes(f_dg_pred, b_dg_pred)) +
+    d <- ggplot2::ggplot(plot_dt[id!="-0-"],ggplot2::aes(f_ddg_pred, b_ddg_pred)) +
       ggplot2::geom_point(alpha = 0.5, size = 1, color = "lightgrey") +
       ggplot2::geom_point(data = plot_dt[allosteric==T,], alpha = 0.5, ggplot2::aes(color = Pos_ref_plot), size = 2) +
-      ggplot2::geom_linerange(data = plot_dt[allosteric==T,], alpha = 0.25, ggplot2::aes(ymin = b_dg_pred-b_ddg_pred_sd*1.96, ymax = b_dg_pred+b_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
-      ggplot2::geom_linerange(data = plot_dt[allosteric==T,], alpha = 0.25, ggplot2::aes(xmin = f_dg_pred-f_ddg_pred_sd*1.96, xmax = f_dg_pred+f_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
+      ggplot2::geom_linerange(data = plot_dt[allosteric==T,], alpha = 0.25, ggplot2::aes(ymin = b_ddg_pred-b_ddg_pred_sd*1.96, ymax = b_ddg_pred+b_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
+      ggplot2::geom_linerange(data = plot_dt[allosteric==T,], alpha = 0.25, ggplot2::aes(xmin = f_ddg_pred-f_ddg_pred_sd*1.96, xmax = f_ddg_pred+f_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
       ggplot2::geom_vline(xintercept = 0) +
-      ggplot2::geom_vline(data = plot_dt[id=="-0-",], ggplot2::aes(xintercept = f_dg_pred), linetype = 2) +
       ggplot2::geom_hline(yintercept = 0) +
-      ggplot2::geom_hline(data = plot_dt[id=="-0-",], ggplot2::aes(yintercept = b_dg_pred), linetype = 2) +
-      ggplot2::xlab(expression("Folding "*Delta*"G")) +
-      ggplot2::ylab(expression("Binding "*Delta*"G")) +
+      ggplot2::xlab(expression("Folding "*Delta*Delta*"G")) +
+      ggplot2::ylab(expression("Binding "*Delta*Delta*"G")) +
       ggplot2::labs(color = "Allosteric\nsite") +
       ggplot2::theme_classic()
-    ggplot2::ggsave(file.path(outpath, paste0("dG_scatter_allosteric_sites_", i, ".pdf")), d, width = 4, height = 3, useDingbats=FALSE)
+    ggplot2::ggsave(file.path(outpath, paste0("ddG_scatter_allosteric_sites_", i, ".pdf")), d, width = 4, height = 3, useDingbats=FALSE)
     #Plot - xylim
-    d <- ggplot2::ggplot(plot_dt[id!="-0-"],ggplot2::aes(f_dg_pred, b_dg_pred)) +
+    d <- ggplot2::ggplot(plot_dt[id!="-0-"],ggplot2::aes(f_ddg_pred, b_ddg_pred)) +
       ggplot2::geom_point(alpha = 0.5, size = 1, color = "lightgrey") +
       ggplot2::geom_point(data = plot_dt[allosteric==T,], alpha = 0.5, ggplot2::aes(color = Pos_ref_plot), size = 2) +
-      ggplot2::geom_linerange(data = plot_dt[allosteric==T,], alpha = 0.25, ggplot2::aes(ymin = b_dg_pred-b_ddg_pred_sd*1.96, ymax = b_dg_pred+b_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
-      ggplot2::geom_linerange(data = plot_dt[allosteric==T,], alpha = 0.25, ggplot2::aes(xmin = f_dg_pred-f_ddg_pred_sd*1.96, xmax = f_dg_pred+f_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
+      ggplot2::geom_linerange(data = plot_dt[allosteric==T,], alpha = 0.25, ggplot2::aes(ymin = b_ddg_pred-b_ddg_pred_sd*1.96, ymax = b_ddg_pred+b_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
+      ggplot2::geom_linerange(data = plot_dt[allosteric==T,], alpha = 0.25, ggplot2::aes(xmin = f_ddg_pred-f_ddg_pred_sd*1.96, xmax = f_ddg_pred+f_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
       ggplot2::geom_vline(xintercept = 0) +
-      ggplot2::geom_vline(data = plot_dt[id=="-0-",], ggplot2::aes(xintercept = f_dg_pred), linetype = 2) +
       ggplot2::geom_hline(yintercept = 0) +
-      ggplot2::geom_hline(data = plot_dt[id=="-0-",], ggplot2::aes(yintercept = b_dg_pred), linetype = 2) +
-      ggplot2::xlab(expression("Folding "*Delta*"G")) +
-      ggplot2::ylab(expression("Binding "*Delta*"G")) +
+      ggplot2::xlab(expression("Folding "*Delta*Delta*"G")) +
+      ggplot2::ylab(expression("Binding "*Delta*Delta*"G")) +
       ggplot2::labs(color = "Allosteric\nsite") +
       ggplot2::theme_classic()
     if(i!="GB1"){
-      d <- d + ggplot2::coord_cartesian(ylim = c(-2.5, 2.5), xlim = c(-2.5,2.5))
+      d <- d + ggplot2::coord_cartesian(ylim = c(-1.5, 3.5), xlim = c(-1.5,3.5))
     }
-    ggplot2::ggsave(file.path(outpath, paste0("dG_scatter_allosteric_sites_", i, "_xylim.pdf")), d, width = 4, height = 3, useDingbats=FALSE)
+    ggplot2::ggsave(file.path(outpath, paste0("ddG_scatter_allosteric_sites_", i, "_xylim.pdf")), d, width = 4, height = 3, useDingbats=FALSE)
   }
 
   ###########################
@@ -141,7 +137,7 @@ doubledeepms_allostery_scatterplots <- function(
 
   #Free energy scatterplots by protein - all - conf
   for(i in dg_dt[,unique(protein)]){
-    plot_dt <- copy(dg_dt)[protein==i][,.(f_dg_pred, f_ddg_pred_sd, b_dg_pred, b_ddg_pred_sd, f_ddg_pred_conf, b_ddg_pred_conf, Pos_class, allosteric, allosteric_mutation, id, Pos_ref)]
+    plot_dt <- copy(dg_dt)[protein==i][,.(f_dg_pred, f_ddg_pred, f_ddg_pred_sd, b_dg_pred, b_ddg_pred, b_ddg_pred_sd, f_ddg_pred_conf, b_ddg_pred_conf, Pos_class, allosteric, allosteric_mutation, id, Pos_ref)]
     plot_dt <- plot_dt[f_ddg_pred_conf==T & b_ddg_pred_conf==T,]
     plot_dt[, Pos_ref_plot := "Remainder"]
     plot_dt[allosteric==T & Pos_class != "binding_interface", Pos_ref_plot := "Site"]
@@ -149,40 +145,36 @@ doubledeepms_allostery_scatterplots <- function(
     plot_cols = c("grey", colour_scheme[["shade 0"]][c(2,4)])
     names(plot_cols) <- c("Remainder", "Site", "Mutation")
     #Plot
-    d <- ggplot2::ggplot(plot_dt[id!="-0-"],ggplot2::aes(f_dg_pred, b_dg_pred)) +
+    d <- ggplot2::ggplot(plot_dt[id!="-0-"],ggplot2::aes(f_ddg_pred, b_ddg_pred)) +
       ggplot2::geom_point(data = plot_dt[Pos_ref_plot=="Remainder"], alpha = 0.5, size = 1, color = "lightgrey") +
       ggplot2::geom_point(data = plot_dt[Pos_ref_plot!="Remainder"], alpha = 0.5, ggplot2::aes(color = Pos_ref_plot), size = 2) +
-      ggplot2::geom_linerange(data = plot_dt[Pos_ref_plot!="Remainder"], alpha = 0.25, ggplot2::aes(ymin = b_dg_pred-b_ddg_pred_sd*1.96, ymax = b_dg_pred+b_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
-      ggplot2::geom_linerange(data = plot_dt[Pos_ref_plot!="Remainder"], alpha = 0.25, ggplot2::aes(xmin = f_dg_pred-f_ddg_pred_sd*1.96, xmax = f_dg_pred+f_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
+      ggplot2::geom_linerange(data = plot_dt[Pos_ref_plot!="Remainder"], alpha = 0.25, ggplot2::aes(ymin = b_ddg_pred-b_ddg_pred_sd*1.96, ymax = b_ddg_pred+b_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
+      ggplot2::geom_linerange(data = plot_dt[Pos_ref_plot!="Remainder"], alpha = 0.25, ggplot2::aes(xmin = f_ddg_pred-f_ddg_pred_sd*1.96, xmax = f_ddg_pred+f_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
       ggplot2::geom_vline(xintercept = 0) +
-      ggplot2::geom_vline(data = plot_dt[id=="-0-",], ggplot2::aes(xintercept = f_dg_pred), linetype = 2) +
       ggplot2::geom_hline(yintercept = 0) +
-      ggplot2::geom_hline(data = plot_dt[id=="-0-",], ggplot2::aes(yintercept = b_dg_pred), linetype = 2) +
-      ggplot2::xlab(expression("Folding "*Delta*"G")) +
-      ggplot2::ylab(expression("Binding "*Delta*"G")) +
+      ggplot2::xlab(expression("Folding "*Delta*Delta*"G")) +
+      ggplot2::ylab(expression("Binding "*Delta*Delta*"G")) +
       ggplot2::labs(color = "Allosteric") +
       ggplot2::scale_colour_manual(values=plot_cols) +
       ggplot2::theme_classic()
-    ggplot2::ggsave(file.path(outpath, paste0("dG_scatter_allosteric_mutations_", i, ".pdf")), d, width = 4, height = 3, useDingbats=FALSE)
+    ggplot2::ggsave(file.path(outpath, paste0("ddG_scatter_allosteric_mutations_", i, ".pdf")), d, width = 4, height = 3, useDingbats=FALSE)
     #Plot - xylim
-    d <- ggplot2::ggplot(plot_dt[id!="-0-"],ggplot2::aes(f_dg_pred, b_dg_pred)) +
+    d <- ggplot2::ggplot(plot_dt[id!="-0-"],ggplot2::aes(f_ddg_pred, b_ddg_pred)) +
       ggplot2::geom_point(data = plot_dt[Pos_ref_plot=="Remainder"], alpha = 0.5, size = 1, color = "lightgrey") +
       ggplot2::geom_point(data = plot_dt[Pos_ref_plot!="Remainder"], alpha = 0.5, ggplot2::aes(color = Pos_ref_plot), size = 2) +
-      ggplot2::geom_linerange(data = plot_dt[Pos_ref_plot!="Remainder"], alpha = 0.25, ggplot2::aes(ymin = b_dg_pred-b_ddg_pred_sd*1.96, ymax = b_dg_pred+b_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
-      ggplot2::geom_linerange(data = plot_dt[Pos_ref_plot!="Remainder"], alpha = 0.25, ggplot2::aes(xmin = f_dg_pred-f_ddg_pred_sd*1.96, xmax = f_dg_pred+f_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
+      ggplot2::geom_linerange(data = plot_dt[Pos_ref_plot!="Remainder"], alpha = 0.25, ggplot2::aes(ymin = b_ddg_pred-b_ddg_pred_sd*1.96, ymax = b_ddg_pred+b_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
+      ggplot2::geom_linerange(data = plot_dt[Pos_ref_plot!="Remainder"], alpha = 0.25, ggplot2::aes(xmin = f_ddg_pred-f_ddg_pred_sd*1.96, xmax = f_ddg_pred+f_ddg_pred_sd*1.96, color = Pos_ref_plot)) +
       ggplot2::geom_vline(xintercept = 0) +
-      ggplot2::geom_vline(data = plot_dt[id=="-0-",], ggplot2::aes(xintercept = f_dg_pred), linetype = 2) +
       ggplot2::geom_hline(yintercept = 0) +
-      ggplot2::geom_hline(data = plot_dt[id=="-0-",], ggplot2::aes(yintercept = b_dg_pred), linetype = 2) +
-      ggplot2::xlab(expression("Folding "*Delta*"G")) +
-      ggplot2::ylab(expression("Binding "*Delta*"G")) +
+      ggplot2::xlab(expression("Folding "*Delta*Delta*"G")) +
+      ggplot2::ylab(expression("Binding "*Delta*Delta*"G")) +
       ggplot2::labs(color = "Allosteric") +
       ggplot2::scale_colour_manual(values=plot_cols) +
       ggplot2::theme_classic()
     if(i!="GB1"){
-      d <- d + ggplot2::coord_cartesian(ylim = c(-2.5, 2.5), xlim = c(-2.5,2.5))
+      d <- d + ggplot2::coord_cartesian(ylim = c(-1.5, 3.5), xlim = c(-1.5,3.5))
     }
-    ggplot2::ggsave(file.path(outpath, paste0("dG_scatter_allosteric_mutations_", i, "_xylim.pdf")), d, width = 4, height = 3, useDingbats=FALSE)
+    ggplot2::ggsave(file.path(outpath, paste0("ddG_scatter_allosteric_mutations_", i, "_xylim.pdf")), d, width = 4, height = 3, useDingbats=FALSE)
   }
 
   ###########################

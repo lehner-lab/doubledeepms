@@ -4,14 +4,14 @@
 \alias{doubledeepms_allostery_scatterplots}
 \title{doubledeepms_allostery_scatterplots}
 \usage{
-doubledeepms_allostery_scatterplots(input_file, temperature = 24,
+doubledeepms_allostery_scatterplots(input_file, temperature = 30,
   fitness_list, mochi_outpath_list, outpath, colour_scheme,
   execute = TRUE)
 }
 \arguments{
 \item{input_file}{path to input file (required)}
 
-\item{temperature}{temperature in degrees celcuis (default:24)}
+\item{temperature}{temperature in degrees celcuis (default:30)}
 
 \item{fitness_list}{list of folder paths to fitness data (required)}
 

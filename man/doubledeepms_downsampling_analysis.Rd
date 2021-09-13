@@ -6,7 +6,7 @@
 \usage{
 doubledeepms_downsampling_analysis(mochi_outpath_prefix, sample_percentage,
   outpath_suffix = "p", literature_comparison_prefix = "",
-  literature_comparison_list = list(), temperature = 24, outpath,
+  literature_comparison_list = list(), temperature = 30, outpath,
   colour_scheme, execute = TRUE)
 }
 \arguments{
@@ -20,7 +20,7 @@ doubledeepms_downsampling_analysis(mochi_outpath_prefix, sample_percentage,
 
 \item{literature_comparison_list}{literature comparison file list (default:empty list)}
 
-\item{temperature}{temperature in degrees celcuis (default:24)}
+\item{temperature}{temperature in degrees celcuis (default:30)}
 
 \item{outpath}{output path for plots and saved objects (required)}
 

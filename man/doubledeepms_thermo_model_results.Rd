@@ -4,7 +4,7 @@
 \alias{doubledeepms_thermo_model_results}
 \title{doubledeepms_thermo_model_results}
 \usage{
-doubledeepms_thermo_model_results(mochi_outpath, temperature = 24,
+doubledeepms_thermo_model_results(mochi_outpath, temperature = 30,
   literature_free_energies = NA, position_offset = 0,
   folding_energy_max_sd = 1/(1.96 * 2), binding_energy_max_sd = 1/(1.96
   * 2), outpath, colour_scheme, execute = TRUE)
@@ -12,7 +12,7 @@ doubledeepms_thermo_model_results(mochi_outpath, temperature = 24,
 \arguments{
 \item{mochi_outpath}{path to MoCHI thermo model fit results (required)}
 
-\item{temperature}{temperature in degrees celcuis (default:24)}
+\item{temperature}{temperature in degrees celcuis (default:30)}
 
 \item{literature_free_energies}{path to literature free energies (default:NA)}
 

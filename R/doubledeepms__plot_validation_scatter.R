@@ -57,13 +57,16 @@ doubledeepms__plot_validation_scatter <- function(
     lit_dt[, b_dg_sd := NA]
     lit_dt[, b_ddg_sd := NA]
   }else{
-    lit_dt[, b_dg := log(Kd)*RT]
-    #Logical columns to numeric
-    to.replace <- names(which(sapply(lit_dt, is.logical)))
-    for(var in to.replace){lit_dt[, (var):= as.numeric(get(var))]}
+    lit_dt <- fread(lit_inpath, colClasses = list("character" = 1:2, "numeric" = 3:13))
+    lit_dt[!is.na(Kd), b_dg := log(Kd)*RT]
+    lit_dt[!is.na(Kf) & !is.na(Ku), f_dg := -log(Kf/Ku)*RT]
+    # #Logical columns to numeric
+    # to.replace <- names(which(sapply(lit_dt, is.logical)))
+    # for(var in to.replace){lit_dt[, (var) := as.numeric(get(var))]}
     for(i in lit_dt[,unique(Dataset)]){
       if(lit_dt[Dataset==i & id=="WT",.N]!=0){
-        lit_dt[Dataset==i, b_ddg := b_dg-lit_dt[Dataset==i & id=="WT",b_dg]]
+        lit_dt[Dataset==i & !is.na(b_dg), b_ddg := b_dg-lit_dt[Dataset==i & id=="WT",b_dg]]
+        lit_dt[Dataset==i & !is.na(f_dg), f_ddg := f_dg-lit_dt[Dataset==i & id=="WT",f_dg]]
       }
     }
   }
@@ -130,6 +133,21 @@ doubledeepms__plot_validation_scatter <- function(
         ggplot2::ggsave(file.path(report_outpath, paste0("validation_scatter_", dname, "_", metric_lit, c("", "_conf")[as.numeric(conf_level)+1], ".pdf")), d, width = 3, height = 3, useDingbats=FALSE)
         #Save plot data
         write.table(plot_dt[,.(id, col_lit, col_data)], file = file.path(report_outpath, paste0("validation_scatter_", dname, "_", metric_lit, c("", "_conf")[as.numeric(conf_level)+1], ".txt")), quote = F, row.names = F)
+        #Axis ranges at least 3 kcal/mol  
+        if(dname=="Malagrino_2019"){
+          temp_ylim_max <- max(c(plot_dt[,mean(col_data)] + 1.5, plot_dt[!is.na(col_data_sd),unlist(col_data+col_data_sd*1.96)]))
+          temp_ylim_max <- max(c(temp_ylim_max, plot_dt[is.na(col_data_sd),unlist(col_data)]))
+          temp_ylim_min <- min(c(plot_dt[,mean(col_data)] - 1.5, plot_dt[!is.na(col_data_sd),unlist(col_data-col_data_sd*1.96)]))
+          temp_ylim_min <- min(c(temp_ylim_min, plot_dt[is.na(col_data_sd),unlist(col_data)]))
+          temp_xlim_max <- max(c(plot_dt[,mean(col_lit)] + 1.5, plot_dt[!is.na(col_lit_sd),unlist(col_lit+col_lit_sd*1.96)]))
+          temp_xlim_max <- max(c(temp_xlim_max, plot_dt[is.na(col_lit_sd),unlist(col_lit)]))
+          temp_xlim_min <- min(c(plot_dt[,mean(col_lit)] - 1.5, plot_dt[!is.na(col_lit_sd),unlist(col_lit-col_lit_sd*1.96)]))
+          temp_xlim_min <- min(c(temp_xlim_min, plot_dt[is.na(col_lit_sd),unlist(col_lit)]))
+          d <- d + 
+            ggplot2::scale_x_continuous(limits = c(temp_xlim_min, temp_xlim_max)) +
+            ggplot2::scale_y_continuous(limits = c(temp_ylim_min, temp_ylim_max))
+          ggplot2::ggsave(file.path(report_outpath, paste0("validation_scatter_", dname, "_", metric_lit, c("", "_conf")[as.numeric(conf_level)+1], "_minrange.pdf")), d, width = 3, height = 3, useDingbats=FALSE)
+        }
       }
     }
   }

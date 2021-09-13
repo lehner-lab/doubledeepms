@@ -54,9 +54,19 @@ doubledeepms_fitness_plots <- function(
         all_variants <- merge(all_variants, metrics_dt, by = "Pos", all = T)
         fit_list[[protein]][[pca_type]] <- all_variants
       }
+      if(protein!="GB1"){
+        #Save for supplement
+        write.table(all_variants[Nham_aa==Nmut_codons & STOP==F & STOP_readthrough==F,.SD,,.SDcols = c("aa_seq", "Nham_aa", "WT", "fitness", "sigma")], 
+          file = file.path(outpath, paste0("fitness_", protein, "_", pca_type, "_supp.txt")), 
+          quote = F, sep = "\t", row.names = F)
+      }
     }
   }
   fitness_dt <- rbindlist(unlist(fit_list, recursive = FALSE), fill = T)
+  #Save for supplement
+  write.table(fitness_dt[Nham_aa==Nmut_codons & STOP==F & STOP_readthrough==F,.SD,,.SDcols = c("protein", "pca_type", "aa_seq", "Nham_aa", "WT", "fitness", "sigma", "growthrate", "growthrate_sigma")], 
+    file = file.path(outpath, "fitness_supp.txt"), 
+    quote = F, sep = "\t", row.names = F)
 
   ### Plot fitness replicate correlations
   ###########################
@@ -83,12 +93,12 @@ doubledeepms_fitness_plots <- function(
   plot_dt[STOP==T, STOP_detrimental := STOP_pos>1/4 & STOP_pos<3/4]
   #Plot
   d <- ggplot2::ggplot(plot_dt[is.na(WT) & STOP==F & STOP_readthrough==F & Nham_aa==Nmut_codons,],ggplot2::aes(fitness, fill = as.factor(Nham_aa))) +
-    ggplot2::geom_density(alpha = 0.5) +
+    ggplot2::geom_density(data = plot_dt[is.na(WT) & STOP==F & STOP_readthrough==F & Nham_aa==Nmut_codons,], alpha = 0.5) +
     ggplot2::geom_vline(data = plot_dt[WT==T,], ggplot2::aes(xintercept = fitness)) +
     ggplot2::geom_vline(data = plot_dt[STOP_detrimental==T,.(fitness = median(fitness)),.(pca_type, protein)], ggplot2::aes(xintercept = fitness), linetype = 2) +
     ggplot2::facet_wrap(pca_type~protein, scales = "free") +
-    ggplot2::geom_text(data = plot_dt[Nham_aa==1 & STOP==F,.(label = paste0("#Singles = ", .N), mut_group = NA),.(pca_type, protein, Nham_aa)], ggplot2::aes(label=label, x=-Inf, y=Inf, hjust = 0, vjust = 1)) +
-    ggplot2::geom_text(data = plot_dt[Nham_aa==2 & STOP==F,.(label = paste0("#Doubles = ", .N), mut_group = NA),.(pca_type, protein, Nham_aa)], ggplot2::aes(label=label, x=-Inf, y=-Inf, hjust = 0, vjust = 0)) +
+    ggplot2::geom_text(data = plot_dt[Nham_aa==1 & STOP==F & STOP_readthrough==F & Nham_aa==Nmut_codons,.(label = paste0("#Singles = ", .N), mut_group = NA),.(pca_type, protein, Nham_aa)], ggplot2::aes(label=label, x=-Inf, y=Inf, hjust = 0, vjust = 1)) +
+    ggplot2::geom_text(data = plot_dt[Nham_aa==2 & STOP==F & STOP_readthrough==F & Nham_aa==Nmut_codons,.(label = paste0("#Doubles = ", .N), mut_group = NA),.(pca_type, protein, Nham_aa)], ggplot2::aes(label=label, x=-Inf, y=-Inf, hjust = 0, vjust = 0)) +
     ggplot2::xlab("Fitness") +
     ggplot2::ylab("Density") +
     ggplot2::labs(fill = "Num. AA\nsubstitutions") +
@@ -133,8 +143,7 @@ doubledeepms_fitness_plots <- function(
     d <- d + ggplot2::scale_colour_manual(values = unlist(colour_scheme[["shade 0"]][c(1, 3, 4)]))
   }
   ggplot2::ggsave(file.path(outpath, "fitness_scatter_singles_overlay.pdf"), d, width = 7, height = 3, useDingbats=FALSE)
-  
-  
+
   ###########################
   ### Where are strongest binding effects?
   ###########################

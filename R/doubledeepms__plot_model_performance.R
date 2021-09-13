@@ -66,7 +66,7 @@ doubledeepms__plot_model_performance <- function(
 
   #Plot observed versus predicted fitness - not facetted on mutation order - only validation data
   #Check validation data exists
-  if(input_dt[training_set==0,.N]!=0){
+  if(input_dt[training_set==0 & mut_order!=0,.N]!=0){
     plot_dt <- input_dt[training_set==0 & mut_order!=0 & !is.na(dataset_binding),.(id, dataset_binding, mut_order, observed_fitness, predicted_fitness)]
     plot_dt <- plot_dt[!duplicated(plot_dt[,.(id, dataset_binding)])]
     plot_dt[, dataset := "Folding"]

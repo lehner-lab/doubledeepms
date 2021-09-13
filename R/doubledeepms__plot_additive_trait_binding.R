@@ -26,6 +26,10 @@ doubledeepms__plot_additive_trait_binding <- function(
   #Plot data.table
   plot_dt <- input_dt[dataset_binding==1][!duplicated(id)]
 
+  #WT dGs
+  f_dg_WT <- plot_dt[mut_order==0,f_dg_pred][1]
+  b_dg_WT <- plot_dt[mut_order==0,b_dg_pred][1]
+
   #Number of grid points
   num_grid <- 15
 
@@ -65,6 +69,22 @@ doubledeepms__plot_additive_trait_binding <- function(
   plot3D::scatter3D(
     x = plot_dt[,f_dg_pred], 
     y = plot_dt[,b_dg_pred], 
+    z = plot_dt[,observed_fitness], 
+    add = T, col = "black", alpha = 0.2, cex = 0.2)
+  dev.off()
+
+  Cairo::CairoPDF(file = file.path(report_outpath, "ddG_observed_binding_scatter.pdf"))
+  plot3D::persp3D(
+    x = folding_energy_grid-f_dg_WT, 
+    y = binding_energy_grid-b_dg_WT, 
+    z = matrix(data=pred_fitness_dt[,observed_fitness], nrow=length(folding_energy_grid), ncol=length(folding_energy_grid)), 
+    r=2, shade=0.4, axes=TRUE,scale=TRUE, box=TRUE, nticks=5, ticktype="detailed", colvar=F, col="white", alpha = 0, border=colour_scheme[["shade 0"]][[1]], lwd=0.2,
+    xlab = "ddG Folding",
+    ylab = "ddG Binding",
+    zlab = "Fitness (Binding)")
+  plot3D::scatter3D(
+    x = plot_dt[,f_dg_pred]-f_dg_WT, 
+    y = plot_dt[,b_dg_pred]-b_dg_WT, 
     z = plot_dt[,observed_fitness], 
     add = T, col = "black", alpha = 0.2, cex = 0.2)
   dev.off()
@@ -109,6 +129,37 @@ doubledeepms__plot_additive_trait_binding <- function(
   plot3D::scatter3D(
     x = plot_dt[,f_dg_pred], 
     y = plot_dt[,b_dg_pred], 
+    z = plot_dt[,observed_fitness], 
+    add = T, col = "black", alpha = 0.2, cex = 0.2)
+  dev.off()
+
+  ### Restrict folding and binding energy changes to [-2, 7]
+  ###########################
+
+  plot_xylim <- c(-2, 7)
+  plot_dt <- plot_dt[(f_dg_pred-f_dg_WT)>plot_xylim[1] & (f_dg_pred-f_dg_WT)<plot_xylim[2]]
+  plot_dt <- plot_dt[(b_dg_pred-b_dg_WT)>plot_xylim[1] & (b_dg_pred-b_dg_WT)<plot_xylim[2]]
+
+  #Model data.table (for geom_line)
+  folding_energy_range <- plot_xylim
+  binding_energy_range <- plot_xylim
+  folding_energy_grid <- seq(folding_energy_range[1]+f_dg_WT, folding_energy_range[2]+f_dg_WT, (folding_energy_range[2]-folding_energy_range[1])/num_grid)
+  binding_energy_grid <- seq(binding_energy_range[1]+b_dg_WT, binding_energy_range[2]+b_dg_WT, (binding_energy_range[2]-binding_energy_range[1])/num_grid)
+  
+  energy_grid_dt <- as.data.table(expand.grid(folding_energy_grid = folding_energy_grid, binding_energy_grid = binding_energy_grid))
+
+  Cairo::CairoPDF(file = file.path(report_outpath, "ddG_observed_binding_scatter_xylim.pdf"))
+  plot3D::persp3D(
+    x = folding_energy_grid-f_dg_WT, 
+    y = binding_energy_grid-b_dg_WT, 
+    z = matrix(data=pred_fitness_dt[,observed_fitness], nrow=length(folding_energy_grid), ncol=length(folding_energy_grid)), 
+    r=2, shade=0.4, axes=TRUE,scale=TRUE, box=TRUE, nticks=5, ticktype="detailed", colvar=F, col="white", alpha = 0, border=colour_scheme[["shade 0"]][[1]], lwd=0.2,
+    xlab = "ddG Folding",
+    ylab = "ddG Binding",
+    zlab = "Fitness (Binding)")
+  plot3D::scatter3D(
+    x = plot_dt[,f_dg_pred]-f_dg_WT, 
+    y = plot_dt[,b_dg_pred]-b_dg_WT, 
     z = plot_dt[,observed_fitness], 
     add = T, col = "black", alpha = 0.2, cex = 0.2)
   dev.off()
