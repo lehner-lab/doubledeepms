@@ -39,7 +39,7 @@ library(doubledeepms)
 
 # Required Data
 
-Fitness scores, thermodynamic models, pre-processed data and required miscellaneous files should be downloaded from [here]() to your project directory (see '_base_dir_' option) i.e. where output files should be written, and unzipped.
+Fitness scores, thermodynamic models, pre-processed data and required miscellaneous files should be downloaded from [here]() and unzipped in your project directory (see '_base_dir_' option) i.e. where output files should be written.
 
 # Pipeline Modes
 
