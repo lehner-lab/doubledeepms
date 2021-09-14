@@ -1,4 +1,4 @@
-Welcome to the GitHub repository for the following publication: [Global mapping of the energetic and allosteric landscapes of protein binding domains (Faure AJ & Domingo J et al., 2021)]()
+Welcome to the GitHub repository for the following publication: [Global mapping of the energetic and allosteric landscapes of protein binding domains (Faure AJ, Domingo J & Schmiedel JM et al., 2021)]()
 
 Here you'll find an R package with all scripts to reproduce the figures and results from the computational analyses described in the paper.
 
@@ -61,7 +61,7 @@ DiMSum command-line arguments and Experimental design files required to obtain v
 
 # Pipeline Stages
 
-The top-level function **doubledeepms()** is the recommended entry point to the pipeline and reproduces the figures and results from the computational analyses described in the following publication: [Global mapping of the energetic and allosteric landscapes of protein binding domains (Faure AJ & Domingo J et al., 2021)](). See [Required Data](#required-data) for instructions on how to obtain all required data and miscellaneous files before running the pipeline.
+The top-level function **doubledeepms()** is the recommended entry point to the pipeline and reproduces the figures and results from the computational analyses described in the following publication: [Global mapping of the energetic and allosteric landscapes of protein binding domains (Faure AJ, Domingo J & Schmiedel JM et al., 2021)](). See [Required Data](#required-data) for instructions on how to obtain all required data and miscellaneous files before running the pipeline.
 
 ## Stage 1: Evaluate thermodynamic model results
 
