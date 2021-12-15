@@ -222,10 +222,11 @@ doubledeepms_downsampling_analysis <- function(
   names(plot_cols) <- c("binding", "abundance/folding")
   plot_linetype <- c(1, 2)
   names(plot_linetype) <- c("literature_ddGs", "test_fitness")
-  d <- ggplot2::ggplot(plot_dt[!is.na(r2)],ggplot2::aes(sample_size_num, r2, color = phenotype, linetype = validation)) +
+  d <- ggplot2::ggplot(plot_dt[!is.na(r2)],ggplot2::aes(sample_size_num, r2*100, color = phenotype, linetype = validation)) +
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::ylab("%Variance explained") +
+    ggplot2::coord_cartesian(ylim = c(30, 100)) +
     ggplot2::scale_colour_manual(values=plot_cols) +
     ggplot2::scale_linetype_manual(values=plot_linetype) +
     ggplot2::theme_classic()

@@ -8,6 +8,8 @@
 #' @param colour_scheme colour scheme file (required)
 #' @param literature_sites literature allosteric sites (default:empty vector)
 #' @param trait_name trait name (default:folding)
+#' @param absolute_value absolute value of the trait (default:T)
+#' @param threshold_residues residues used to determine regulatory threshold: either "proximal" or "distal" (default:"proximal")
 #'
 #' @return Allosteric positions
 #' @export
@@ -16,7 +18,9 @@ doubledeepms__persite_energy_vs_distance_plot <- function(
   outpath,
   colour_scheme,
   literature_sites=c(), 
-  trait_name="folding"
+  trait_name="folding",
+  absolute_value=T,
+  threshold_residues="proximal"
   ){
 
   #Trait
@@ -24,15 +28,27 @@ doubledeepms__persite_energy_vs_distance_plot <- function(
   metric_name_plot <- ""
   if(trait_name=="folding"){
     trait_prefix <- "f_ddg"
-    metric_name_plot <- expression("Weighted mean |Folding "*Delta*Delta*"G|")
+    if(absolute_value){
+      metric_name_plot <- expression("Weighted mean |Folding "*Delta*Delta*"G|")
+    }else{
+      metric_name_plot <- expression("Weighted mean Folding "*Delta*Delta*"G")
+    }
   }
   if(trait_name=="binding"){
     trait_prefix <- "b_ddg"
-    metric_name_plot <- expression("Weighted mean |Binding "*Delta*Delta*"G|")
+    if(absolute_value){
+      metric_name_plot <- expression("Weighted mean |Binding "*Delta*Delta*"G|")
+    }else{
+      metric_name_plot <- expression("Weighted mean Binding "*Delta*Delta*"G")
+    }
   }
 
   #Metrics
-  metric_name <- paste0(trait_prefix, "_wposmeanabs")
+  if(absolute_value){
+    metric_name <- paste0(trait_prefix, "_wposmeanabs")
+  }else{
+    metric_name <- paste0(trait_prefix, "_wposmean")
+  }
   metric_name_se <- paste0(trait_prefix, "_wposse")
 
   #Subset
@@ -43,7 +59,16 @@ doubledeepms__persite_energy_vs_distance_plot <- function(
   plot_dt[, plot_metric_se := .SD[[1]],,.SDcols = metric_name_se]
 
   #Threshold for binding interface modulating residues
-  reg_threshold <- input_dt[Pos_class=="binding_interface",sum(abs(.SD[[1]])/.SD[[2]]^2, na.rm = T)/sum(1/.SD[[2]]^2, na.rm = T),.SDcols = paste0(trait_prefix, c("_pred", "_pred_sd"))]
+  if(threshold_residues=="proximal"){
+    if(absolute_value){
+      reg_threshold <- input_dt[Pos_class=="binding_interface",sum(abs(.SD[[1]])/.SD[[2]]^2, na.rm = T)/sum(1/.SD[[2]]^2, na.rm = T),.SDcols = paste0(trait_prefix, c("_pred", "_pred_sd"))]
+    }else{
+      reg_threshold <- input_dt[Pos_class=="binding_interface",sum(.SD[[1]]/.SD[[2]]^2, na.rm = T)/sum(1/.SD[[2]]^2, na.rm = T),.SDcols = paste0(trait_prefix, c("_pred", "_pred_sd"))]
+    }
+  }
+  if(threshold_residues=="distal"){
+    reg_threshold <- input_dt[scHAmin_ligand>=5][!duplicated(Pos_ref),mean(.SD[[1]]) + sd(.SD[[1]]),,.SDcols = metric_name]
+  }
 
   #Residue class
   allostery_pos <- plot_dt[plot_metric>=reg_threshold,Pos_ref]

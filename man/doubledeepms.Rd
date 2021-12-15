@@ -4,7 +4,7 @@
 \alias{doubledeepms}
 \title{doubledeepms}
 \usage{
-doubledeepms(startStage = 1, stopStage = 11,
+doubledeepms(startStage = 1, stopStage = 15,
   base_dir = "/users/project/prj004631/afaure/DMS/Results/doubledeepms_proj",
   tmodel_job_number = 1, tmodel_grid_search = FALSE,
   tmodel_protein = "GRB2-SH3", tmodel_subset = 100)
@@ -12,7 +12,7 @@ doubledeepms(startStage = 1, stopStage = 11,
 \arguments{
 \item{startStage}{Start at a specified analysis stage (default:1)}
 
-\item{stopStage}{Stop at a specified analysis stage (default:11)}
+\item{stopStage}{Stop at a specified analysis stage (default:15)}
 
 \item{base_dir}{Base directory for all output files (default:NB private CRG server path; change accordingly)}
 

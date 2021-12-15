@@ -3,13 +3,11 @@
 #'
 #' Plot free energy heatmaps.
 #'
-#' @param input_list path to MoCHI thermo model fit results (required)
+#' @param input_file path to input file (required)
 #' @param pdb_file_list path to PDB file (required)
 #' @param pdb_chain_query_list query chain id (required)
 #' @param annotation_list annotations of allosteric sites (required)
 #' @param ohm_file_list ohm output file list (required)
-#' @param aaprop_file path to amino acid properties file (required)
-#' @param aaprop_file_selected path to file with selected subset of identifiers
 #' @param outpath output path for plots and saved objects (required)
 #' @param colour_scheme colour scheme file (required)
 #' @param execute whether or not to execute the analysis (default: TRUE)
@@ -18,13 +16,11 @@
 #' @export
 #' @import data.table
 doubledeepms_allostery_plots <- function(
-  input_list,
+  input_file,
   pdb_file_list,
   pdb_chain_query_list,
   annotation_list,
   ohm_file_list,
-  aaprop_file,
-  aaprop_file_selected,
   outpath,
   colour_scheme,
   execute = TRUE
@@ -45,58 +41,14 @@ doubledeepms_allostery_plots <- function(
   ###########################
 
   #Load dg data
-  dg_list <- list()
-  for(protein in names(input_list)){
-    temp_dt <- fread(input_list[[protein]])
-    temp_dt[, protein := protein]
-
-    #Add WT and mutant AAs
-    temp_dt[id!="-0-", WT_AA := substr(id, 1, 1)]
-    temp_dt[id!="-0-", Mut := substr(id, nchar(id), nchar(id))]
-
-    #Per residue metrics
-    for(i in c("f_ddg", "b_ddg")){
-      temp_dt[,paste0(i, "_posmeanabs") := mean(abs(.SD[[1]]), na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred"))]
-      temp_dt[,paste0(i, "_posse") := sd(abs(.SD[[1]]), na.rm = T)/sqrt(sum(!is.na(.SD[[1]]))),Pos_ref,.SDcols = paste0(i, c("_pred"))]
-      temp_dt[,paste0(i, "_wposmeanabs") := sum(abs(.SD[[1]])/.SD[[2]]^2, na.rm = T)/sum(1/.SD[[2]]^2, na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred", "_pred_sd"))]
-      temp_dt[,paste0(i, "_wposse") := sqrt(1/sum(1/.SD[[2]]^2, na.rm = T)),Pos_ref,.SDcols = paste0(i, c("_pred", "_pred_sd"))]
-    }
-
-    #Per residue metrics - confident only
-    for(i in c("f_ddg", "b_ddg")){
-      temp_dt[get(paste0(i, "_pred_conf"))==TRUE,paste0(i, "_pred_filtered") := .SD[[1]],,.SDcols = paste0(i, "_pred")]
-      temp_dt[get(paste0(i, "_pred_conf"))==TRUE,paste0(i, "_pred_sd_filtered") := .SD[[1]],,.SDcols = paste0(i, "_pred_sd")]
-      temp_dt[,paste0(i, "_posmeanabs_conf") := mean(abs(.SD[[1]]), na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred_filtered"))]
-      temp_dt[,paste0(i, "_posse_conf") := sd(abs(.SD[[1]]), na.rm = T)/sqrt(sum(!is.na(.SD[[1]]))),Pos_ref,.SDcols = paste0(i, c("_pred_filtered"))]
-      temp_dt[,paste0(i, "_wposmeanabs_conf") := sum(abs(.SD[[1]])/.SD[[2]]^2, na.rm = T)/sum(1/.SD[[2]]^2, na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred_filtered", "_pred_sd_filtered"))]
-      temp_dt[,paste0(i, "_wposse_conf") := sqrt(1/sum(1/.SD[[2]]^2, na.rm = T)),Pos_ref,.SDcols = paste0(i, c("_pred_filtered", "_pred_sd_filtered"))]
-    }
-
-    # #Mann whitney U test + randomisation
-    # result_list <- list()
-    # for(i in temp_dt[order(Pos_ref), unique(Pos_ref)]){
-    #   print(i)
-    #   result_list[[as.character(i)]] <- doubledeepms__mann_whitney_U_wrapper_rand(
-    #     temp_dt[Pos_ref==i & b_ddg_pred_conf,abs(b_ddg_pred)],
-    #     temp_dt[Pos_ref!=i & b_ddg_pred_conf,abs(b_ddg_pred)],
-    #     temp_dt[Pos_ref==i & b_ddg_pred_conf,b_ddg_pred_sd],
-    #     temp_dt[Pos_ref!=i & b_ddg_pred_conf,b_ddg_pred_sd],
-    #     100)
-    # }
-    # result_dt <- as.data.table(do.call('rbind', result_list))
-    # result_dt[, Pos_ref := as.integer(names(result_list))]
-    # temp_dt <- merge(temp_dt, result_dt, by = "Pos_ref")
-
-    dg_list[[protein]] <- temp_dt
-  }
-  dg_dt <- rbindlist(dg_list)
+  dg_dt <- fread(input_file)
 
   ###########################
   ### Literature sites
   ###########################
 
   literature_list <- list()
-  for(protein in names(input_list)){
+  for(protein in names(pdb_file_list)){
     literature_list[[protein]] <- list(class_switching = c(), sector = c())
     if(protein %in% names(annotation_list)){
       anno_dt <- fread(annotation_list[[protein]])
@@ -140,6 +92,66 @@ doubledeepms_allostery_plots <- function(
   }
 
   ###########################
+  ### Binding energy distance correlation plots (no absolute value)
+  ###########################
+
+  for(i in dg_dt[,unique(protein)]){
+    allostery_pos <- doubledeepms__persite_energy_vs_distance_plot(
+      input_dt = copy(dg_dt)[protein==i & id!="-0-"],
+      literature_sites = literature_list[[i]][["class_switching"]],
+      outpath = file.path(outpath, paste0(i, "_persite_binding_energy_vs_distance_scatter_noabs.pdf")),
+      colour_scheme = colour_scheme,
+      trait_name = "binding",
+      absolute_value = F)
+    #Limit y axis to sites with weighted mean ddG<3
+    if(dg_dt[,max(b_ddg_wposmeanabs)]>3){
+      doubledeepms__persite_energy_vs_distance_plot(
+        input_dt = copy(dg_dt)[protein==i & id!="-0-" & b_ddg_wposmeanabs<3],
+        literature_sites = literature_list[[i]][["class_switching"]],
+        outpath = file.path(outpath, paste0(i, "_persite_binding_energy_vs_distance_scatter_noabs_l3.pdf")),
+        colour_scheme = colour_scheme,
+        trait_name = "binding",
+        absolute_value = F)
+    }
+    dg_dt[protein==i, allosteric := NA]
+    dg_dt[protein==i, orthosteric := NA]
+    dg_dt[protein==i & Pos_ref %in% allostery_pos & Pos_class!="binding_interface", allosteric := T]
+    dg_dt[protein==i & Pos_ref %in% allostery_pos & Pos_class=="binding_interface", orthosteric := T]
+    print(paste0("Allosteric residues for ", i, " (no absolute value): ", paste(dg_dt[protein==i & allosteric][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
+    print(paste0("Orthosteric residues for ", i, " (no absolute value): ", paste(dg_dt[protein==i & orthosteric][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
+  }
+
+  ###########################
+  ### Binding energy distance correlation plots (distal threshold residues)
+  ###########################
+
+  for(i in dg_dt[,unique(protein)]){
+    allostery_pos <- doubledeepms__persite_energy_vs_distance_plot(
+      input_dt = copy(dg_dt)[protein==i & id!="-0-"],
+      literature_sites = literature_list[[i]][["class_switching"]],
+      outpath = file.path(outpath, paste0(i, "_persite_binding_energy_vs_distance_scatter_distaltreshold.pdf")),
+      colour_scheme = colour_scheme,
+      trait_name = "binding",
+      threshold_residues = "distal")
+    #Limit y axis to sites with weighted mean ddG<3
+    if(dg_dt[,max(b_ddg_wposmeanabs)]>3){
+      doubledeepms__persite_energy_vs_distance_plot(
+        input_dt = copy(dg_dt)[protein==i & id!="-0-" & b_ddg_wposmeanabs<3],
+        literature_sites = literature_list[[i]][["class_switching"]],
+        outpath = file.path(outpath, paste0(i, "_persite_binding_energy_vs_distance_scatter_distaltreshold_l3.pdf")),
+        colour_scheme = colour_scheme,
+        trait_name = "binding",
+        threshold_residues = "distal")
+    }
+    dg_dt[protein==i, allosteric := NA]
+    dg_dt[protein==i, orthosteric := NA]
+    dg_dt[protein==i & Pos_ref %in% allostery_pos & Pos_class!="binding_interface", allosteric := T]
+    dg_dt[protein==i & Pos_ref %in% allostery_pos & Pos_class=="binding_interface", orthosteric := T]
+    print(paste0("Allosteric residues for ", i, " (distal threshold): ", paste(dg_dt[protein==i & allosteric][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
+    print(paste0("Orthosteric residues for ", i, " (distal threshold): ", paste(dg_dt[protein==i & orthosteric][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
+  }
+
+  ###########################
   ### Binding energy distance correlation plots
   ###########################
 
@@ -159,6 +171,8 @@ doubledeepms_allostery_plots <- function(
         colour_scheme = colour_scheme,
         trait_name = "binding")
     }
+    dg_dt[protein==i, allosteric := NA]
+    dg_dt[protein==i, orthosteric := NA]
     dg_dt[protein==i & Pos_ref %in% allostery_pos & Pos_class!="binding_interface", allosteric := T]
     dg_dt[protein==i & Pos_ref %in% allostery_pos & Pos_class=="binding_interface", orthosteric := T]
     print(paste0("Allosteric residues for ", i, ": ", paste(dg_dt[protein==i & allosteric][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
@@ -170,6 +184,20 @@ doubledeepms_allostery_plots <- function(
   ###########################
 
   for(i in dg_dt[,unique(protein)]){
+    doubledeepms__plot_binding_site_ROC(
+      input_dt = copy(dg_dt)[protein==i & id!="-0-"],
+      outpath = file.path(outpath, paste0(i, "_binding_site_ROC_noabs.pdf")),
+      colour_scheme = colour_scheme,
+      metric_names <- c(
+        "b_ddg_posmean", 
+        "b_ddg_posmean_conf",
+        "b_ddg_wposmean", 
+        "b_ddg_wposmean_conf"),
+      metric_names_plot <- c(
+        "Mean Binding ddG",
+        "Mean Binding ddG (conf.)",
+        "Weighted mean Binding ddG",
+        "Weighted mean Binding ddG (conf.)"))
     doubledeepms__plot_binding_site_ROC(
       input_dt = copy(dg_dt)[protein==i & id!="-0-"],
       outpath = file.path(outpath, paste0(i, "_binding_site_ROC.pdf")),
@@ -512,9 +540,13 @@ doubledeepms_allostery_plots <- function(
       out_lset_allo <- dg_dt[protein==i & Pos_class!="binding_interface" & !is.na(SS)][!WT_AA %in% lset & allosteric_mutation==T,.N]
       in_lset_nallo <- dg_dt[protein==i & Pos_class!="binding_interface" & !is.na(SS)][WT_AA %in% lset & allosteric_mutation==F,.N]
       out_lset_nallo <- dg_dt[protein==i & Pos_class!="binding_interface" & !is.na(SS)][!WT_AA %in% lset & allosteric_mutation==F,.N]
-      temp_test <- fisher.test(matrix(c(in_lset_allo, out_lset_allo, in_lset_nallo, out_lset_nallo), nrow = 2))
+      temp_matrix <- matrix(c(in_lset_allo, out_lset_allo, in_lset_nallo, out_lset_nallo), nrow = 2)
+      rownames(temp_matrix) <- c("In set", "Out set")
+      colnames(temp_matrix) <- c("Allosteric", "Not allosteric")
+      temp_test <- fisher.test(temp_matrix)
       if(lset_name %in% c("G", "P")){
         print(paste0("Enrichment of allosteric mutations (not in loops) from ", lset_name, " (", i, "): p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+        print(temp_matrix)
       }
       result_list <- c(result_list, list(data.table(protein = i, set_name = lset_name, mutation = "WT", odds_ratio = temp_test$estimate, p_value = temp_test$p.value)))
       in_lset_allo <- dg_dt[protein==i & Pos_class!="binding_interface" & !is.na(SS)][Mut %in% lset & allosteric_mutation==T,.N]
@@ -564,13 +596,80 @@ doubledeepms_allostery_plots <- function(
   }
   ggplot2::ggsave(file.path(outpath, "allosteric_mutations_mutated_residues_noloops_GP.pdf"), d, width = 3, height = 4, useDingbats=FALSE)
 
-  # Enrichment of major allosteric sites in non-loop Glycines
+  # Enrichment of major allosteric sites in Glycines
+  g_allo <- dg_dt[!duplicated(paste0(protein, ":", Pos_ref))][Pos_class != "binding_interface"][allosteric==T & WT_AA=="G",.N]
+  ng_allo <- dg_dt[!duplicated(paste0(protein, ":", Pos_ref))][Pos_class != "binding_interface"][allosteric==T & WT_AA!="G",.N]
+  g_nallo <- dg_dt[!duplicated(paste0(protein, ":", Pos_ref))][Pos_class != "binding_interface"][is.na(allosteric) & WT_AA=="G",.N]
+  ng_nallo <- dg_dt[!duplicated(paste0(protein, ":", Pos_ref))][Pos_class != "binding_interface"][is.na(allosteric) & WT_AA!="G",.N]
+  temp_matrix <- matrix(c(g_allo, ng_allo, g_nallo, ng_nallo), nrow = 2)
+  rownames(temp_matrix) <- c("In set", "Out set")
+  colnames(temp_matrix) <- c("Allosteric", "Not allosteric")
+  temp_test <- fisher.test(temp_matrix)
+  print(paste0("Amongst residues not in binding interface, enrichment of Glycine residues for major allosteric sites: p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+  print(temp_matrix)
+
+  # Amongst Glycines, enrichment of major allosteric sites in non-loop residues
   nloop_allo <- dg_dt[!duplicated(paste0(protein, ":", Pos_ref))][WT_AA=="G" & Pos_class != "binding_interface"][allosteric==T & !is.na(SS),.N]
   loop_allo <- dg_dt[!duplicated(paste0(protein, ":", Pos_ref))][WT_AA=="G" & Pos_class != "binding_interface"][allosteric==T & is.na(SS),.N]
   nloop_nallo <- dg_dt[!duplicated(paste0(protein, ":", Pos_ref))][WT_AA=="G" & Pos_class != "binding_interface"][is.na(allosteric) & !is.na(SS),.N]
   loop_nallo <- dg_dt[!duplicated(paste0(protein, ":", Pos_ref))][WT_AA=="G" & Pos_class != "binding_interface"][is.na(allosteric) & is.na(SS),.N]
-  temp_test <- fisher.test(matrix(c(nloop_allo, loop_allo, nloop_nallo, loop_nallo), nrow = 2))
-  print(paste0("Enrichment of non-loop Glycine residues (not in binding interface) for major allosteric sites: p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+  temp_matrix <- matrix(c(nloop_allo, loop_allo, nloop_nallo, loop_nallo), nrow = 2)
+  rownames(temp_matrix) <- c("In set", "Out set")
+  colnames(temp_matrix) <- c("Allosteric", "Not allosteric")
+  temp_test <- fisher.test(temp_matrix)
+  print(paste0("Amongst Glycines not in binding interface, enrichment of non-loop residues for major allosteric sites: p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+  print(temp_matrix)
+
+  # Enrichment of major allosteric sites in non-loop Glycines
+  nloop_allo <- dg_dt[!duplicated(paste0(protein, ":", Pos_ref))][Pos_class != "binding_interface"][allosteric==T & (!is.na(SS) & WT_AA=="G"),.N]
+  loop_allo <- dg_dt[!duplicated(paste0(protein, ":", Pos_ref))][Pos_class != "binding_interface"][allosteric==T & !(!is.na(SS) & WT_AA=="G"),.N]
+  nloop_nallo <- dg_dt[!duplicated(paste0(protein, ":", Pos_ref))][Pos_class != "binding_interface"][is.na(allosteric) & (!is.na(SS) & WT_AA=="G"),.N]
+  loop_nallo <- dg_dt[!duplicated(paste0(protein, ":", Pos_ref))][Pos_class != "binding_interface"][is.na(allosteric) & !(!is.na(SS) & WT_AA=="G"),.N]
+  temp_matrix <- matrix(c(nloop_allo, loop_allo, nloop_nallo, loop_nallo), nrow = 2)
+  rownames(temp_matrix) <- c("In set", "Out set")
+  colnames(temp_matrix) <- c("Allosteric", "Not allosteric")
+  temp_test <- fisher.test(temp_matrix)
+  print(paste0("Amongst residues not in binding interface, enrichment of non-loop Glycine residues for major allosteric sites: p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+  print(temp_matrix)
+
+  ### Enrichment of allosteric mutations in negatively charged surface sites
+  ###########################
+
+  for(i in dg_dt[,unique(protein)]){
+    temp_in <- dg_dt[protein==i & allosteric_mutation==T & Pos_class=="surface",WT_AA %in% c("D", "E")]
+    temp_out <- dg_dt[protein==i & allosteric_mutation==F & Pos_class=="surface",WT_AA %in% c("D", "E")]
+    temp_test <- fisher.test(matrix(c(sum(temp_in), sum(!temp_in), sum(temp_out), sum(!temp_out)), nrow = 2))
+    print(paste0("Enrichment of allosteric mutations in negatively charged surface sites (", i, "): p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+  }
+
+  ### Enrichment of allosteric mutations to negatively charged surface sites
+  ###########################
+
+  for(i in dg_dt[,unique(protein)]){
+    temp_in <- dg_dt[protein==i & allosteric_mutation==T & Pos_class=="surface",Mut %in% c("D", "E")]
+    temp_out <- dg_dt[protein==i & allosteric_mutation==F & Pos_class=="surface",Mut %in% c("D", "E")]
+    temp_test <- fisher.test(matrix(c(sum(temp_in), sum(!temp_in), sum(temp_out), sum(!temp_out)), nrow = 2))
+    print(paste0("Enrichment of allosteric mutations to negatively charged surface sites (", i, "): p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+  }
+
+  ### Enrichment of allosteric mutations in net -1 charged mutations at surface sites
+  ###########################
+
+  #Delta charge
+  dg_dt[id!="-0-", WT_AA_charge := 0]
+  dg_dt[WT_AA %in% c("R", "H", "K"), WT_AA_charge := 1]
+  dg_dt[WT_AA %in% c("D", "E"), WT_AA_charge := -1]
+  dg_dt[id!="-0-", Mut_charge := 0]
+  dg_dt[Mut %in% c("R", "H", "K"), Mut_charge := 1]
+  dg_dt[Mut %in% c("D", "E"), Mut_charge := -1]
+  dg_dt[id!="-0-", delta_charge := Mut_charge-WT_AA_charge]
+
+  for(i in dg_dt[,unique(protein)]){
+    temp_in <- dg_dt[protein==i & allosteric_mutation==T & Pos_class=="surface",delta_charge==(-1)]
+    temp_out <- dg_dt[protein==i & allosteric_mutation==F & Pos_class=="surface",delta_charge==(-1)]
+    temp_test <- fisher.test(matrix(c(sum(temp_in), sum(!temp_in), sum(temp_out), sum(!temp_out)), nrow = 2))
+    print(paste0("Enrichment of allosteric mutations in net -1 charged mutations at surface sites (", i, "): p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+  }
 
   ###########################
   ### Where are strongest binding effects?

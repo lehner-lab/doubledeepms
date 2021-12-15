@@ -84,7 +84,8 @@ doubledeepms__plot_isochore_fraction_bound <- function(
     ggplot2::ylab(expression(Delta*"G Binding")) +
     ggplot2::theme_bw() +
     ggplot2::scale_fill_gradientn(
-      colours = c(colour_scheme[["shade 0"]][[1]], colour_scheme[["shade 0"]][[2]], colour_scheme[["shade 0"]][[4]], colour_scheme[["shade 0"]][[3]]),
+      # colours = c(colour_scheme[["shade 0"]][[1]], colour_scheme[["shade 0"]][[2]], colour_scheme[["shade 0"]][[4]], colour_scheme[["shade 0"]][[3]]),
+      colours = c("white", "lightgrey", "darkgrey", "black"),
       aesthetics = "fill") +
     ggplot2::scale_colour_manual(
       values = plot_cols)

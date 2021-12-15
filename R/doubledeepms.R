@@ -4,7 +4,7 @@
 #' Main analysis script.
 #'
 #' @param startStage Start at a specified analysis stage (default:1)
-#' @param stopStage Stop at a specified analysis stage (default:11)
+#' @param stopStage Stop at a specified analysis stage (default:15)
 #' @param base_dir Base directory for all output files (default:NB private CRG server path; change accordingly)
 #' @param tmodel_job_number Thermodynamic model fit job number: 1:final model, 2-11: monte carlo simluations for confidence intervals of model-inferred free energies (default:1)
 #' @param tmodel_grid_search Thermodynamic model fit grid search to determine optimal hyperparameters (default:FALSE)
@@ -15,7 +15,7 @@
 #' @export
 doubledeepms <- function(
   startStage = 1,
-  stopStage = 11,
+  stopStage = 15,
   base_dir = "/users/project/prj004631/afaure/DMS/Results/doubledeepms_proj",
   tmodel_job_number = 1,
   tmodel_grid_search = FALSE,
@@ -24,7 +24,7 @@ doubledeepms <- function(
   ){
 
   # startStage=1
-  # stopStage=0
+  # stopStage=15
   # base_dir = "/users/project/prj004631/afaure/DMS/Results/doubledeepms_proj"
   # rerun_raw = F
 
@@ -454,10 +454,7 @@ doubledeepms <- function(
   stagenum <- 9
   #All domains
   doubledeepms_allostery_plots(
-    input_list = list(
-      "GB1" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_GB1"), "dg_singles.txt"),
-      "PSD95-PDZ3" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_PSD95-PDZ3"), "dg_singles.txt"),
-      "GRB2-SH3" = file.path(base_dir, paste0("002", "_doubledeepms_structure_metrics_GRB2-SH3"), "dg_singles.txt")),
+    input_file = file.path(base_dir, paste0("007", "_doubledeepms_protein_stability_plots"), "dg_singles.txt"),
     pdb_file_list = list(
       "GB1" = file.path(base_dir, "Data", "pdb", "1fcc.pdb"),
       "PSD95-PDZ3" = file.path(base_dir, "Data", "pdb", "1be9.pdb"),
@@ -472,8 +469,6 @@ doubledeepms <- function(
       "GB1" = file.path(base_dir, "Data", "ohm", "ohm_2gb1_ddPCA_GB1only.txt"), 
       "PSD95-PDZ3" = file.path(base_dir, "Data", "ohm", "ohm_1be9_ddPCA_PDZonly.txt"),
       "GRB2-SH3" = file.path(base_dir, "Data", "ohm", "ohm_2vwf_ddPCA_GRB2only.txt")),
-    aaprop_file = file.path(base_dir, "Data", "amino_acid_properties", "amino_acid_properties_annotated_supplementary.txt"),
-    aaprop_file_selected = file.path(base_dir, "Data", "amino_acid_properties", "selected.amino_acid_properties.txt"),
     outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_allostery_plots", stagenum=stagenum, base_dir=base_dir),
     colour_scheme = colour_scheme,
     execute = (first_stage <= stagenum & last_stage >= stagenum))
@@ -528,6 +523,75 @@ doubledeepms <- function(
     colour_scheme = colour_scheme,
     execute = (first_stage <= stagenum & last_stage >= stagenum))
 
+  ### Foldx comparisons
+  ###########################
+
+  stagenum <- 12
+  #All domains
+  doubledeepms_foldx_comparisons(
+    input_file = file.path(base_dir, paste0("009", "_doubledeepms_allostery_plots"), "dg_singles.txt"),
+    foldx_file_list = list(
+      "GB1" = file.path(base_dir, "Data", "foldx", "GB1", "PS_2gb1_nowater_noligand_restrict_scanning_output.txt"), 
+      "PSD95-PDZ3" = file.path(base_dir, "Data", "foldx", "PSD95-PDZ3", "PS_1be9_nowater_noligand_restrict_scanning_output.txt"),
+      "GRB2-SH3" = file.path(base_dir, "Data", "foldx", "GRB2-SH3", "PS_2vwf_nowater_noligand_restrict_scanning_output.txt")),
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_foldx_comparisons", stagenum=stagenum, base_dir=base_dir),
+    colour_scheme = colour_scheme,
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
+
+  ### PolyPhen2 comparisons
+  ###########################
+
+  stagenum <- 13
+  #All domains
+  doubledeepms_polyphen2_comparisons(
+    input_file = file.path(base_dir, paste0("009", "_doubledeepms_allostery_plots"), "dg_singles.txt"),
+    polyphen2_file = file.path(base_dir, "Data", "polyphen2", "poyphen2_short.txt"),
+    position_offset = list(
+      # "GB1" = 0, 
+      "PSD95-PDZ3" = 0,
+      "GRB2-SH3" = 158),
+    uniprot_id = list(
+      # "GB1" = "", 
+      "PSD95-PDZ3" = "DLG4_HUMAN",
+      "GRB2-SH3" = "GRB2_HUMAN"),
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_polyphen2_comparisons", stagenum=stagenum, base_dir=base_dir),
+    colour_scheme = colour_scheme,
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
+
+  ### 3did comparisons
+  ###########################
+
+  stagenum <- 14
+  #All domains
+  doubledeepms_3did_comparisons(
+    input_file = file.path(base_dir, paste0("009", "_doubledeepms_allostery_plots"), "dg_singles.txt"),
+    threedid_file = file.path(base_dir, "Data", "3did", "3did_interface_flat"),
+    alignment_file_list = list(
+      "PSD95-PDZ3" = file.path(base_dir, "Data", "3did", "PSD95-PDZ3", "PF00595_seed_rat_human_align.fasta"),
+      "GRB2-SH3" = file.path(base_dir, "Data", "3did", "GRB2-SH3", "PF00018_seed_chicken_human_align.fasta")),
+    threedid_domain_name_list = list(
+      "PSD95-PDZ3" = "PDZ",
+      "GRB2-SH3" = "SH3_1"),
+    position_offset_list = list(
+      "PSD95-PDZ3" = 310,
+      "GRB2-SH3" = 0),
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_3did_comparisons", stagenum=stagenum, base_dir=base_dir),
+    colour_scheme = colour_scheme,
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
+
+  ### EVE comparisons
+  ###########################
+
+  stagenum <- 15
+  #All domains
+  doubledeepms_eve_comparisons(
+    eve_file_list = list(
+      "GB1" = file.path(base_dir, "Data", "EVE", "GB1", "SPG1_STRSG_218-292_11-26-2021_b05_single_mutant_matrix.csv"),
+      "PSD95-PDZ3" = file.path(base_dir, "Data", "EVE", "PSD95-PDZ3", "DLG4_HUMAN_301-404_11-26-2021_b04_single_mutant_matrix.csv"),
+      "GRB2-SH3" = file.path(base_dir, "Data", "EVE", "GRB2-SH3", "GRB2_HUMAN_149-217_11-26-2021_b02_single_mutant_matrix.csv")),
+    outpath = doubledeepms__format_dir(dir_suffix="_doubledeepms_eve_comparisons", stagenum=stagenum, base_dir=base_dir),
+    colour_scheme = colour_scheme,
+    execute = (first_stage <= stagenum & last_stage >= stagenum))
 
 }
 

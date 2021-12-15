@@ -4,12 +4,12 @@
 \alias{doubledeepms_allostery_plots}
 \title{doubledeepms_allostery_plots}
 \usage{
-doubledeepms_allostery_plots(input_list, pdb_file_list,
-  pdb_chain_query_list, annotation_list, ohm_file_list, aaprop_file,
-  aaprop_file_selected, outpath, colour_scheme, execute = TRUE)
+doubledeepms_allostery_plots(input_file, pdb_file_list,
+  pdb_chain_query_list, annotation_list, ohm_file_list, outpath,
+  colour_scheme, execute = TRUE)
 }
 \arguments{
-\item{input_list}{path to MoCHI thermo model fit results (required)}
+\item{input_file}{path to input file (required)}
 
 \item{pdb_file_list}{path to PDB file (required)}
 
@@ -18,10 +18,6 @@ doubledeepms_allostery_plots(input_list, pdb_file_list,
 \item{annotation_list}{annotations of allosteric sites (required)}
 
 \item{ohm_file_list}{ohm output file list (required)}
-
-\item{aaprop_file}{path to amino acid properties file (required)}
-
-\item{aaprop_file_selected}{path to file with selected subset of identifiers}
 
 \item{outpath}{output path for plots and saved objects (required)}
 

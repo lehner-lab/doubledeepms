@@ -45,16 +45,20 @@ doubledeepms_protein_stability_plots <- function(
   #Load dg data
   dg_list <- list()
   for(protein in names(input_list)){
-    temp_dt <- fread(input_list[[protein]])[id!="-0-"]
+    temp_dt <- fread(input_list[[protein]])
     temp_dt[, protein := protein]
 
     #Add WT and mutant AAs
-    temp_dt[, WT_AA := substr(id, 1, 1)]
-    temp_dt[, Mut := substr(id, nchar(id), nchar(id))]
+    temp_dt[id!="-0-", WT_AA := substr(id, 1, 1)]
+    temp_dt[id!="-0-", Mut := substr(id, nchar(id), nchar(id))]
 
     #Per residue metrics
     for(i in c("f_ddg", "b_ddg")){
+      temp_dt[,paste0(i, "_posmean") := mean(.SD[[1]], na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred"))]
+      temp_dt[,paste0(i, "_posmeanabs") := mean(abs(.SD[[1]]), na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred"))]
+      temp_dt[,paste0(i, "_posse") := sd(abs(.SD[[1]]), na.rm = T)/sqrt(sum(!is.na(.SD[[1]]))),Pos_ref,.SDcols = paste0(i, c("_pred"))]
       temp_dt[,paste0(i, "_wposmean") := sum(.SD[[1]]/.SD[[2]]^2, na.rm = T)/sum(1/.SD[[2]]^2, na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred", "_pred_sd"))]
+      temp_dt[,paste0(i, "_wposmeanabs") := sum(abs(.SD[[1]])/.SD[[2]]^2, na.rm = T)/sum(1/.SD[[2]]^2, na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred", "_pred_sd"))]
       temp_dt[,paste0(i, "_wposse") := sqrt(1/sum(1/.SD[[2]]^2, na.rm = T)),Pos_ref,.SDcols = paste0(i, c("_pred", "_pred_sd"))]
     }
 
@@ -62,9 +66,28 @@ doubledeepms_protein_stability_plots <- function(
     for(i in c("f_ddg", "b_ddg")){
       temp_dt[get(paste0(i, "_pred_conf"))==TRUE,paste0(i, "_pred_filtered") := .SD[[1]],,.SDcols = paste0(i, "_pred")]
       temp_dt[get(paste0(i, "_pred_conf"))==TRUE,paste0(i, "_pred_sd_filtered") := .SD[[1]],,.SDcols = paste0(i, "_pred_sd")]
+      temp_dt[,paste0(i, "_posmean_conf") := mean(.SD[[1]], na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred_filtered"))]
+      temp_dt[,paste0(i, "_posmeanabs_conf") := mean(abs(.SD[[1]]), na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred_filtered"))]
+      temp_dt[,paste0(i, "_posse_conf") := sd(abs(.SD[[1]]), na.rm = T)/sqrt(sum(!is.na(.SD[[1]]))),Pos_ref,.SDcols = paste0(i, c("_pred_filtered"))]
       temp_dt[,paste0(i, "_wposmean_conf") := sum(.SD[[1]]/.SD[[2]]^2, na.rm = T)/sum(1/.SD[[2]]^2, na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred_filtered", "_pred_sd_filtered"))]
+      temp_dt[,paste0(i, "_wposmeanabs_conf") := sum(abs(.SD[[1]])/.SD[[2]]^2, na.rm = T)/sum(1/.SD[[2]]^2, na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred_filtered", "_pred_sd_filtered"))]
       temp_dt[,paste0(i, "_wposse_conf") := sqrt(1/sum(1/.SD[[2]]^2, na.rm = T)),Pos_ref,.SDcols = paste0(i, c("_pred_filtered", "_pred_sd_filtered"))]
     }
+
+    # #Mann whitney U test + randomisation
+    # result_list <- list()
+    # for(i in temp_dt[order(Pos_ref), unique(Pos_ref)]){
+    #   print(i)
+    #   result_list[[as.character(i)]] <- doubledeepms__mann_whitney_U_wrapper_rand(
+    #     temp_dt[Pos_ref==i & b_ddg_pred_conf,abs(b_ddg_pred)],
+    #     temp_dt[Pos_ref!=i & b_ddg_pred_conf,abs(b_ddg_pred)],
+    #     temp_dt[Pos_ref==i & b_ddg_pred_conf,b_ddg_pred_sd],
+    #     temp_dt[Pos_ref!=i & b_ddg_pred_conf,b_ddg_pred_sd],
+    #     100)
+    # }
+    # result_dt <- as.data.table(do.call('rbind', result_list))
+    # result_dt[, Pos_ref := as.integer(names(result_list))]
+    # temp_dt <- merge(temp_dt, result_dt, by = "Pos_ref")
 
     dg_list[[protein]] <- temp_dt
   }
@@ -202,6 +225,7 @@ doubledeepms_protein_stability_plots <- function(
       print(paste0("Surface destabilising (3+) residues for ", i, ": ", paste(dg_dt[protein==i & f_ddg_pred_stab_res5 & Pos_class=="surface"][!duplicated(Pos_ref),Pos_ref], collapse = ",")))
     }
   }
+  
   ###########################
   ### Position of de-stabilising residues
   ###########################
@@ -426,5 +450,14 @@ doubledeepms_protein_stability_plots <- function(
   
   write(x = pymol_script, file = file.path(outpath, "PSD95-PDZ3_example_destabilising_residues_quaternary_struct.txt"))
   
+  ###########################
+  ### Save
+  ###########################
+
+  #Save
+  write.table(dg_dt, 
+    file = file.path(outpath, "dg_singles.txt"), 
+    quote = F, sep = "\t", row.names = F)
+
 }
 

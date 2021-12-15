@@ -5,7 +5,8 @@
 \title{doubledeepms__persite_energy_vs_distance_plot}
 \usage{
 doubledeepms__persite_energy_vs_distance_plot(input_dt, outpath,
-  colour_scheme, literature_sites = c(), trait_name = "folding")
+  colour_scheme, literature_sites = c(), trait_name = "folding",
+  absolute_value = T, threshold_residues = "proximal")
 }
 \arguments{
 \item{input_dt}{input data table (required)}
@@ -17,6 +18,10 @@ doubledeepms__persite_energy_vs_distance_plot(input_dt, outpath,
 \item{literature_sites}{literature allosteric sites (default:empty vector)}
 
 \item{trait_name}{trait name (default:folding)}
+
+\item{absolute_value}{absolute value of the trait (default:T)}
+
+\item{threshold_residues}{residues used to determine regulatory threshold: either "proximal" or "distal" (default:"proximal")}
 }
 \value{
 Allosteric positions
