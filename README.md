@@ -111,4 +111,18 @@ This stage ('doubledeepms_allostery_scatterplots') produces free energy scatterp
 
 This stage ('doubledeepms_downsampling_analysis') evaluates thermodynamic model results and performance after downsampling (related to Figure 2).
 
+## Stage 12: FoldX comparisons
 
+This stage ('doubledeepms_foldx_comparisons') compares inferred folding free energy changes to those predicted by FoldX.
+
+## Stage 13: PolyPhen2 comparisons
+
+This stage ('doubledeepms_polyphen2_comparisons') compares inferred folding free energy changes to PolyPhen2 predictions of functional effects.
+
+## Stage 14: 3did comparisons
+
+This stage ('doubledeepms_3did_comparisons') tests the enrichment of allosteric mutations at interaction interfaces as annotated by the database of three-dimensional interacting domains (3did).
+
+## Stage 15: EVE comparisons
+
+This stage ('doubledeepms_eve_comparisons') compares inferred folding free energy changes to EVE predictions of functional effects.
