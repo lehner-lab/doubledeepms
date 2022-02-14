@@ -406,25 +406,34 @@ doubledeepms_allostery_plots <- function(
   #Sector residues
   for(i in dg_dt[,unique(protein)]){
     if(length(literature_list[[i]][["sector"]]!=0)){
-      in_sector_means <- dg_dt[protein==i & !is.na(b_ddg_wposmeanabs)][!duplicated(Pos_ref)][Pos_ref %in% literature_list[[i]][["sector"]],b_ddg_wposmeanabs]
-      out_sector_means <- dg_dt[protein==i & !is.na(b_ddg_wposmeanabs)][!duplicated(Pos_ref)][!Pos_ref %in% literature_list[[i]][["sector"]],b_ddg_wposmeanabs]
+      in_sector_means <- dg_dt[protein==i & !is.na(b_ddg_wposmeanabs) & id!="-0-"][!duplicated(Pos_ref)][Pos_ref %in% literature_list[[i]][["sector"]],b_ddg_wposmeanabs]
+      out_sector_means <- dg_dt[protein==i & !is.na(b_ddg_wposmeanabs) & id!="-0-"][!duplicated(Pos_ref)][!Pos_ref %in% literature_list[[i]][["sector"]],b_ddg_wposmeanabs]
       temp_test <- doubledeepms__mann_whitney_U_wrapper(in_sector_means, out_sector_means)
-      print(paste0("Predicting sector residues using position-wise weighted mean of binding free energies changes (", i, "): p-value=", format(temp_test[["p_value"]], digits=2, scientific=T), " AUC=", round(temp_test[["effect_size"]], 2)))
+      print(paste0("Predicting sector residues using position-wise weighted mean of binding free energies changes (", i, "): p-value=", 
+        format(temp_test[["p_value"]], digits=2, scientific=T), " AUC=", 
+        round(temp_test[["effect_size"]], 2), " n=",
+        length(c(in_sector_means, out_sector_means))))
    }
   }
 
   #Class switching residues
   for(i in dg_dt[,unique(protein)]){
     if(length(literature_list[[i]][["class_switching"]]!=0)){
-      in_sector_means <- dg_dt[protein==i & !is.na(b_ddg_wposmeanabs)][!duplicated(Pos_ref)][Pos_ref %in% literature_list[[i]][["class_switching"]],b_ddg_wposmeanabs]
-      out_sector_means <- dg_dt[protein==i & !is.na(b_ddg_wposmeanabs)][!duplicated(Pos_ref)][!Pos_ref %in% literature_list[[i]][["class_switching"]],b_ddg_wposmeanabs]
+      in_sector_means <- dg_dt[protein==i & !is.na(b_ddg_wposmeanabs) & id!="-0-"][!duplicated(Pos_ref)][Pos_ref %in% literature_list[[i]][["class_switching"]],b_ddg_wposmeanabs]
+      out_sector_means <- dg_dt[protein==i & !is.na(b_ddg_wposmeanabs) & id!="-0-"][!duplicated(Pos_ref)][!Pos_ref %in% literature_list[[i]][["class_switching"]],b_ddg_wposmeanabs]
       temp_test <- doubledeepms__mann_whitney_U_wrapper(in_sector_means, out_sector_means)
-      print(paste0("Predicting class-switching residues using position-wise weighted mean of binding free energies changes (", i, "): p-value=", format(temp_test[["p_value"]], digits=2, scientific=T), " AUC=", round(temp_test[["effect_size"]], 2)))
+      print(paste0("Predicting class-switching residues using position-wise weighted mean of binding free energies changes (", i, "): p-value=", 
+        format(temp_test[["p_value"]], digits=2, scientific=T), " AUC=", 
+        round(temp_test[["effect_size"]], 2), " n=",
+        length(c(in_sector_means, out_sector_means))))
       #Predicting class-switching residues not classified as allosteric
-      in_sector_means <- dg_dt[protein==i & !is.na(b_ddg_pred)][Pos_ref %in% literature_list[[i]][["class_switching"]] & is.na(allosteric) & is.na(orthosteric),abs(b_ddg_pred)]
-      out_sector_means <- dg_dt[protein==i & !is.na(b_ddg_pred)][!Pos_ref %in% literature_list[[i]][["class_switching"]] & is.na(allosteric) & is.na(orthosteric),abs(b_ddg_pred)]
+      in_sector_means <- dg_dt[protein==i & !is.na(b_ddg_pred) & id!="-0-"][Pos_ref %in% literature_list[[i]][["class_switching"]] & is.na(allosteric) & is.na(orthosteric),abs(b_ddg_pred)]
+      out_sector_means <- dg_dt[protein==i & !is.na(b_ddg_pred) & id!="-0-"][!Pos_ref %in% literature_list[[i]][["class_switching"]] & is.na(allosteric) & is.na(orthosteric),abs(b_ddg_pred)]
       temp_test <- doubledeepms__mann_whitney_U_wrapper(in_sector_means, out_sector_means)
-      print(paste0("Predicting class-switching residues using binding free energies changes of mutations at non-allosteric/orthosteric sites (", i, "): p-value=", format(temp_test[["p_value"]], digits=2, scientific=T), " AUC=", round(temp_test[["effect_size"]], 2)))
+      print(paste0("Binding free energies of mutations at non-allosteric/orthosteric residues that are class-switching versus remainder (", i, "): p-value=", 
+        format(temp_test[["p_value"]], digits=2, scientific=T), " AUC=", 
+        round(temp_test[["effect_size"]], 2), " n=",
+        length(c(in_sector_means, out_sector_means))))
     }
   }
 
@@ -444,7 +453,10 @@ doubledeepms_allostery_plots <- function(
         in_lset_nallo <- dg_dt[protein==i & Pos_class!="binding_interface"][Pos_ref %in% lset & allosteric_mutation==F,.N]
         out_lset_nallo <- dg_dt[protein==i & Pos_class!="binding_interface"][!Pos_ref %in% lset & allosteric_mutation==F,.N]
         temp_test <- fisher.test(matrix(c(in_lset_allo, out_lset_allo, in_lset_nallo, out_lset_nallo), nrow = 2))
-        print(paste0("Enrichment of allosteric mutations in ", lset_name, " (", i, "): p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+        print(paste0("Enrichment of allosteric mutations in ", lset_name, " (", i, "): p-value=", 
+          format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", 
+          round(temp_test$estimate, 2), " n=",
+          sum(c(in_lset_allo, out_lset_allo, in_lset_nallo, out_lset_nallo))))
         result_list <- c(result_list, list(data.table(protein = i, set_name = paste0(lset_name, " (n = ", length(lset), ")"), mutation = "in", odds_ratio = temp_test$estimate, p_value = temp_test$p.value)))
       }
     }
@@ -487,7 +499,10 @@ doubledeepms_allostery_plots <- function(
       out_lset_nallo <- dg_dt[protein==i & Pos_class!="binding_interface"][!WT_AA %in% lset & allosteric_mutation==F,.N]
       temp_test <- fisher.test(matrix(c(in_lset_allo, out_lset_allo, in_lset_nallo, out_lset_nallo), nrow = 2))
       if(lset_name %in% c("G", "P")){
-        print(paste0("Enrichment of allosteric mutations from ", lset_name, " (", i, "): p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+        print(paste0("Enrichment of allosteric mutations from ", lset_name, " (", i, "): p-value=", 
+          format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", 
+          round(temp_test$estimate, 2), " n=",
+          sum(c(in_lset_allo, out_lset_allo, in_lset_nallo, out_lset_nallo))))
       }
       result_list <- c(result_list, list(data.table(protein = i, set_name = lset_name, mutation = "WT", odds_ratio = temp_test$estimate, p_value = temp_test$p.value)))
       in_lset_allo <- dg_dt[protein==i & Pos_class!="binding_interface"][Mut %in% lset & allosteric_mutation==T,.N]
@@ -496,7 +511,10 @@ doubledeepms_allostery_plots <- function(
       out_lset_nallo <- dg_dt[protein==i & Pos_class!="binding_interface"][!Mut %in% lset & allosteric_mutation==F,.N]
       temp_test <- fisher.test(matrix(c(in_lset_allo, out_lset_allo, in_lset_nallo, out_lset_nallo), nrow = 2))
       if(lset_name %in% c("G", "P")){
-        print(paste0("Enrichment of allosteric mutations to ", lset_name, " (", i, "): p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+        print(paste0("Enrichment of allosteric mutations to ", lset_name, " (", i, "): p-value=", 
+          format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", 
+          round(temp_test$estimate, 2), " n=",
+          sum(c(in_lset_allo, out_lset_allo, in_lset_nallo, out_lset_nallo))))
       }
       result_list <- c(result_list, list(data.table(protein = i, set_name = lset_name, mutation = "Mutant", odds_ratio = temp_test$estimate, p_value = temp_test$p.value)))
     }
@@ -545,7 +563,10 @@ doubledeepms_allostery_plots <- function(
       colnames(temp_matrix) <- c("Allosteric", "Not allosteric")
       temp_test <- fisher.test(temp_matrix)
       if(lset_name %in% c("G", "P")){
-        print(paste0("Enrichment of allosteric mutations (not in loops) from ", lset_name, " (", i, "): p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+        print(paste0("Enrichment of allosteric mutations (not in loops) from ", lset_name, " (", i, "): p-value=", 
+          format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", 
+          round(temp_test$estimate, 2), " n=",
+          sum(c(in_lset_allo, out_lset_allo, in_lset_nallo, out_lset_nallo))))
         print(temp_matrix)
       }
       result_list <- c(result_list, list(data.table(protein = i, set_name = lset_name, mutation = "WT", odds_ratio = temp_test$estimate, p_value = temp_test$p.value)))
@@ -555,7 +576,10 @@ doubledeepms_allostery_plots <- function(
       out_lset_nallo <- dg_dt[protein==i & Pos_class!="binding_interface" & !is.na(SS)][!Mut %in% lset & allosteric_mutation==F,.N]
       temp_test <- fisher.test(matrix(c(in_lset_allo, out_lset_allo, in_lset_nallo, out_lset_nallo), nrow = 2))
       if(lset_name %in% c("G", "P")){
-        print(paste0("Enrichment of allosteric mutations (not in loops) to ", lset_name, " (", i, "): p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+        print(paste0("Enrichment of allosteric mutations (not in loops) to ", lset_name, " (", i, "): p-value=", 
+          format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", 
+          round(temp_test$estimate, 2), " n=",
+          sum(c(in_lset_allo, out_lset_allo, in_lset_nallo, out_lset_nallo))))
       }
       result_list <- c(result_list, list(data.table(protein = i, set_name = lset_name, mutation = "Mutant", odds_ratio = temp_test$estimate, p_value = temp_test$p.value)))
     }
@@ -605,7 +629,10 @@ doubledeepms_allostery_plots <- function(
   rownames(temp_matrix) <- c("In set", "Out set")
   colnames(temp_matrix) <- c("Allosteric", "Not allosteric")
   temp_test <- fisher.test(temp_matrix)
-  print(paste0("Amongst residues not in binding interface, enrichment of Glycine residues for major allosteric sites: p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+  print(paste0("Amongst residues not in binding interface, enrichment of Glycine residues for major allosteric sites: p-value=", 
+    format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", 
+    round(temp_test$estimate, 2), " n=",
+    sum(c(g_allo, ng_allo, g_nallo, ng_nallo))))
   print(temp_matrix)
 
   # Amongst Glycines, enrichment of major allosteric sites in non-loop residues
@@ -617,7 +644,10 @@ doubledeepms_allostery_plots <- function(
   rownames(temp_matrix) <- c("In set", "Out set")
   colnames(temp_matrix) <- c("Allosteric", "Not allosteric")
   temp_test <- fisher.test(temp_matrix)
-  print(paste0("Amongst Glycines not in binding interface, enrichment of non-loop residues for major allosteric sites: p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+  print(paste0("Amongst Glycines not in binding interface, enrichment of non-loop residues for major allosteric sites: p-value=", 
+    format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", 
+    round(temp_test$estimate, 2), " n=",
+    sum(c(nloop_allo, loop_allo, nloop_nallo, loop_nallo))))
   print(temp_matrix)
 
   # Enrichment of major allosteric sites in non-loop Glycines
@@ -629,7 +659,10 @@ doubledeepms_allostery_plots <- function(
   rownames(temp_matrix) <- c("In set", "Out set")
   colnames(temp_matrix) <- c("Allosteric", "Not allosteric")
   temp_test <- fisher.test(temp_matrix)
-  print(paste0("Amongst residues not in binding interface, enrichment of non-loop Glycine residues for major allosteric sites: p-value=", format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", round(temp_test$estimate, 2)))
+  print(paste0("Amongst residues not in binding interface, enrichment of non-loop Glycine residues for major allosteric sites: p-value=", 
+    format(temp_test$p.value, digits=2, scientific=T), " odds ratio=", 
+    round(temp_test$estimate, 2), " n=",
+    sum(c(nloop_allo, loop_allo, nloop_nallo, loop_nallo))))
   print(temp_matrix)
 
   ### Enrichment of allosteric mutations in negatively charged surface sites

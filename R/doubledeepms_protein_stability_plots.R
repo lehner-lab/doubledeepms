@@ -60,6 +60,7 @@ doubledeepms_protein_stability_plots <- function(
       temp_dt[,paste0(i, "_wposmean") := sum(.SD[[1]]/.SD[[2]]^2, na.rm = T)/sum(1/.SD[[2]]^2, na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred", "_pred_sd"))]
       temp_dt[,paste0(i, "_wposmeanabs") := sum(abs(.SD[[1]])/.SD[[2]]^2, na.rm = T)/sum(1/.SD[[2]]^2, na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred", "_pred_sd"))]
       temp_dt[,paste0(i, "_wposse") := sqrt(1/sum(1/.SD[[2]]^2, na.rm = T)),Pos_ref,.SDcols = paste0(i, c("_pred", "_pred_sd"))]
+      temp_dt[,paste0(i, "_n") := sum(!is.na(.SD[[1]])),Pos_ref,.SDcols = paste0(i, c("_pred"))]
     }
 
     #Per residue metrics - confident only
@@ -73,6 +74,10 @@ doubledeepms_protein_stability_plots <- function(
       temp_dt[,paste0(i, "_wposmeanabs_conf") := sum(abs(.SD[[1]])/.SD[[2]]^2, na.rm = T)/sum(1/.SD[[2]]^2, na.rm = T),Pos_ref,.SDcols = paste0(i, c("_pred_filtered", "_pred_sd_filtered"))]
       temp_dt[,paste0(i, "_wposse_conf") := sqrt(1/sum(1/.SD[[2]]^2, na.rm = T)),Pos_ref,.SDcols = paste0(i, c("_pred_filtered", "_pred_sd_filtered"))]
     }
+
+    #Number of residues to calculated weighted mean binding ddG
+    print(paste0("Range of sample sizes for weighted mean folding ddG calculation (", protein, "): ", temp_dt[!duplicated(Pos_ref) & id!="-0-",paste(range(f_ddg_n), collapse = ",")], sep = ""))
+    print(paste0("Range of sample sizes for weighted mean binding ddG calculation (", protein, "): ", temp_dt[!duplicated(Pos_ref) & id!="-0-",paste(range(b_ddg_n), collapse = ",")], sep = ""))
 
     # #Mann whitney U test + randomisation
     # result_list <- list()
@@ -156,10 +161,11 @@ doubledeepms_protein_stability_plots <- function(
   #P-value for each protein separately
   plot_dt <- dg_dt[f_ddg_pred_conf==T & id!="-0-",.(protein, f_ddg_pred, Pos_class, RSASA, scHAmin_ligand, Pos_ref)]
   for(i in plot_dt[,unique(protein)]){
-    print(paste0("Folding free energy change of mutations in core residues vs. the remainder, Mann–Whitney U test p-value (", i, "): ", 
+    print(paste0("Folding free energy change of mutations in core residues vs. the remainder, Mann–Whitney U test(", i, "): p-value=", 
     doubledeepms__mann_whitney_U_wrapper(
       plot_dt[protein==i & Pos_class=="core",f_ddg_pred],
-      plot_dt[protein==i & Pos_class!="core",f_ddg_pred])['p_value']))
+      plot_dt[protein==i & Pos_class!="core",f_ddg_pred])['p_value'],
+    " n=", plot_dt[protein==i,.N]))
   }
 
   ###########################

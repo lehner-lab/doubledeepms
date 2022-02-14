@@ -154,7 +154,7 @@ doubledeepms_fitness_plots <- function(
 
   #Thresholded data
   plot_list <- list()
-  for(i in c(1:40)/20){
+  for(i in c(1:200)/20){
     plot_list[[as.character(i)]] <- fitness_dt_merge[Nham_aa==1 & STOP==F & STOP_readthrough==F & (fitness-1.96*sigma)>i/10,]
     plot_list[[as.character(i)]][, fitness_class := i]
     plot_list[[as.character(-i)]] <- fitness_dt_merge[Nham_aa==1 & STOP==F & STOP_readthrough==F & (fitness-1.96*sigma)<(-i),]
@@ -178,6 +178,24 @@ doubledeepms_fitness_plots <- function(
   }
   ggplot2::ggsave(file.path(outpath, "binding_fitness_mutations_all.pdf"), d, width = 5, height = 7, useDingbats=FALSE)
 
+  ###########################
+  ### Where are strongest binding effects?
+  ###########################
+
+  fitness_dt_merge <- merge(
+    fitness_dt[Nham_aa==1 & STOP==F & STOP_readthrough==F & pca_type=="Binding"], 
+    fitness_dt[Nham_aa==1 & STOP==F & STOP_readthrough==F & pca_type=="Abundance", .(aa_seq, fitness_abundance = fitness, sigma_abundance = sigma)], by = "aa_seq", all.x = T)
+
+  #Thresholded data
+  plot_list <- list()
+  for(i in c(1:40)/20){
+    plot_list[[as.character(i)]] <- fitness_dt_merge[Nham_aa==1 & STOP==F & STOP_readthrough==F & (fitness-1.96*sigma)>i/10,]
+    plot_list[[as.character(i)]][, fitness_class := i]
+    plot_list[[as.character(-i)]] <- fitness_dt_merge[Nham_aa==1 & STOP==F & STOP_readthrough==F & (fitness-1.96*sigma)<(-i),]
+    plot_list[[as.character(-i)]][, fitness_class := (-i)]
+  }
+  plot_dt <- rbindlist(plot_list)
+  
   #Plot
   plot_dt_all <- plot_dt[protein!="GB1",.(num_mutations = .N),.(fitness_class, Pos_class, protein)]
   d <- ggplot2::ggplot(plot_dt_all[order(Pos_class)],ggplot2::aes(fitness_class, num_mutations, color = Pos_class)) +

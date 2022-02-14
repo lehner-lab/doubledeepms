@@ -56,8 +56,12 @@ doubledeepms__plot_growth_validations <- function(
   ggplot2::ggsave(file.path(outpath, "growthrate_validations_scatter.pdf"), width = 3.2, height = 4)
 
   #Correlation P-value
-  temp_cor <- plot_dt[!is.na(growth_rate_slope) & !is.na(growthrate),cor.test(growth_rate_slope, growthrate)]
-  print(paste0("Correlation with growth validations (pooled): p-value=", format(temp_cor[["p.value"]], scientific = T, digits = 2)))
+  cor_dt <- plot_dt[!is.na(growth_rate_slope) & !is.na(growthrate),]
+  temp_cor <- cor_dt[,cor.test(growth_rate_slope, growthrate)]
+  print(paste0("Correlation with growth validations (pooled): r=", 
+    round(temp_cor[["estimate"]], digits = 2), " p-value=", 
+    format(temp_cor[["p.value"]], scientific = T, digits = 2), " n=",
+    cor_dt[,.N]))
 
 }
 
