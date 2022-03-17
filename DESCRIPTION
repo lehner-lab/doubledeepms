@@ -1,6 +1,6 @@
 Package: doubledeepms
 Title: Analysis scripts to reproduce the figures and results from doubleDeepPCA manuscript
-Version: 0.0.3.9000
+Version: 0.0.4.9000
 Authors@R: c(
 	person("Andre", "Faure", email = "ajfaure@gmail.com", role = c("aut", "cre")),
 	person("Julia", "Domingo", email = "julia.domingo.espinos@gmail.com", role = "aut"),

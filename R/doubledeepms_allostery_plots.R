@@ -427,10 +427,11 @@ doubledeepms_allostery_plots <- function(
         round(temp_test[["effect_size"]], 2), " n=",
         length(c(in_sector_means, out_sector_means))))
       #Predicting class-switching residues not classified as allosteric
-      in_sector_means <- dg_dt[protein==i & !is.na(b_ddg_pred) & id!="-0-"][Pos_ref %in% literature_list[[i]][["class_switching"]] & is.na(allosteric) & is.na(orthosteric),abs(b_ddg_pred)]
-      out_sector_means <- dg_dt[protein==i & !is.na(b_ddg_pred) & id!="-0-"][!Pos_ref %in% literature_list[[i]][["class_switching"]] & is.na(allosteric) & is.na(orthosteric),abs(b_ddg_pred)]
+      print(paste0("#mutations class-switching residues outside binding interface that are not within major allosteric sites: ", dg_dt[protein==i & !is.na(b_ddg_pred) & id!="-0-"][Pos_ref %in% literature_list[[i]][["class_switching"]] & is.na(allosteric) & Pos_class!="binding_interface",.N]))
+      in_sector_means <- dg_dt[protein==i & !is.na(b_ddg_pred) & id!="-0-"][Pos_ref %in% literature_list[[i]][["class_switching"]] & is.na(allosteric) & Pos_class!="binding_interface",abs(b_ddg_pred)]
+      out_sector_means <- dg_dt[protein==i & !is.na(b_ddg_pred) & id!="-0-"][!Pos_ref %in% literature_list[[i]][["class_switching"]] & is.na(allosteric) & Pos_class!="binding_interface",abs(b_ddg_pred)]
       temp_test <- doubledeepms__mann_whitney_U_wrapper(in_sector_means, out_sector_means)
-      print(paste0("Binding free energies of mutations at non-allosteric/orthosteric residues that are class-switching versus remainder (", i, "): p-value=", 
+      print(paste0("Binding free energies of mutations at non-allosteric/binding interface residues that are class-switching versus remainder (", i, "): p-value=", 
         format(temp_test[["p_value"]], digits=2, scientific=T), " AUC=", 
         round(temp_test[["effect_size"]], 2), " n=",
         length(c(in_sector_means, out_sector_means))))
